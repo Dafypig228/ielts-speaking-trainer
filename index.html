@@ -463,6 +463,9 @@ mark.voc{background:var(--act-soft);color:inherit;border-radius:4px;padding:0 2p
 
 .readpar{margin:0;font-size:17px;line-height:1.6;background:var(--sunken);border-radius:10px;padding:12px 14px}
 
+.newver{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;display:flex;gap:12px;align-items:center;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 8px 24px rgba(0,0,0,.18);border-radius:12px;padding:10px 12px 10px 16px;font-size:14.5px;max-width:calc(100vw - 24px)}
+@media (min-width:900px){.newver{bottom:24px}}
+
 </style>
 </head>
 <body>
@@ -4236,6 +4239,28 @@ document.addEventListener('click', e => {
     case 'rpmine': RP.mine = d.v === '1'; render(); break;
   }
 });
+
+
+/* ---------- tell the user when a newer version is online ---------- */
+const BUILD_ID = '20261116144308';
+let newerShown = false;
+async function checkNewer() {
+  if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
+  try {
+    const t = await (await fetch('./index.html?v=' + Date.now(), {cache: 'no-store'})).text();
+    const m = t.match(/const BUILD_ID = '([^']+)'/);
+    if (!m || m[1] === BUILD_ID || m[1].startsWith('__')) return;
+    newerShown = true;
+    const bar = document.createElement('div');
+    bar.className = 'newver';
+    bar.innerHTML = '<span>A newer version of the app is ready.</span><button class="btn sm primary" type="button">Reload</button>';
+    bar.querySelector('button').onclick = () => location.reload();
+    document.body.appendChild(bar);
+  } catch {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkNewer(); });
+setInterval(checkNewer, 10 * 60 * 1000);
+setTimeout(checkNewer, 20000);
 
 init();
 </script>
