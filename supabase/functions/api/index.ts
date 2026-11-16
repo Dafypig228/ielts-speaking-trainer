@@ -63,6 +63,38 @@ Idioms: once in a blue moon, piece of cake, break the ice, hit the nail on the h
 Topic vocab: broaden one's horizons, learn the ropes, cutting-edge technology, tech-savvy, a double-edged sword, climb the career ladder, a dead-end job, carbon footprint, throwaway society, health-conscious, kick the habit, the rat race, generation gap, silver lining.
 Grammar for Part 3: inversion (Rarely do people..., Not only is..., Had we acted earlier...), mixed conditionals (If I had studied medicine, I would be a doctor now), complex passives (It is widely believed that..., X is thought to...).`;
 
+const DESCRIPTORS = `IELTS Speaking band descriptors (public version), condensed. Score each criterion separately by BEST FIT: pick the band whose description matches the answer most closely. A candidate does not have to meet every point of a band to get it.
+FLUENCY AND COHERENCE
+9: fluent, only rare repetition or self-correction; any hesitation is about content, not searching for words or grammar; fully coherent; develops topics fully.
+8: fluent with only occasional repetition or self-correction; hesitation is usually content-related and only rarely to search for language; develops topics coherently.
+7: speaks at length without noticeable effort or loss of coherence; may show some language-related hesitation at times, or some repetition/self-correction; uses a range of connectives and discourse markers with some flexibility.
+6: willing to speak at length, though may lose coherence at times due to occasional repetition, self-correction or hesitation; uses a range of connectives but not always appropriately.
+5: usually keeps going but relies on repetition, self-correction and/or slow speech; may over-use some connectives; simple speech is fluent but more complex communication causes fluency problems.
+4: cannot respond without noticeable pauses; may speak slowly with frequent repetition and self-correction; links basic sentences with repetitive simple connectives; some breakdowns in coherence.
+3: long pauses; limited ability to link simple sentences; only simple responses, often unable to convey the basic message.
+LEXICAL RESOURCE
+9: full flexibility and precision on all topics; idiomatic language used naturally and accurately.
+8: wide resource used readily and flexibly for precise meaning; less common and idiomatic vocabulary used skilfully, occasional inaccuracies; paraphrases effectively.
+7: uses vocabulary flexibly across topics; some less common and idiomatic vocabulary with some awareness of style and collocation, some inappropriate choices; paraphrases effectively.
+6: wide enough vocabulary to discuss topics at length and make meaning clear despite inappropriacies; generally paraphrases successfully.
+5: can talk about familiar and unfamiliar topics but with limited flexibility; attempts paraphrase with mixed success.
+4: can talk about familiar topics but only basic meaning on unfamiliar ones; frequent errors in word choice; rarely paraphrases.
+GRAMMATICAL RANGE AND ACCURACY
+9: full range of structures, naturally and appropriately; consistently accurate apart from native-speaker-like slips.
+8: wide range used flexibly; majority of sentences error-free, only very occasional inappropriacies or non-systematic errors.
+7: range of complex structures with some flexibility; frequently error-free sentences, though some mistakes persist.
+6: mix of simple and complex structures with limited flexibility; may make frequent mistakes with complex structures, but these rarely cause comprehension problems.
+5: basic sentence forms with reasonable accuracy; limited range of complex structures, usually with errors that may cause some comprehension problems.
+4: basic sentence forms and some correct simple sentences, subordinate structures rare; errors frequent and may cause misunderstanding.
+PRONUNCIATION
+9: full range of features with precision and subtlety; sustains flexible use; effortless to understand.
+8: wide range of features; sustains flexible use with occasional lapses; easy to understand throughout; L1 accent has minimal effect on intelligibility.
+7: all positive features of 6 and some, not all, of 8.
+6: range of features with mixed control; some effective use but not sustained; generally understood throughout, though some words or sounds are mispronounced and reduce clarity at times.
+5: all positive features of 4 and some, not all, of 6.
+4: limited range of features; attempts control but lapses are frequent; mispronunciations frequent and cause some difficulty for the listener.
+Scoring rules: a Kazakh or Russian accent is NOT an error in itself; only mark down pronunciation that makes words hard to understand. Pauses spent thinking about WHAT to say are acceptable even at band 8; mark down pauses spent searching for words or grammar. A single short answer gives limited evidence: in Part 1, a short but natural, accurate answer can still score 6.5 to 7; don't drop a band just because an answer is brief, but say it should be longer. Real examiners are fair, not stingy: if an answer sits between two bands, give the half band between them.`;
+
 function questionText(q: any) {
   if (!q) return "";
   if (q.part === 2) return `Part 2 cue card: ${q.text}\nYou should say: ${(q.bullets || []).join("; ")}`;
@@ -135,6 +167,8 @@ async function analyze(body: any, userId: string) {
     : `The student hasn't set a goal band; assume they are aiming for band 7.`;
   const prompt = `${STYLE}
 
+${DESCRIPTORS}
+
 ${COURSE}
 
 ${goalText}
@@ -146,7 +180,8 @@ ${fmtPauses(body.stats)}${target}
 
 Listen carefully to the audio, then return ONLY a JSON object with these keys:
 "transcript": verbatim transcript of what they actually said, including um, uh, er, repetitions, self-corrections and unfinished words. Put pause markers like [pause 1.8s] where the measured pauses of 1s or longer happen (use the timings above to place them).
-"bands": {"fc": number, "lr": number, "gra": number, "p": number, "overall": number} estimated IELTS bands in 0.5 steps, honest, not inflated. If the answer is far too short or off-topic, score accordingly.
+"bands": {"fc": number, "lr": number, "gra": number, "p": number, "overall": number} IELTS bands in 0.5 steps, scored by best fit against the band descriptors above, the way a trained, fair examiner would: neither inflated nor harsh. Only an answer that is off-topic or just a few words should score very low.
+"band_reasons": {"fc": ..., "lr": ..., "gra": ..., "p": ...} one short sentence each saying which descriptor the answer matches and what it would need for the next half band, quoting their words where useful.
 "summary": 2-3 sentences, the most important thing about this answer.
 "fluency": 2-4 sentences about pauses, hesitation, fillers and speed: say where the long pauses were (quote the words around them) and what probably caused them (searching for a word, planning the next idea, grammar).
 "pronunciation": 1-3 sentences about specific words or sounds you actually heard as unclear, wrong word stress, or flat intonation. If it was clear, say so briefly.
@@ -168,7 +203,14 @@ How to choose the root problem: pick the single issue that costs the most band p
   const parts: any[] = [{ text: prompt }];
   if (body.audio) parts.push({ inline_data: { mime_type: body.mime || "audio/wav", data: body.audio } });
   let r;
-  try { r = await gemini(parts, true, 0.5); } catch (e) { await refund(userId, usage.used); throw e; }
+  try { r = await gemini(parts, true, 0.3); } catch (e) { await refund(userId, usage.used); throw e; }
+  // IELTS overall = mean of the four criteria; .25 rounds up to .5 and .75 up to the next whole band
+  const b = r.data?.bands;
+  if (b && ["fc", "lr", "gra", "p"].every((k) => typeof b[k] === "number" || !isNaN(Number(b[k])))) {
+    const avg = (Number(b.fc) + Number(b.lr) + Number(b.gra) + Number(b.p)) / 4;
+    const whole = Math.floor(avg + 1e-9), frac = avg - whole;
+    b.overall = frac < 0.25 - 1e-9 ? whole : frac < 0.75 - 1e-9 ? whole + 0.5 : whole + 1;
+  }
   return { ...r.data, model: r.model, usage };
 }
 

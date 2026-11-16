@@ -466,6 +466,8 @@ mark.voc{background:var(--act-soft);color:inherit;border-radius:4px;padding:0 2p
 .newver{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;display:flex;gap:12px;align-items:center;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 8px 24px rgba(0,0,0,.18);border-radius:12px;padding:10px 12px 10px 16px;font-size:14.5px;max-width:calc(100vw - 24px)}
 @media (min-width:900px){.newver{bottom:24px}}
 
+.bb-why{grid-column:1/-1;font-size:13px;line-height:1.4;color:var(--muted);margin-top:-2px}
+
 </style>
 </head>
 <body>
@@ -3932,7 +3934,7 @@ function bandsBox(ai) {
   const gap = g != null && b.overall != null ? g - +b.overall : null;
   return `<section class="card bandbox"><div class="bb-top"><div><div class="small muted">This answer</div><div class="bb-big">${fmtB(b.overall)}</div></div>
       ${g != null ? `<div style="text-align:right"><div class="small muted">Your goal</div><div class="bb-goal">${fmtB(g)}</div><div class="small ${gap <= 0 ? 'ok' : 'muted'}">${gap <= 0 ? 'reached' : fmtB(gap) + ' to go'}</div></div>` : ''}</div>
-    ${rows.map(([k, l]) => `<div class="bb-row ${k === low && rows.length > 1 ? 'low' : ''}"><span>${l}${k === low && rows.length > 1 ? ' <span class="small">· lowest</span>' : ''}</span><span class="bb-bar"><i style="width:${pos(b[k])}%"></i>${g != null ? `<em style="left:${pos(g)}%" title="Goal ${fmtB(g)}"></em>` : ''}</span><b>${fmtB(b[k])}</b></div>`).join('')}
+    ${rows.map(([k, l]) => `<div class="bb-row ${k === low && rows.length > 1 ? 'low' : ''}"><span>${l}${k === low && rows.length > 1 ? ' <span class="small">· lowest</span>' : ''}</span><span class="bb-bar"><i style="width:${pos(b[k])}%"></i>${g != null ? `<em style="left:${pos(g)}%" title="Goal ${fmtB(g)}"></em>` : ''}</span><b>${fmtB(b[k])}</b>${ai.band_reasons && ai.band_reasons[k] ? `<span class="bb-why">${esc(ai.band_reasons[k])}</span>` : ''}</div>`).join('')}
     ${g == null ? `<div class="bb-set"><div class="small muted" style="margin-bottom:6px">Set your goal so the coach aims at it:</div>${goalChips('sm')}</div>` : ''}</section>`;
 }
 function fixFirstBox(a, inPractice) {
@@ -4248,7 +4250,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261116145130';
+const BUILD_ID = '20261116145611';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
