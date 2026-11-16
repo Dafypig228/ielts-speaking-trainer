@@ -1,11 +1,16 @@
 ---
 name: IELTS Speaking Trainer
-description: Speaking practice set as a station departure board, counting down to exam day.
+description: A plain, white practice tool for answering IELTS Speaking questions out loud, with the test date always in view.
 colors:
+  bg: "oklch(0.972 0.0060 262)"
+  surface: "oklch(0.997 0.0014 262)"
+  sunken: "oklch(0.948 0.0100 262)"
+  ink: "oklch(0.235 0.0350 262)"
+  muted: "oklch(0.470 0.0300 262)"
+  line: "oklch(0.895 0.0130 262)"
+  line-strong: "oklch(0.800 0.0200 262)"
   board: "oklch(0.300 0.0800 262)"
-  board-2: "oklch(0.370 0.0850 262)"
   on-board: "oklch(0.975 0.0080 262)"
-  on-board-muted: "oklch(0.800 0.0450 262)"
   act: "oklch(0.420 0.1500 262)"
   act-ink: "oklch(0.430 0.1500 262)"
   act-soft: "oklch(0.940 0.0286 262)"
@@ -18,127 +23,126 @@ colors:
   rec-ink: "oklch(0.500 0.1900 27)"
   rec-soft: "oklch(0.950 0.0249 27)"
   on-rec: "oklch(0.990 0.0048 27)"
-  p1: "oklch(0.500 0.0853 200)"
-  p1-ink: "oklch(0.450 0.0769 200)"
-  p1-soft: "oklch(0.945 0.0300 200)"
-  p2: "oklch(0.540 0.1500 45)"
-  p2-ink: "oklch(0.500 0.1400 45)"
-  p2-soft: "oklch(0.950 0.0280 50)"
-  p3: "oklch(0.480 0.1600 305)"
-  p3-ink: "oklch(0.450 0.1600 305)"
-  p3-soft: "oklch(0.950 0.0297 305)"
-  on-part: "oklch(0.990 0.0040 262)"
   ok: "oklch(0.500 0.1200 150)"
   ok-soft: "oklch(0.950 0.0350 150)"
   warn: "oklch(0.520 0.1100 65)"
   warn-soft: "oklch(0.955 0.0400 80)"
-  bg: "oklch(0.972 0.0060 262)"
-  surface: "oklch(0.997 0.0014 262)"
-  sunken: "oklch(0.948 0.0100 262)"
-  ink: "oklch(0.235 0.0350 262)"
-  muted: "oklch(0.470 0.0300 262)"
-  line: "oklch(0.895 0.0130 262)"
-  line-strong: "oklch(0.800 0.0200 262)"
+  p1: "oklch(0.500 0.0853 200)"
+  p1-ink: "oklch(0.450 0.0769 200)"
+  p1-soft: "oklch(0.945 0.0300 200)"
+  p2: "oklch(0.540 0.1500 45)"
+  p3: "oklch(0.480 0.1600 305)"
+  on-part: "oklch(0.990 0.0040 262)"
 typography:
-  board-timer:
+  display:
     fontFamily: "Onest, Segoe UI, system-ui, sans-serif"
-    fontSize: "64px"
-    fontWeight: 700
-    lineHeight: 1
-    fontFeature: "\"tnum\""
-  board-time:
-    fontFamily: "Onest, Segoe UI, system-ui, sans-serif"
-    fontSize: "32px"
-    fontWeight: 700
-    lineHeight: 1
-    letterSpacing: "-0.04em"
-  headline:
-    fontFamily: "Onest, Segoe UI, system-ui, sans-serif"
-    fontSize: "clamp(22px, 5.2vw, 29px)"
+    fontSize: "clamp(24px, 6vw, 30px)"
     fontWeight: 600
     lineHeight: 1.25
     letterSpacing: "-0.015em"
-  title-page:
+  headline:
     fontFamily: "Onest, Segoe UI, system-ui, sans-serif"
     fontSize: "24px"
     fontWeight: 650
     lineHeight: 1.2
     letterSpacing: "-0.012em"
-  title-row:
+  title:
     fontFamily: "Onest, Segoe UI, system-ui, sans-serif"
-    fontSize: "18px"
+    fontSize: "16px"
     fontWeight: 650
-    lineHeight: 1.25
+    lineHeight: 1.2
+    letterSpacing: "-0.012em"
   body:
     fontFamily: "Onest, Segoe UI, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 400
-    lineHeight: 1.5
-    fontFeature: "\"pnum\""
+    lineHeight: 1.45
+    fontFeature: "\"pnum\" 1"
   body-small:
     fontFamily: "Onest, Segoe UI, system-ui, sans-serif"
     fontSize: "14px"
     fontWeight: 400
-    lineHeight: 1.4
-  label-board:
+    lineHeight: 1.45
+  label:
     fontFamily: "Onest, Segoe UI, system-ui, sans-serif"
-    fontSize: "12px"
+    fontSize: "14px"
     fontWeight: 600
-    letterSpacing: "0.04em"
-  label-tab:
+    lineHeight: 1.3
+  timer:
     fontFamily: "Onest, Segoe UI, system-ui, sans-serif"
-    fontSize: "12px"
-    fontWeight: 500
+    fontSize: "56px"
+    fontWeight: 700
+    lineHeight: 1
+    fontFeature: "\"tnum\" 1"
 rounded:
-  cue: "4px"
-  badge: "5px"
-  tag: "6px"
-  sm: "8px"
-  md: "10px"
-  sheet: "14px"
-  round: "50%"
+  xs: "5px"
+  sm: "10px"
+  md: "14px"
+  sheet: "16px"
+  pill: "999px"
 spacing:
   xs: "6px"
-  sm: "8px"
-  md: "12px"
-  row: "14px"
-  lg: "16px"
-  xl: "20px"
-  col: "40px"
+  sm: "10px"
+  md: "14px"
+  lg: "18px"
+  xl: "28px"
   tap: "44px"
 components:
   button-primary:
     backgroundColor: "{colors.act}"
     textColor: "{colors.on-act}"
     rounded: "{rounded.sm}"
-    padding: "9px 15px"
-    height: "44px"
+    padding: "0 18px"
+    height: "48px"
+    typography: "{typography.label}"
+  button-primary-big:
+    backgroundColor: "{colors.act}"
+    textColor: "{colors.on-act}"
+    rounded: "{rounded.sm}"
+    padding: "0 18px"
+    height: "54px"
   button-secondary:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.sm}"
-    padding: "9px 15px"
-    height: "44px"
+    padding: "0 18px"
+    height: "48px"
   button-secondary-hover:
     backgroundColor: "{colors.sunken}"
   button-ghost:
+    backgroundColor: "transparent"
     textColor: "{colors.act-ink}"
     rounded: "{rounded.sm}"
-    padding: "9px 15px"
-  button-on:
-    backgroundColor: "{colors.signal-soft}"
-    textColor: "{colors.signal-ink}"
-    rounded: "{rounded.sm}"
-  button-danger:
+    padding: "0 18px"
+    height: "48px"
+  chip-filter:
     backgroundColor: "{colors.surface}"
-    textColor: "{colors.rec-ink}"
-    rounded: "{rounded.sm}"
-  segment-pressed:
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "0 14px"
+    height: "38px"
+  chip-filter-selected:
     backgroundColor: "{colors.board}"
     textColor: "{colors.on-board}"
-    rounded: "{rounded.sm}"
-    padding: "6px 13px"
-    height: "40px"
+    rounded: "{rounded.pill}"
+  exam-chip:
+    backgroundColor: "{colors.sunken}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "5px 11px"
+    height: "32px"
+  exam-chip-unset:
+    backgroundColor: "{colors.signal-soft}"
+    textColor: "{colors.signal-ink}"
+  part-badge:
+    backgroundColor: "{colors.p1}"
+    textColor: "{colors.on-part}"
+    rounded: "{rounded.xs}"
+    size: "22px"
+  card:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.md}"
+    padding: "16px"
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
@@ -148,226 +152,186 @@ components:
   record-button:
     backgroundColor: "{colors.rec}"
     textColor: "{colors.on-rec}"
-    rounded: "{rounded.round}"
-    size: "64px"
-  record-dock-live:
-    backgroundColor: "{colors.rec-soft}"
-  part-badge-1:
-    backgroundColor: "{colors.p1}"
-    textColor: "{colors.on-part}"
-    rounded: "{rounded.badge}"
-    size: "22px"
-  part-badge-2:
-    backgroundColor: "{colors.p2}"
-    textColor: "{colors.on-part}"
-    rounded: "{rounded.badge}"
-    size: "22px"
-  part-badge-3:
-    backgroundColor: "{colors.p3}"
-    textColor: "{colors.on-part}"
-    rounded: "{rounded.badge}"
-    size: "22px"
-  band-low:
-    backgroundColor: "{colors.warn-soft}"
-    textColor: "{colors.warn}"
-    rounded: "{rounded.tag}"
-    height: "28px"
-  band-mid:
-    backgroundColor: "{colors.sunken}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.tag}"
-    height: "28px"
-  band-high:
-    backgroundColor: "{colors.ok-soft}"
-    textColor: "{colors.ok}"
-    rounded: "{rounded.tag}"
-    height: "28px"
-  departure-row:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    padding: "14px 16px"
-  board-header:
-    backgroundColor: "{colors.board}"
-    textColor: "{colors.on-board-muted}"
-    typography: "{typography.label-board}"
-    padding: "8px 16px"
-  card:
-    backgroundColor: "{colors.surface}"
-    rounded: "{rounded.md}"
-    padding: "16px"
-  toast:
-    backgroundColor: "{colors.board}"
-    textColor: "{colors.on-board}"
-    rounded: "{rounded.sm}"
-    padding: "10px 10px 10px 16px"
+    rounded: "{rounded.pill}"
+    size: "76px"
 ---
 
 # Design System: IELTS Speaking Trainer
 
 ## Overview
 
-**Creative North Star: "The Station Board"**
+**Creative North Star: "The Quiet Test Room"**
 
-The app reads like the departure hall of a Kazakh railway station. A deep board-blue band runs across the top and, on phones, across the bottom; between them is a cool near-white floor of ruled rows. The home screen is a timetable: each practice mode is a departure, its duration sits in the time column, and what is left for it sits in the status column. Exam day is the one fixed departure in the header, counted down in bold numerals.
+A white, calm room with one job in it: say the next answer out loud. The page is plain white and pale blue-grey; colour is spent on meaning, never on decoration. Each strong colour has exactly one job (blue acts, navy marks where you are, amber marks what is next, red means the microphone is on), so a user can read the state of the screen from colour alone. The only constant chrome is a white header carrying the test-date chip, because the date is the reason the app exists.
 
-Density is moderate and practical: rows are tall enough to hit with a thumb (56 to 84px), type is one family at a small number of weights, and colour is spent only where it carries information. Blue means the board and the action. Amber means now or next. Red means the microphone. Teal, orange and violet are the three lines (Parts 1, 2, 3). Everything else is ink on paper.
+Density is moderate and phone-first: one column, 44px touch targets, a bottom tab bar of four (Today / Questions / My answers / Words) with settings behind a gear. On a computer (900px and up) the same components stay the same size; the tab bar becomes a 96px left rail and pages split into a main column and a side column. Nothing grows into a dashboard.
 
-Progress is shown as plain facts and counts, never as rewards: there are no rings, streak flames, trophies, confetti or celebratory colour anywhere in the build.
+Progress is shown as plain measured facts (seconds spoken, pauses, band estimates from the coach) and never as a game. There are no streaks, points, badges, confetti or daily targets. The coach costs a request and runs only when the user presses its button.
 
 **Key Characteristics:**
-- Board-blue header and tab bar framing a cool near-white ground.
-- One typeface, Onest, with bold numerals for every time, duration and countdown.
-- Rows divided by 1px rules inside lightly bordered containers; depth is mostly flat.
-- Amber kept for now/next, red kept for recording, part line colours kept for part identity.
-- Full light and dark themes from the same OKLCH token set, hue 262 for every neutral.
+- White header and surfaces on a cool off-white page (hue 262 throughout the neutrals).
+- One family, Onest variable, for everything, including timers.
+- Colour by job: act blue, board navy, signal amber, record red, three part colours.
+- Part identity carried by 22px numeral badges, not by tinted screens.
+- A length-zone bar per part is the main piece of feedback while speaking.
+- Flat surfaces with 1px hairlines; shadows only on things that float.
+- Full light and dark themes from the same token names.
 
 ## Colors
 
-A cool blue-grey neutral family (all at hue 262) carrying three tightly scoped signal colours and three line colours.
+A cool, low-chroma blue-grey base with five saturated accents, each reserved for one meaning. Every token has a dark-theme value under the same name (see `.impeccable/design.json`); dark mode follows `prefers-color-scheme` and can be forced with `data-theme`.
 
 ### Primary
-- **Station Board Blue** (board): the header bar, the bottom tab bar, the departure board's column header, the toast, pressed segment buttons, and the scrim tint behind sheets and modals. Its lighter step (board-2) is reserved for board-on-board layering.
-- **Departure Blue** (act): the action colour. Primary buttons, caret, focus ring, links (act-ink), progress fills, the "Change" link in filters. act-soft is its quiet tint.
+- **Action Blue** (`act`): fill of primary buttons, the switch "on" state, the focus outline, the input focus ring, playback progress and the live length bar. `act-ink` is the text version for links, ghost buttons and text buttons. `act-soft` is the pale wash behind the current Words section, the active gear and the numbered phrase dots in "Try to use".
 
 ### Secondary
-- **Signal Amber** (signal): the now/next light. Days-left numeral in the header, the selected-tab underline, the current stop on the mock-test line, and "phrases due" when phrases are due. signal-ink is its text-safe step on light ground; signal-soft backs "on" toggles, the phrase challenge box and text selection.
-- **Record Red** (rec): the record control, always. rec-soft and rec-ink appear on the live dock, the live inline recorder, pause marks in transcripts and destructive button text.
+- **Board Navy** (`board`, text `on-board`): the "you are here / selected" marker. It draws the 3px active-tab bar (top edge on phone, left edge on the rail) and the active tab label, fills selected filter chips and segmented pills, and colours current-item text in the Words list. It is also the toast background and the tint of the sheet/modal scrim.
 
 ### Tertiary
-- **Line Teal** (p1), **Line Orange** (p2), **Line Violet** (p3): IELTS Parts 1, 2 and 3. Each has an -ink step for text and a -soft step for tints; on-part is the numeral colour on a filled badge.
-- **Confirm Green** (ok) and **Caution Ochre** (warn): band estimates (high / low), coverage and timing bars, flagged-filler marks and status tags, each with a -soft tint.
+- **Signal Amber** (`signal`, `signal-ink`, `signal-soft`, text `on-signal`): what is next or still owed. The "next" step mark in Today's session, the current segment of the session progress bar, the unset "Set test date" chip, the Part 2 preparation countdown band, the toast's action text and text selection.
+- **Record Red** (`rec`, `rec-ink`, `rec-soft`, `on-rec`): the microphone. The round record button, the docked bar while recording (soft red fill, 2px red top edge), the inset red line under the session header while recording, and the input level meter.
+
+### Part colours
+- **Part 1 Teal** (`p1`), **Part 2 Orange** (`p2`), **Part 3 Violet** (`p3`), all with `on-part` numerals. Used as the fill of 22px numeral badges and pills that label a question's part. `p1` also colours completed segments of the session bar, the "Start here" line and topic tags (`p1-soft` / `p1-ink`).
+
+### Feedback
+- **Measured Green** (`ok`, `ok-soft`): inside the target length, completed steps, high band estimates, improvements in the second-try comparison.
+- **Short Brown-Amber** (`warn`, `warn-soft`): too short, flagged pauses and filler marks in the transcript, low band estimates. This is a darker, browner amber than Signal and is never used for "next".
 
 ### Neutral
-- **Platform Floor** (bg): page ground; also the sheet panel ground.
-- **Timetable Paper** (surface): cards, lists, the board body, inputs, secondary buttons, the idle dock.
-- **Recess** (sunken): row hover, idle inline recorder, transcript and ideas wells, mid-band chips.
-- **Board Ink** (ink): body text and numerals. **Faded Ink** (muted): secondary lines, captions, units such as "min".
-- **Rule** (line): 1px dividers between rows and container edges. **Strong Rule** (line-strong): control borders, empty-count numerals, the row arrow, the mock-test track.
-
-Dark theme swaps every token for its dark step (see the sidecar); roles do not change.
-
-### App icon and install colours
-Where OKLCH cannot be used, the identity carries hex stand-ins for three tokens: board as #162c55 (icon ground, manifest and meta theme_color), bg as #f3f6fa (the microphone mark, manifest background_color) and signal as #fcbb39 (the dot on the icon). The icon is a rounded board-blue square (rx 112 on 512) with a paper-white microphone and one amber dot in the top right corner: the board, the record control and the now light.
+- **Cool Paper** (`bg`): page background.
+- **White Card** (`surface`): header, tab bar, cards, lists, inputs, dock.
+- **Sunken Grey** (`sunken`): transcript and idea blocks, fact tiles, the exam chip at rest, list hover, segmented-switch track.
+- **Ink** (`ink`) and **Muted** (`muted`): text and secondary text.
+- **Hairline** (`line`) and **Strong Hairline** (`line-strong`): dividers and card borders; button, input and chip borders, chevrons.
 
 ### Named Rules
-**The Now-and-Next Rule.** Amber marks only what is current or due: days left, the selected tab, the current mock stop, phrases due today. A count of zero or a past item is never amber.
+**The One Job Per Colour Rule.** Blue acts, navy marks the current place or selection, amber marks what is next or unset, red means recording. Never borrow one colour for another job; a primary button is never navy, a selected chip is never blue.
 
-**The Live Red Rule.** The record button is red at rest by convention. The 3px red line under the header and the red-tinted dock appear only while a recording is live, and go away when it stops.
+**The Red Means Live Rule.** Record red appears only on the record control, the live-recording dock and header line, and the level meter. Destructive text buttons use `rec-ink` as text only, with no red fill.
 
-**The Line Colour Rule.** Teal, orange and violet identify Parts 1, 2 and 3 and nothing else: badges, mock-test stops, coverage meters.
+**The Two Ambers Rule.** `signal` (bright, yellow-amber) is "next / due / unset". `warn` (dark, brown-amber) is "too short / check this". They do not swap.
 
 ## Typography
 
-**Display Font:** Onest (with Segoe UI, system-ui, sans-serif)
-**Body Font:** Onest (same stack)
+**Display Font:** Onest variable (embedded), falling back to Segoe UI, system-ui, sans-serif
+**Body Font:** Onest, same stack
+**Label/Mono Font:** none distinct; every role uses Onest
 
-**Character:** One variable family does everything. Board numerals come from weight (700) and size, not from a second face. Headings sit at 650 with slight negative tracking.
+**Character:** A single clear grotesque with Cyrillic coverage, set in many fine weight steps (400, 500, 550, 600, 650, 700) instead of size jumps. Headings are tight (-0.012em to -0.015em) and balanced; body is 16px at 1.45.
 
 ### Hierarchy
-- **Board timer** (700, 64px, line-height 1, tabular figures): the large mock-test countdown.
-- **Board time** (700, 32px, -0.04em, proportional figures): the time column of the departure board (28px under 420px). Related bold numerals: status count 24px, record time 30px, dock time 28px, prep timer 26px, header date and days left 19px (18px on small phones).
-- **Headline** (600, clamp 22 to 29px, 1.25, max 30ch, balanced): the question being answered. The vocabulary review prompt uses a larger step (650, clamp 26 to 34px).
-- **Page title** (650, 24px, 1.2): page heads such as "Weak spots".
-- **Row title** (650, 18px): departure names (17px under 420px). Section heads are 15 to 16px at 650.
-- **Body** (400, 16px, 1.5): running text, list rows, inputs. Coach text and ideas cap at 70ch, cue cards at 62ch.
-- **Small** (400 to 500, 14px): row subtitles, meta lines, page meta.
-- **Board label** (600, 12px, 0.04em, uppercase): the departure board's column header only (TIME / PRACTICE / STATUS).
-- **Tab label** (500, 12px; 650 when current): bottom tab captions; 15px inline in the desktop header.
+- **Display** (600, clamp(24px, 6vw, 30px), 1.25): the question being answered. 21px inside the Part 2 cue card, 18px in compact contexts. The Words review prompt uses clamp(26px, 7vw, 34px) at 650.
+- **Headline** (650, 24px, 1.2): page titles; 26px on Today, 22px for the "Start here" card title, 20px for "Today's session".
+- **Title** (650, 16px, 1.2): section and card headings (`h2`), 15px for `h3`.
+- **Body** (400, 16px, 1.45): running text. Transcripts at 15px / 1.65.
+- **Body small** (400, 14px; also 13.5px and 12.5px): sub-lines in lists, hints, zone labels, fact labels.
+- **Label** (600, 14px): buttons (16px at 600 in the default button, 17px in big), chips, section links, step titles.
+- **Timer** (700, 56px, 1): the speaking timer; 30px in the Part 2 prep band, 26px in the dock, 28px in older runner views.
 
 ### Named Rules
-**The Bold Numeral Rule.** Times, durations, counts and countdowns are Onest 700. Digits are proportional everywhere except timers that tick (record, dock, prep, mock clock), which use tabular figures so they do not jitter.
+**The Proportional Digits Rule.** Body text sets `proportional-nums`. Only ticking timers and counters (`tabular-nums`) get fixed-width digits, so they do not jitter while counting.
 
-**The Station Header Rule.** Uppercase tracked text is the board's column header and nowhere else.
+**The Weight Not Size Rule.** Hierarchy comes from weight steps between 500 and 700 and a short size range (12.5px to 30px); the only large type is a running timer.
 
 ## Layout
 
-A single column on phones, up to 760px wide for practice and sheet content and 1120px for the home and takes pages. Page padding is 16px at the sides, 20px top (28px at 900px and up), with bottom padding that clears the fixed tab bar (60px) and, when present, the record dock (88px).
-
-At 900px and wider the tab bar moves into the header as inline links and the home page becomes a 7:5 two-column grid with a 40px gap: departure board and coverage on the left, last takes on the right. On phones the order is board, last takes, coverage.
-
-Spacing steps observed in use: 6, 8, 12, 14, 16, 20 and 40px. 14px is the vertical rhythm of stacked blocks; 26px separates sections (section heads). Every control is at least 44px tall; record buttons are 64 to 68px.
-
-The departure row is a four-column grid: time (64px, 54px on small phones), name and description, status (right-aligned), arrow (18px).
+- **Phone (below 900px):** one column, max 720px wide, 18px side padding. Sticky white header (56px) with brand, test-date chip, sync-status dot and gear. Fixed bottom tab bar (64px) with four equal tabs, icon over 12px label. Below 600px the sync chip collapses to its dot.
+- **Computer (900px and up):** a two-column grid, 96px left rail plus content up to 1184px with 28px/32px padding. The tab bar becomes the rail with the same icons and labels stacked vertically. Pages split into a main column (flex-basis 440-460px, up to 640px on Today) and a side column (300-440px) with 28px gaps; they wrap back to one column when space runs out.
+- **Answering session:** the tabs hide; a session header (close button, title, position) and a 4px segmented progress bar replace them. Content widens to 1040px. Controls live in a fixed bottom dock (min 96px) with a three-slot grid: left action, record button centred, right action. On a computer the two-button dock right-aligns its buttons at min 200px each.
+- **Rhythm:** gaps of 6, 8, 10, 12, 14, 18, 22 and 28px. Stacks default to 14px, rows to 10px, page sections to 18px. List rows are at least 56px tall with 12px x 14px padding.
+- **Touch:** every interactive element is at least 44px (`tap`) on its short side, or 40px for in-row chips and segmented buttons.
 
 ## Elevation & Depth
 
-Mostly flat. Containers separate from the ground by a 1px rule and a one-step lighter fill (bg to surface); rows inside them are divided by 1px rules; hover drops a row into sunken. Shadows exist only on things that float above the page or on the record control.
+Flat by default. Depth comes from tonal layering (Cool Paper page, White Card surfaces, Sunken Grey insets) and 1px hairlines. Shadows exist only for things that float above the page or must read as live.
 
 ### Shadow Vocabulary
-- **Lift** (`0 1px 2px color-mix(in oklab, var(--ink) 10%, transparent), 0 6px 20px color-mix(in oklab, var(--ink) 8%, transparent)`): modal box and toast.
-- **Sheet** (`0 -10px 34px color-mix(in oklab, var(--ink) 22%, transparent)`): the bottom sheet panel.
-- **Dock** (`0 -6px 18px color-mix(in oklab, var(--ink) 7%, transparent)`): the record dock above the tab bar.
-- **Record glow** (`0 4px 14px color-mix(in oklab, var(--rec) 30%, transparent)`): the record button; while live it pulses out to a 9px ring at 20%.
+- **Lift** (`box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 10%, transparent), 0 8px 24px color-mix(in oklab, var(--ink) 10%, transparent)`): bottom sheet, modal box, toast.
+- **Record glow** (`box-shadow: 0 4px 14px color-mix(in oklab, var(--rec) 32%, transparent)`): the record button at rest; while recording it pulses a 10px ring at 18% red every 1.4s.
+- **Switch thumb** (`box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 14%, transparent)`): the selected half of a two-way switch.
+- **Focus ring** (`box-shadow: 0 0 0 3px color-mix(in oklab, var(--act) 22%, transparent)`): focused inputs; other controls use a 2px solid `act` outline at 2px offset.
 
 ### Named Rules
-**The Ruled Rows Rule.** Rows are divided by 1px rules, not by gaps between floating cards. A new surface earns a shadow only if it sits above the page.
+**The Only Floaters Cast Shadows Rule.** Cards, lists and buttons never carry a shadow. If it does not sit above the page (sheet, modal, toast, record button), it is flat.
 
 ## Shapes
 
-Modest, consistent rounding. Containers 10px; controls and inputs 8px; chips, tags and band chips 6px; part badges 5px (square numerals); the Part 2 cue card 4px with a 1.5px ink border, like a printed exam card. The sheet has 14px top corners only. Round shapes are kept for the record buttons, play buttons, status dots and mock-test stops. On the mock-test line Part 2 stops are rounded squares, Parts 1 and 3 are circles; the current stop is a larger amber dot with a board-blue ring and a soft amber halo.
+Soft, consistent rounding: 14px on cards, lists and the modal; 10px on buttons, inputs, icon buttons, notes-in-cards and fact tiles; 12px on notes; 16px top corners on the bottom sheet; full pills on filter chips, segmented pills and the exam chip; circles for the record button, play buttons and step marks. Small labels use 5-6px: part badges (5px), band scores and topic tags (6px). The Part 2 cue card is the one deliberate exception: a 1.5px ink border with a tight 6px radius, so it reads like the printed card the examiner hands over.
+
+Borders are 1px `line` on containers and 1px `line-strong` on controls. Selected states replace the border colour with the fill colour.
 
 ## Components
 
 ### Buttons
-- **Shape:** gently rounded (8px), min height 44px, 15px semibold label, optional 18px line icon.
-- **Primary:** Departure Blue fill, near-white text, padding 9px 15px. Hover mixes 12% ink in.
-- **Secondary:** paper fill, strong-rule border, ink text; hover to sunken; active nudges down 1px.
-- **Ghost:** no fill or border, act-ink text. **Danger:** secondary with rec-ink text. **On:** signal-soft fill, amber border, signal-ink text (starred, active toggles). **Big:** 52px tall, 17px.
-- **Focus:** 2px act outline, 2px offset; inside the header and tab bar the outline is amber.
-- **Link buttons:** underlined act-ink text, 1px underline 3px below.
+Solid, roomy and plainly labelled, with an icon trailing or leading at 18px.
+- **Shape:** gently rounded (10px), min height 48px, 0 18px padding, 16px / 600 label.
+- **Primary:** Action Blue fill and border, `on-act` text. Hover mixes 12% ink into the blue. Used once per view for the next step ("Start Part 1", "Continue with Part 2").
+- **Big / wide:** 54px tall at 17px for the main call to action on Today; full width on phone.
+- **Secondary:** White Card fill, `line-strong` border, ink text; hover to Sunken Grey.
+- **Ghost / text:** transparent with `act-ink` text; the text-button variant is underlined at 1px with 3px offset.
+- **Small:** 40px tall, 12px padding, 14px text.
+- **Toggled on:** soft amber fill, amber-mixed border, `signal-ink` text.
+- **Pressed / disabled:** 1px downward nudge on press; 45% opacity when disabled.
+- **Icon button:** 44px square, 10px radius, `line-strong` border.
 
-### Segmented choices
-- Row of 40px buttons (paper, strong-rule border). Pressed state is a board-blue fill with on-board text.
+### Chips
+- **Filter chips and segmented pills:** 38-40px tall pills, 1px `line-strong` border, White Card fill, 14px / 500 text. Selected: Board Navy fill and border, `on-board` text at 600.
+- **Two-way switch:** Sunken Grey track (10px radius, 3px padding); selected half becomes White Card with ink text and the switch-thumb shadow.
+- **Test-date chip (header):** Sunken Grey pill, calendar icon, "Test Sat 12 Dec · 26 days" in 14px / 600. When no date is set it turns Signal Amber soft with `signal-ink` text and reads "Set test date".
+- **Status chip:** 13px muted text after an 8px dot; green when connected/synced (`ok`), amber when pending (`signal`), grey otherwise.
 
-### Chips, tags and bands
-- **Status chip:** dot plus text; in the header the dot is green (synced) or amber (attention). In content it gets a 1px rule border, 6px corners.
-- **Band chip:** bold numeral on a 28px chip: ochre tint below 6, neutral 6 to 6.5, green tint 7 and above.
-- **Part badge:** 22px rounded square in the part line colour with a bold white numeral, then "Part N" in muted text.
+### Part badge (signature)
+A 22px square with a 5px radius, filled with the part's colour and carrying the part numeral (1, 2, 3) in 13px / 700 `on-part`. It sits before every question title, step title and answer row. The pill variant pairs the badge with a 14px / 600 muted label.
 
 ### Cards / Containers
-- **Corner Style:** 10px. **Background:** surface. **Border:** 1px line. **Shadow:** none. **Padding:** 16px (question card 18px 16px, 22px 24px from 600px).
-- Lists are a single bordered container of rows (min 56px, padding 12px 16px) with rules between them.
+- **Corner Style:** 14px.
+- **Background:** White Card on Cool Paper.
+- **Shadow Strategy:** none (see Elevation).
+- **Border:** 1px `line`.
+- **Internal Padding:** 16px; 18px on the Today start card.
+- **Lists:** a card with no padding whose rows are separated by 1px `line` top borders, at least 56px tall, with a bold 600 title, a 14px muted sub-line and a `line-strong` chevron. Rows tint to Sunken Grey on hover.
+- **Notes:** 12px radius, 10px x 14px padding, 15px text, in four tones: `ok`, `warn`, `amber` (signal) and `plain` (sunken).
 
 ### Inputs / Fields
-- **Style:** paper fill, 1px strong-rule border, 8px corners, 10px 12px padding, 16px text, muted placeholder.
-- **Focus:** border turns act plus a 3px act ring at 22%.
-- Filters collapse to one ruled line with a summary and a "Change" link.
+- **Style:** White Card fill, 1px `line-strong` border, 10px radius, 10px x 12px padding, 44px minimum height, 16px text (prevents zoom on iOS).
+- **Focus:** border turns Action Blue with a 3px 22% blue ring.
+- **Search:** 20px muted magnifier inset 12px from the left, 40px left padding.
+- **Settings switch:** 46 x 28px track in `line-strong`, white 22px knob; on state fills Action Blue.
 
 ### Navigation
-- **Phone:** fixed bottom bar in board blue, four equal tabs (22px icon over 12px label), on-board-muted at rest; current tab is on-board, 650, with a 3px amber bar along the top edge.
-- **Desktop (900px+):** the same tabs sit inline in the header after the name; the amber bar moves to the bottom edge.
-- **Header:** board blue, 56px; name on the left (second word muted), exam date and amber days left on the right, sync chip last. While recording, a 3px red line runs along its bottom.
+- **Header:** white, 56px, 1px bottom hairline; brand in 17px / 700 ink; test-date chip; status dot; 44px gear in muted, which turns navy on `act-soft` when Settings is open.
+- **Tabs (phone):** four equal columns, 22px icons over 12px / 500 muted labels. Active: navy text at 700 with a 3px navy bar along the top edge (inset 30% each side).
+- **Rail (computer):** same tabs stacked in a 96px column with a right hairline; the active bar moves to the left edge (3px, inset 14px top and bottom).
+- **Session header:** replaces the tab bar during practice; close button, title with part badge, muted "2 of 5" position, then the segmented progress bar (done segments in `p1`, the current one in `signal`, rest in `line`).
 
-### Departure Board (signature)
-A bordered container whose top strip is board blue with the uppercase column header. Each mode is a row: bold time numeral with "min" beneath, mode name and one-line description, right-aligned bold status count with its caption, and a strong-rule arrow that darkens and shifts 2px on hover. A zero count is drawn in strong-rule grey; a due count is amber (signal-ink).
+### Length zone bar (signature)
+A 12px rounded bar split into three zones sized from each part's limits: too short (`warn-soft`), target (`ok-soft`), over (`sunken`). A solid Action Blue fill grows across it while the user speaks (0.25s linear). Targets: Part 1 20-30 s (bar to 45 s), Part 2 90-120 s (bar to 120 s), Part 3 45-60 s (bar to 90 s). Labels under it are 12.5px muted with the target range in green 600, and a 15px / 600 state line reads short (warn), good (ok) or long (muted).
 
-### Mock-test Line (signature)
-A 2px strong-rule track with one stop per question in the part's line colour: hollow when ahead, filled when done, Part 2 as a square, the current stop amber.
+### Record dock (signature)
+Fixed to the bottom in a session. At rest: White Card with a top hairline, a 76px red record button with the glow shadow, flanked by left and right actions. While recording: the dock fills `rec-soft` with a 2px `rec` top edge, the button shows a 26px square stop mark and pulses, its label turns `rec-ink`, and the session header gains a 3px red inset line.
 
-### Record Control and Dock
-- **Record button:** 64px (dock) or 68px (inline) red circle, white mic or stop glyph, record glow. Pulses while live.
-- **Dock:** fixed above the tab bar (bottom of viewport on desktop), paper with a top rule and a soft upward shadow; three columns: back/end, record plus timer, next. While live it turns rec-soft with a red top rule. The time bar fills green and turns ochre past the target.
-
-### Sheet, Modal, Toast
-- **Sheet:** slides up (320ms, ease-out-expo) over a 55% board-blue scrim; panel on bg with a paper header row.
-- **Modal:** centred paper box, 10px corners, lift shadow, max 400px.
-- **Toast:** board-blue bar (8px corners), on-board text, amber action text.
+### Coach and second-try views
+Facts appear as three Sunken Grey tiles (10px radius) with a 12.5px label, an 18px / 700 value and a sub-line, tinted ok or warn when the number is in or out of range. The transcript is a Sunken Grey block at 15px / 1.65 with pauses and fillers marked in `warn-soft`. The second-try comparison is a three-column table (measure, first, second) with improvements in green 700. The coach request is an ordinary secondary button inside a card, with the remaining daily checks stated in muted text beside it.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** set every time, duration and countdown in Onest 700, tabular only when it ticks.
-- **Do** keep amber for now/next: days left, current tab, current mock stop, phrases due.
-- **Do** keep the record button red at rest and switch the header line and dock to red only while live.
-- **Do** mark Parts 1, 2, 3 with teal, orange and violet square numeral badges and matching mock stops.
-- **Do** divide rows with 1px rules inside one bordered container; keep controls at 44px or taller.
-- **Do** take every colour from the OKLCH tokens so light and dark themes both hold.
+- **Do** keep the header white and put the test-date chip in it on every main screen; switch it to the amber "Set test date" state when the date is missing.
+- **Do** use Action Blue for the single primary button of a view, and Board Navy only for the active tab marker, the selected chip or pill, and the current item.
+- **Do** label every question with its 22px part badge in teal (1), orange (2) or violet (3).
+- **Do** show the length zone bar for the question's part while recording, with the ranges Part 1 20-30 s, Part 2 90-120 s, Part 3 45-60 s.
+- **Do** report progress as measured facts (seconds, pauses, band estimates) in plain sentences.
+- **Do** use `tabular-nums` on ticking timers and counters only.
+- **Do** keep touch targets at 44px and reuse the same components on phone and computer; only the shell (tabs to 96px rail) and column count change.
+- **Do** honour `prefers-reduced-motion`: the build turns off all animation and transitions under it.
 
 ### Don't:
-- **Don't** add game mechanics or their visuals: streaks, badges, goal rings, confetti, celebratory colour.
-- **Don't** use amber for decoration, emphasis, warnings or zero counts.
-- **Don't** use red anywhere but recording, pause marks and destructive actions.
-- **Don't** reuse the part line colours for anything other than part identity.
-- **Don't** add uppercase tracked labels outside the departure board's column header.
-- **Don't** put shadows on cards or rows; shadows belong to the sheet, modal, toast, dock and record button.
-- **Don't** add a second typeface.
+- **Don't** use red for anything except the record control, the live recording state and the level meter.
+- **Don't** use Signal Amber for warnings or Warn amber for "next"; the two ambers have separate jobs.
+- **Don't** add game mechanics: no streaks, points, badges, confetti, celebratory copy or daily targets.
+- **Don't** run the coach automatically; it runs only when the user presses "Check with coach".
+- **Don't** put shadows on cards, lists or buttons.
+- **Don't** tint whole screens or cards with a part colour; part colour lives on the badge.
+- **Don't** add a second typeface; timers and labels are Onest too.
+- **Don't** add small uppercase labels or kickers above headings; the "Start here" line on the first-run Today card is a known exception in the build, not a pattern.

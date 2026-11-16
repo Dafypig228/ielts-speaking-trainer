@@ -1,869 +1,756 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-16T07:15:39+00:00",
+  "generatedAt": "2026-11-16T10:29:54+00:00",
   "title": "Design System: IELTS Speaking Trainer",
   "extensions": {
     "colorMeta": {
-      "board": {
-        "role": "primary",
-        "displayName": "Station Board Blue",
-        "canonical": "oklch(0.300 0.0800 262)",
-        "dark": "oklch(0.255 0.0700 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0218 262)",
-          "oklch(0.26 0.0378 262)",
-          "oklch(0.37 0.0538 262)",
-          "oklch(0.48 0.0698 262)",
-          "oklch(0.59 0.0742 262)",
-          "oklch(0.70 0.0582 262)",
-          "oklch(0.82 0.0407 262)",
-          "oklch(0.95 0.0218 262)"
-        ],
-        "hexStandIn": "#162c55"
-      },
-      "board-2": {
-        "role": "primary",
-        "displayName": "Station Board Blue, raised",
-        "canonical": "oklch(0.370 0.0850 262)",
-        "dark": "oklch(0.320 0.0800 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0232 262)",
-          "oklch(0.26 0.0402 262)",
-          "oklch(0.37 0.0572 262)",
-          "oklch(0.48 0.0742 262)",
-          "oklch(0.59 0.0788 262)",
-          "oklch(0.70 0.0618 262)",
-          "oklch(0.82 0.0433 262)",
-          "oklch(0.95 0.0232 262)"
-        ]
-      },
-      "on-board": {
-        "role": "primary",
-        "displayName": "On Board",
-        "canonical": "oklch(0.975 0.0080 262)",
-        "dark": "oklch(0.960 0.0100 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0022 262)",
-          "oklch(0.26 0.0038 262)",
-          "oklch(0.37 0.0054 262)",
-          "oklch(0.48 0.0070 262)",
-          "oklch(0.59 0.0074 262)",
-          "oklch(0.70 0.0058 262)",
-          "oklch(0.82 0.0041 262)",
-          "oklch(0.95 0.0022 262)"
-        ]
-      },
-      "on-board-muted": {
-        "role": "primary",
-        "displayName": "On Board, muted",
-        "canonical": "oklch(0.800 0.0450 262)",
-        "dark": "oklch(0.800 0.0400 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0123 262)",
-          "oklch(0.26 0.0213 262)",
-          "oklch(0.37 0.0303 262)",
-          "oklch(0.48 0.0393 262)",
-          "oklch(0.59 0.0417 262)",
-          "oklch(0.70 0.0327 262)",
-          "oklch(0.82 0.0229 262)",
-          "oklch(0.95 0.0123 262)"
-        ]
-      },
-      "act": {
-        "role": "primary",
-        "displayName": "Departure Blue",
-        "canonical": "oklch(0.420 0.1500 262)",
-        "dark": "oklch(0.760 0.1100 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0409 262)",
-          "oklch(0.26 0.0709 262)",
-          "oklch(0.37 0.1009 262)",
-          "oklch(0.48 0.1309 262)",
-          "oklch(0.59 0.1391 262)",
-          "oklch(0.70 0.1091 262)",
-          "oklch(0.82 0.0764 262)",
-          "oklch(0.95 0.0409 262)"
-        ]
-      },
-      "act-ink": {
-        "role": "primary",
-        "displayName": "Departure Blue ink",
-        "canonical": "oklch(0.430 0.1500 262)",
-        "dark": "oklch(0.800 0.1000 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0409 262)",
-          "oklch(0.26 0.0709 262)",
-          "oklch(0.37 0.1009 262)",
-          "oklch(0.48 0.1309 262)",
-          "oklch(0.59 0.1391 262)",
-          "oklch(0.70 0.1091 262)",
-          "oklch(0.82 0.0764 262)",
-          "oklch(0.95 0.0409 262)"
-        ]
-      },
-      "act-soft": {
-        "role": "primary",
-        "displayName": "Departure Blue tint",
-        "canonical": "oklch(0.940 0.0286 262)",
-        "dark": "oklch(0.290 0.0500 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0078 262)",
-          "oklch(0.26 0.0135 262)",
-          "oklch(0.37 0.0192 262)",
-          "oklch(0.48 0.0250 262)",
-          "oklch(0.59 0.0265 262)",
-          "oklch(0.70 0.0208 262)",
-          "oklch(0.82 0.0146 262)",
-          "oklch(0.95 0.0078 262)"
-        ]
-      },
-      "on-act": {
-        "role": "primary",
-        "displayName": "On Departure Blue",
-        "canonical": "oklch(0.985 0.0050 262)",
-        "dark": "oklch(0.170 0.0300 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0014 262)",
-          "oklch(0.26 0.0024 262)",
-          "oklch(0.37 0.0034 262)",
-          "oklch(0.48 0.0044 262)",
-          "oklch(0.59 0.0046 262)",
-          "oklch(0.70 0.0036 262)",
-          "oklch(0.82 0.0025 262)",
-          "oklch(0.95 0.0014 262)"
-        ]
-      },
-      "signal": {
-        "role": "secondary",
-        "displayName": "Signal Amber",
-        "canonical": "oklch(0.830 0.1550 80)",
-        "dark": "oklch(0.840 0.1500 82)",
-        "tonalRamp": [
-          "oklch(0.15 0.0423 80)",
-          "oklch(0.26 0.0733 80)",
-          "oklch(0.37 0.1043 80)",
-          "oklch(0.48 0.1353 80)",
-          "oklch(0.59 0.1437 80)",
-          "oklch(0.70 0.1127 80)",
-          "oklch(0.82 0.0789 80)",
-          "oklch(0.95 0.0423 80)"
-        ],
-        "hexStandIn": "#fcbb39"
-      },
-      "signal-ink": {
-        "role": "secondary",
-        "displayName": "Signal Amber ink",
-        "canonical": "oklch(0.500 0.1100 68)",
-        "dark": "oklch(0.860 0.1300 84)",
-        "tonalRamp": [
-          "oklch(0.15 0.0300 68)",
-          "oklch(0.26 0.0520 68)",
-          "oklch(0.37 0.0740 68)",
-          "oklch(0.48 0.0960 68)",
-          "oklch(0.59 0.1020 68)",
-          "oklch(0.70 0.0800 68)",
-          "oklch(0.82 0.0560 68)",
-          "oklch(0.95 0.0300 68)"
-        ]
-      },
-      "signal-soft": {
-        "role": "secondary",
-        "displayName": "Signal Amber tint",
-        "canonical": "oklch(0.955 0.0450 88)",
-        "dark": "oklch(0.300 0.0600 80)",
-        "tonalRamp": [
-          "oklch(0.15 0.0123 88)",
-          "oklch(0.26 0.0213 88)",
-          "oklch(0.37 0.0303 88)",
-          "oklch(0.48 0.0393 88)",
-          "oklch(0.59 0.0417 88)",
-          "oklch(0.70 0.0327 88)",
-          "oklch(0.82 0.0229 88)",
-          "oklch(0.95 0.0123 88)"
-        ]
-      },
-      "on-signal": {
-        "role": "secondary",
-        "displayName": "On Signal Amber",
-        "canonical": "oklch(0.235 0.0350 262)",
-        "dark": "oklch(0.200 0.0300 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0095 262)",
-          "oklch(0.26 0.0165 262)",
-          "oklch(0.37 0.0235 262)",
-          "oklch(0.48 0.0305 262)",
-          "oklch(0.59 0.0325 262)",
-          "oklch(0.70 0.0255 262)",
-          "oklch(0.82 0.0178 262)",
-          "oklch(0.95 0.0095 262)"
-        ]
-      },
-      "rec": {
-        "role": "secondary",
-        "displayName": "Record Red",
-        "canonical": "oklch(0.555 0.2000 27)",
-        "dark": "oklch(0.700 0.1700 27)",
-        "tonalRamp": [
-          "oklch(0.15 0.0545 27)",
-          "oklch(0.26 0.0945 27)",
-          "oklch(0.37 0.1345 27)",
-          "oklch(0.48 0.1745 27)",
-          "oklch(0.59 0.1855 27)",
-          "oklch(0.70 0.1455 27)",
-          "oklch(0.82 0.1018 27)",
-          "oklch(0.95 0.0545 27)"
-        ]
-      },
-      "rec-ink": {
-        "role": "secondary",
-        "displayName": "Record Red ink",
-        "canonical": "oklch(0.500 0.1900 27)",
-        "dark": "oklch(0.780 0.1286 27)",
-        "tonalRamp": [
-          "oklch(0.15 0.0518 27)",
-          "oklch(0.26 0.0898 27)",
-          "oklch(0.37 0.1278 27)",
-          "oklch(0.48 0.1658 27)",
-          "oklch(0.59 0.1762 27)",
-          "oklch(0.70 0.1382 27)",
-          "oklch(0.82 0.0967 27)",
-          "oklch(0.95 0.0518 27)"
-        ]
-      },
-      "rec-soft": {
-        "role": "secondary",
-        "displayName": "Record Red tint",
-        "canonical": "oklch(0.950 0.0249 27)",
-        "dark": "oklch(0.300 0.0700 27)",
-        "tonalRamp": [
-          "oklch(0.15 0.0068 27)",
-          "oklch(0.26 0.0118 27)",
-          "oklch(0.37 0.0168 27)",
-          "oklch(0.48 0.0217 27)",
-          "oklch(0.59 0.0231 27)",
-          "oklch(0.70 0.0181 27)",
-          "oklch(0.82 0.0127 27)",
-          "oklch(0.95 0.0068 27)"
-        ]
-      },
-      "on-rec": {
-        "role": "secondary",
-        "displayName": "On Record Red",
-        "canonical": "oklch(0.990 0.0048 27)",
-        "dark": "oklch(0.160 0.0300 27)",
-        "tonalRamp": [
-          "oklch(0.15 0.0013 27)",
-          "oklch(0.26 0.0023 27)",
-          "oklch(0.37 0.0032 27)",
-          "oklch(0.48 0.0042 27)",
-          "oklch(0.59 0.0045 27)",
-          "oklch(0.70 0.0035 27)",
-          "oklch(0.82 0.0024 27)",
-          "oklch(0.95 0.0013 27)"
-        ]
-      },
-      "p1": {
-        "role": "tertiary",
-        "displayName": "Line Teal",
-        "canonical": "oklch(0.500 0.0853 200)",
-        "dark": "oklch(0.780 0.1000 200)",
-        "tonalRamp": [
-          "oklch(0.15 0.0233 200)",
-          "oklch(0.26 0.0403 200)",
-          "oklch(0.37 0.0574 200)",
-          "oklch(0.48 0.0744 200)",
-          "oklch(0.59 0.0791 200)",
-          "oklch(0.70 0.0620 200)",
-          "oklch(0.82 0.0434 200)",
-          "oklch(0.95 0.0233 200)"
-        ]
-      },
-      "p1-ink": {
-        "role": "tertiary",
-        "displayName": "Line Teal ink",
-        "canonical": "oklch(0.450 0.0769 200)",
-        "dark": "oklch(0.820 0.0900 200)",
-        "tonalRamp": [
-          "oklch(0.15 0.0210 200)",
-          "oklch(0.26 0.0364 200)",
-          "oklch(0.37 0.0517 200)",
-          "oklch(0.48 0.0671 200)",
-          "oklch(0.59 0.0713 200)",
-          "oklch(0.70 0.0559 200)",
-          "oklch(0.82 0.0391 200)",
-          "oklch(0.95 0.0210 200)"
-        ]
-      },
-      "p1-soft": {
-        "role": "tertiary",
-        "displayName": "Line Teal tint",
-        "canonical": "oklch(0.945 0.0300 200)",
-        "dark": "oklch(0.290 0.0400 200)",
-        "tonalRamp": [
-          "oklch(0.15 0.0082 200)",
-          "oklch(0.26 0.0142 200)",
-          "oklch(0.37 0.0202 200)",
-          "oklch(0.48 0.0262 200)",
-          "oklch(0.59 0.0278 200)",
-          "oklch(0.70 0.0218 200)",
-          "oklch(0.82 0.0153 200)",
-          "oklch(0.95 0.0082 200)"
-        ]
-      },
-      "p2": {
-        "role": "tertiary",
-        "displayName": "Line Orange",
-        "canonical": "oklch(0.540 0.1500 45)",
-        "dark": "oklch(0.780 0.1300 55)",
-        "tonalRamp": [
-          "oklch(0.15 0.0409 45)",
-          "oklch(0.26 0.0709 45)",
-          "oklch(0.37 0.1009 45)",
-          "oklch(0.48 0.1309 45)",
-          "oklch(0.59 0.1391 45)",
-          "oklch(0.70 0.1091 45)",
-          "oklch(0.82 0.0764 45)",
-          "oklch(0.95 0.0409 45)"
-        ]
-      },
-      "p2-ink": {
-        "role": "tertiary",
-        "displayName": "Line Orange ink",
-        "canonical": "oklch(0.500 0.1400 45)",
-        "dark": "oklch(0.820 0.1100 55)",
-        "tonalRamp": [
-          "oklch(0.15 0.0382 45)",
-          "oklch(0.26 0.0662 45)",
-          "oklch(0.37 0.0942 45)",
-          "oklch(0.48 0.1222 45)",
-          "oklch(0.59 0.1298 45)",
-          "oklch(0.70 0.1018 45)",
-          "oklch(0.82 0.0713 45)",
-          "oklch(0.95 0.0382 45)"
-        ]
-      },
-      "p2-soft": {
-        "role": "tertiary",
-        "displayName": "Line Orange tint",
-        "canonical": "oklch(0.950 0.0280 50)",
-        "dark": "oklch(0.300 0.0500 55)",
-        "tonalRamp": [
-          "oklch(0.15 0.0076 50)",
-          "oklch(0.26 0.0132 50)",
-          "oklch(0.37 0.0188 50)",
-          "oklch(0.48 0.0244 50)",
-          "oklch(0.59 0.0260 50)",
-          "oklch(0.70 0.0204 50)",
-          "oklch(0.82 0.0143 50)",
-          "oklch(0.95 0.0076 50)"
-        ]
-      },
-      "p3": {
-        "role": "tertiary",
-        "displayName": "Line Violet",
-        "canonical": "oklch(0.480 0.1600 305)",
-        "dark": "oklch(0.760 0.1200 305)",
-        "tonalRamp": [
-          "oklch(0.15 0.0436 305)",
-          "oklch(0.26 0.0756 305)",
-          "oklch(0.37 0.1076 305)",
-          "oklch(0.48 0.1396 305)",
-          "oklch(0.59 0.1484 305)",
-          "oklch(0.70 0.1164 305)",
-          "oklch(0.82 0.0815 305)",
-          "oklch(0.95 0.0436 305)"
-        ]
-      },
-      "p3-ink": {
-        "role": "tertiary",
-        "displayName": "Line Violet ink",
-        "canonical": "oklch(0.450 0.1600 305)",
-        "dark": "oklch(0.800 0.1000 305)",
-        "tonalRamp": [
-          "oklch(0.15 0.0436 305)",
-          "oklch(0.26 0.0756 305)",
-          "oklch(0.37 0.1076 305)",
-          "oklch(0.48 0.1396 305)",
-          "oklch(0.59 0.1484 305)",
-          "oklch(0.70 0.1164 305)",
-          "oklch(0.82 0.0815 305)",
-          "oklch(0.95 0.0436 305)"
-        ]
-      },
-      "p3-soft": {
-        "role": "tertiary",
-        "displayName": "Line Violet tint",
-        "canonical": "oklch(0.950 0.0297 305)",
-        "dark": "oklch(0.290 0.0500 305)",
-        "tonalRamp": [
-          "oklch(0.15 0.0081 305)",
-          "oklch(0.26 0.0140 305)",
-          "oklch(0.37 0.0200 305)",
-          "oklch(0.48 0.0259 305)",
-          "oklch(0.59 0.0275 305)",
-          "oklch(0.70 0.0216 305)",
-          "oklch(0.82 0.0151 305)",
-          "oklch(0.95 0.0081 305)"
-        ]
-      },
-      "on-part": {
-        "role": "tertiary",
-        "displayName": "On Part badge",
-        "canonical": "oklch(0.990 0.0040 262)",
-        "dark": "oklch(0.170 0.0300 262)",
-        "tonalRamp": [
-          "oklch(0.15 0.0011 262)",
-          "oklch(0.26 0.0019 262)",
-          "oklch(0.37 0.0027 262)",
-          "oklch(0.48 0.0035 262)",
-          "oklch(0.59 0.0037 262)",
-          "oklch(0.70 0.0029 262)",
-          "oklch(0.82 0.0020 262)",
-          "oklch(0.95 0.0011 262)"
-        ]
-      },
-      "ok": {
-        "role": "tertiary",
-        "displayName": "Confirm Green",
-        "canonical": "oklch(0.500 0.1200 150)",
-        "dark": "oklch(0.780 0.1300 150)",
-        "tonalRamp": [
-          "oklch(0.15 0.0327 150)",
-          "oklch(0.26 0.0567 150)",
-          "oklch(0.37 0.0807 150)",
-          "oklch(0.48 0.1047 150)",
-          "oklch(0.59 0.1113 150)",
-          "oklch(0.70 0.0873 150)",
-          "oklch(0.82 0.0611 150)",
-          "oklch(0.95 0.0327 150)"
-        ]
-      },
-      "ok-soft": {
-        "role": "tertiary",
-        "displayName": "Confirm Green tint",
-        "canonical": "oklch(0.950 0.0350 150)",
-        "dark": "oklch(0.280 0.0500 150)",
-        "tonalRamp": [
-          "oklch(0.15 0.0095 150)",
-          "oklch(0.26 0.0165 150)",
-          "oklch(0.37 0.0235 150)",
-          "oklch(0.48 0.0305 150)",
-          "oklch(0.59 0.0325 150)",
-          "oklch(0.70 0.0255 150)",
-          "oklch(0.82 0.0178 150)",
-          "oklch(0.95 0.0095 150)"
-        ]
-      },
-      "warn": {
-        "role": "tertiary",
-        "displayName": "Caution Ochre",
-        "canonical": "oklch(0.520 0.1100 65)",
-        "dark": "oklch(0.820 0.1200 80)",
-        "tonalRamp": [
-          "oklch(0.15 0.0300 65)",
-          "oklch(0.26 0.0520 65)",
-          "oklch(0.37 0.0740 65)",
-          "oklch(0.48 0.0960 65)",
-          "oklch(0.59 0.1020 65)",
-          "oklch(0.70 0.0800 65)",
-          "oklch(0.82 0.0560 65)",
-          "oklch(0.95 0.0300 65)"
-        ]
-      },
-      "warn-soft": {
-        "role": "tertiary",
-        "displayName": "Caution Ochre tint",
-        "canonical": "oklch(0.955 0.0400 80)",
-        "dark": "oklch(0.300 0.0500 80)",
-        "tonalRamp": [
-          "oklch(0.15 0.0109 80)",
-          "oklch(0.26 0.0189 80)",
-          "oklch(0.37 0.0269 80)",
-          "oklch(0.48 0.0349 80)",
-          "oklch(0.59 0.0371 80)",
-          "oklch(0.70 0.0291 80)",
-          "oklch(0.82 0.0204 80)",
-          "oklch(0.95 0.0109 80)"
-        ]
-      },
       "bg": {
         "role": "neutral",
-        "displayName": "Platform Floor",
+        "displayName": "Cool Paper",
         "canonical": "oklch(0.972 0.0060 262)",
-        "dark": "oklch(0.175 0.0220 262)",
+        "darkCanonical": "oklch(0.175 0.0220 262)",
         "tonalRamp": [
-          "oklch(0.15 0.0016 262)",
-          "oklch(0.26 0.0028 262)",
-          "oklch(0.37 0.0040 262)",
-          "oklch(0.48 0.0052 262)",
-          "oklch(0.59 0.0056 262)",
-          "oklch(0.70 0.0044 262)",
-          "oklch(0.82 0.0031 262)",
-          "oklch(0.95 0.0016 262)"
-        ],
-        "hexStandIn": "#f3f6fa"
+          "oklch(0.150 0.0025 262)",
+          "oklch(0.264 0.0035 262)",
+          "oklch(0.379 0.0045 262)",
+          "oklch(0.493 0.0055 262)",
+          "oklch(0.607 0.0055 262)",
+          "oklch(0.721 0.0045 262)",
+          "oklch(0.836 0.0035 262)",
+          "oklch(0.950 0.0025 262)"
+        ]
       },
       "surface": {
         "role": "neutral",
-        "displayName": "Timetable Paper",
+        "displayName": "White Card",
         "canonical": "oklch(0.997 0.0014 262)",
-        "dark": "oklch(0.215 0.0260 262)",
+        "darkCanonical": "oklch(0.215 0.0260 262)",
         "tonalRamp": [
-          "oklch(0.15 0.0004 262)",
-          "oklch(0.26 0.0007 262)",
-          "oklch(0.37 0.0009 262)",
-          "oklch(0.48 0.0012 262)",
-          "oklch(0.59 0.0013 262)",
-          "oklch(0.70 0.0010 262)",
-          "oklch(0.82 0.0007 262)",
-          "oklch(0.95 0.0004 262)"
+          "oklch(0.150 0.0006 262)",
+          "oklch(0.264 0.0008 262)",
+          "oklch(0.379 0.0011 262)",
+          "oklch(0.493 0.0013 262)",
+          "oklch(0.607 0.0013 262)",
+          "oklch(0.721 0.0011 262)",
+          "oklch(0.836 0.0008 262)",
+          "oklch(0.950 0.0006 262)"
         ]
       },
       "sunken": {
         "role": "neutral",
-        "displayName": "Recess",
+        "displayName": "Sunken Grey",
         "canonical": "oklch(0.948 0.0100 262)",
-        "dark": "oklch(0.155 0.0200 262)",
+        "darkCanonical": "oklch(0.155 0.0200 262)",
         "tonalRamp": [
-          "oklch(0.15 0.0027 262)",
-          "oklch(0.26 0.0047 262)",
-          "oklch(0.37 0.0067 262)",
-          "oklch(0.48 0.0087 262)",
-          "oklch(0.59 0.0093 262)",
-          "oklch(0.70 0.0073 262)",
-          "oklch(0.82 0.0051 262)",
-          "oklch(0.95 0.0027 262)"
+          "oklch(0.150 0.0042 262)",
+          "oklch(0.264 0.0058 262)",
+          "oklch(0.379 0.0075 262)",
+          "oklch(0.493 0.0092 262)",
+          "oklch(0.607 0.0092 262)",
+          "oklch(0.721 0.0075 262)",
+          "oklch(0.836 0.0058 262)",
+          "oklch(0.950 0.0042 262)"
         ]
       },
       "ink": {
         "role": "neutral",
-        "displayName": "Board Ink",
+        "displayName": "Ink",
         "canonical": "oklch(0.235 0.0350 262)",
-        "dark": "oklch(0.940 0.0080 262)",
+        "darkCanonical": "oklch(0.940 0.0080 262)",
         "tonalRamp": [
-          "oklch(0.15 0.0095 262)",
-          "oklch(0.26 0.0165 262)",
-          "oklch(0.37 0.0235 262)",
-          "oklch(0.48 0.0305 262)",
-          "oklch(0.59 0.0325 262)",
-          "oklch(0.70 0.0255 262)",
-          "oklch(0.82 0.0178 262)",
-          "oklch(0.95 0.0095 262)"
+          "oklch(0.150 0.0146 262)",
+          "oklch(0.264 0.0205 262)",
+          "oklch(0.379 0.0263 262)",
+          "oklch(0.493 0.0321 262)",
+          "oklch(0.607 0.0321 262)",
+          "oklch(0.721 0.0263 262)",
+          "oklch(0.836 0.0205 262)",
+          "oklch(0.950 0.0146 262)"
         ]
       },
       "muted": {
         "role": "neutral",
-        "displayName": "Faded Ink",
+        "displayName": "Muted",
         "canonical": "oklch(0.470 0.0300 262)",
-        "dark": "oklch(0.770 0.0220 262)",
+        "darkCanonical": "oklch(0.770 0.0220 262)",
         "tonalRamp": [
-          "oklch(0.15 0.0082 262)",
-          "oklch(0.26 0.0142 262)",
-          "oklch(0.37 0.0202 262)",
-          "oklch(0.48 0.0262 262)",
-          "oklch(0.59 0.0278 262)",
-          "oklch(0.70 0.0218 262)",
-          "oklch(0.82 0.0153 262)",
-          "oklch(0.95 0.0082 262)"
+          "oklch(0.150 0.0125 262)",
+          "oklch(0.264 0.0175 262)",
+          "oklch(0.379 0.0225 262)",
+          "oklch(0.493 0.0275 262)",
+          "oklch(0.607 0.0275 262)",
+          "oklch(0.721 0.0225 262)",
+          "oklch(0.836 0.0175 262)",
+          "oklch(0.950 0.0125 262)"
         ]
       },
       "line": {
         "role": "neutral",
-        "displayName": "Rule",
+        "displayName": "Hairline",
         "canonical": "oklch(0.895 0.0130 262)",
-        "dark": "oklch(0.300 0.0280 262)",
+        "darkCanonical": "oklch(0.300 0.0280 262)",
         "tonalRamp": [
-          "oklch(0.15 0.0035 262)",
-          "oklch(0.26 0.0061 262)",
-          "oklch(0.37 0.0087 262)",
-          "oklch(0.48 0.0113 262)",
-          "oklch(0.59 0.0121 262)",
-          "oklch(0.70 0.0095 262)",
-          "oklch(0.82 0.0066 262)",
-          "oklch(0.95 0.0035 262)"
+          "oklch(0.150 0.0054 262)",
+          "oklch(0.264 0.0076 262)",
+          "oklch(0.379 0.0098 262)",
+          "oklch(0.493 0.0119 262)",
+          "oklch(0.607 0.0119 262)",
+          "oklch(0.721 0.0098 262)",
+          "oklch(0.836 0.0076 262)",
+          "oklch(0.950 0.0054 262)"
         ]
       },
       "line-strong": {
         "role": "neutral",
-        "displayName": "Strong Rule",
+        "displayName": "Strong Hairline",
         "canonical": "oklch(0.800 0.0200 262)",
-        "dark": "oklch(0.400 0.0300 262)",
+        "darkCanonical": "oklch(0.400 0.0300 262)",
         "tonalRamp": [
-          "oklch(0.15 0.0055 262)",
-          "oklch(0.26 0.0095 262)",
-          "oklch(0.37 0.0135 262)",
-          "oklch(0.48 0.0175 262)",
-          "oklch(0.59 0.0185 262)",
-          "oklch(0.70 0.0145 262)",
-          "oklch(0.82 0.0102 262)",
-          "oklch(0.95 0.0055 262)"
+          "oklch(0.150 0.0084 262)",
+          "oklch(0.264 0.0117 262)",
+          "oklch(0.379 0.0150 262)",
+          "oklch(0.493 0.0183 262)",
+          "oklch(0.607 0.0183 262)",
+          "oklch(0.721 0.0150 262)",
+          "oklch(0.836 0.0117 262)",
+          "oklch(0.950 0.0084 262)"
+        ]
+      },
+      "board": {
+        "role": "secondary",
+        "displayName": "Board Navy",
+        "canonical": "oklch(0.300 0.0800 262)",
+        "darkCanonical": "oklch(0.255 0.0700 262)",
+        "tonalRamp": [
+          "oklch(0.150 0.0335 262)",
+          "oklch(0.264 0.0468 262)",
+          "oklch(0.379 0.0601 262)",
+          "oklch(0.493 0.0734 262)",
+          "oklch(0.607 0.0734 262)",
+          "oklch(0.721 0.0601 262)",
+          "oklch(0.836 0.0468 262)",
+          "oklch(0.950 0.0335 262)"
+        ]
+      },
+      "on-board": {
+        "role": "secondary",
+        "displayName": "On Board Navy",
+        "canonical": "oklch(0.975 0.0080 262)",
+        "darkCanonical": "oklch(0.960 0.0100 262)",
+        "tonalRamp": [
+          "oklch(0.150 0.0033 262)",
+          "oklch(0.264 0.0047 262)",
+          "oklch(0.379 0.0060 262)",
+          "oklch(0.493 0.0073 262)",
+          "oklch(0.607 0.0073 262)",
+          "oklch(0.721 0.0060 262)",
+          "oklch(0.836 0.0047 262)",
+          "oklch(0.950 0.0033 262)"
+        ]
+      },
+      "act": {
+        "role": "primary",
+        "displayName": "Action Blue",
+        "canonical": "oklch(0.420 0.1500 262)",
+        "darkCanonical": "oklch(0.760 0.1100 262)",
+        "tonalRamp": [
+          "oklch(0.150 0.0627 262)",
+          "oklch(0.264 0.0877 262)",
+          "oklch(0.379 0.1126 262)",
+          "oklch(0.493 0.1375 262)",
+          "oklch(0.607 0.1375 262)",
+          "oklch(0.721 0.1126 262)",
+          "oklch(0.836 0.0877 262)",
+          "oklch(0.950 0.0627 262)"
+        ]
+      },
+      "act-ink": {
+        "role": "primary",
+        "displayName": "Action Blue Text",
+        "canonical": "oklch(0.430 0.1500 262)",
+        "darkCanonical": "oklch(0.800 0.1000 262)",
+        "tonalRamp": [
+          "oklch(0.150 0.0627 262)",
+          "oklch(0.264 0.0877 262)",
+          "oklch(0.379 0.1126 262)",
+          "oklch(0.493 0.1375 262)",
+          "oklch(0.607 0.1375 262)",
+          "oklch(0.721 0.1126 262)",
+          "oklch(0.836 0.0877 262)",
+          "oklch(0.950 0.0627 262)"
+        ]
+      },
+      "act-soft": {
+        "role": "primary",
+        "displayName": "Action Blue Wash",
+        "canonical": "oklch(0.940 0.0286 262)",
+        "darkCanonical": "oklch(0.290 0.0500 262)",
+        "tonalRamp": [
+          "oklch(0.150 0.0120 262)",
+          "oklch(0.264 0.0167 262)",
+          "oklch(0.379 0.0215 262)",
+          "oklch(0.493 0.0262 262)",
+          "oklch(0.607 0.0262 262)",
+          "oklch(0.721 0.0215 262)",
+          "oklch(0.836 0.0167 262)",
+          "oklch(0.950 0.0120 262)"
+        ]
+      },
+      "on-act": {
+        "role": "primary",
+        "displayName": "On Action Blue",
+        "canonical": "oklch(0.985 0.0050 262)",
+        "darkCanonical": "oklch(0.170 0.0300 262)",
+        "tonalRamp": [
+          "oklch(0.150 0.0021 262)",
+          "oklch(0.264 0.0029 262)",
+          "oklch(0.379 0.0038 262)",
+          "oklch(0.493 0.0046 262)",
+          "oklch(0.607 0.0046 262)",
+          "oklch(0.721 0.0038 262)",
+          "oklch(0.836 0.0029 262)",
+          "oklch(0.950 0.0021 262)"
+        ]
+      },
+      "signal": {
+        "role": "tertiary",
+        "displayName": "Signal Amber",
+        "canonical": "oklch(0.830 0.1550 80)",
+        "darkCanonical": "oklch(0.840 0.1500 82)",
+        "tonalRamp": [
+          "oklch(0.150 0.0648 80)",
+          "oklch(0.264 0.0906 80)",
+          "oklch(0.379 0.1164 80)",
+          "oklch(0.493 0.1421 80)",
+          "oklch(0.607 0.1421 80)",
+          "oklch(0.721 0.1164 80)",
+          "oklch(0.836 0.0906 80)",
+          "oklch(0.950 0.0648 80)"
+        ]
+      },
+      "signal-ink": {
+        "role": "tertiary",
+        "displayName": "Signal Amber Text",
+        "canonical": "oklch(0.500 0.1100 68)",
+        "darkCanonical": "oklch(0.860 0.1300 84)",
+        "tonalRamp": [
+          "oklch(0.150 0.0460 68)",
+          "oklch(0.264 0.0643 68)",
+          "oklch(0.379 0.0826 68)",
+          "oklch(0.493 0.1009 68)",
+          "oklch(0.607 0.1009 68)",
+          "oklch(0.721 0.0826 68)",
+          "oklch(0.836 0.0643 68)",
+          "oklch(0.950 0.0460 68)"
+        ]
+      },
+      "signal-soft": {
+        "role": "tertiary",
+        "displayName": "Signal Amber Wash",
+        "canonical": "oklch(0.955 0.0450 88)",
+        "darkCanonical": "oklch(0.300 0.0600 80)",
+        "tonalRamp": [
+          "oklch(0.150 0.0188 88)",
+          "oklch(0.264 0.0263 88)",
+          "oklch(0.379 0.0338 88)",
+          "oklch(0.493 0.0413 88)",
+          "oklch(0.607 0.0413 88)",
+          "oklch(0.721 0.0338 88)",
+          "oklch(0.836 0.0263 88)",
+          "oklch(0.950 0.0188 88)"
+        ]
+      },
+      "on-signal": {
+        "role": "tertiary",
+        "displayName": "On Signal Amber",
+        "canonical": "oklch(0.235 0.0350 262)",
+        "darkCanonical": "oklch(0.200 0.0300 262)",
+        "tonalRamp": [
+          "oklch(0.150 0.0146 262)",
+          "oklch(0.264 0.0205 262)",
+          "oklch(0.379 0.0263 262)",
+          "oklch(0.493 0.0321 262)",
+          "oklch(0.607 0.0321 262)",
+          "oklch(0.721 0.0263 262)",
+          "oklch(0.836 0.0205 262)",
+          "oklch(0.950 0.0146 262)"
+        ]
+      },
+      "rec": {
+        "role": "tertiary",
+        "displayName": "Record Red",
+        "canonical": "oklch(0.555 0.2000 27)",
+        "darkCanonical": "oklch(0.700 0.1700 27)",
+        "tonalRamp": [
+          "oklch(0.150 0.0836 27)",
+          "oklch(0.264 0.1169 27)",
+          "oklch(0.379 0.1501 27)",
+          "oklch(0.493 0.1834 27)",
+          "oklch(0.607 0.1834 27)",
+          "oklch(0.721 0.1501 27)",
+          "oklch(0.836 0.1169 27)",
+          "oklch(0.950 0.0836 27)"
+        ]
+      },
+      "rec-ink": {
+        "role": "tertiary",
+        "displayName": "Record Red Text",
+        "canonical": "oklch(0.500 0.1900 27)",
+        "darkCanonical": "oklch(0.780 0.1286 27)",
+        "tonalRamp": [
+          "oklch(0.150 0.0795 27)",
+          "oklch(0.264 0.1110 27)",
+          "oklch(0.379 0.1426 27)",
+          "oklch(0.493 0.1742 27)",
+          "oklch(0.607 0.1742 27)",
+          "oklch(0.721 0.1426 27)",
+          "oklch(0.836 0.1110 27)",
+          "oklch(0.950 0.0795 27)"
+        ]
+      },
+      "rec-soft": {
+        "role": "tertiary",
+        "displayName": "Record Red Wash",
+        "canonical": "oklch(0.950 0.0249 27)",
+        "darkCanonical": "oklch(0.300 0.0700 27)",
+        "tonalRamp": [
+          "oklch(0.150 0.0104 27)",
+          "oklch(0.264 0.0146 27)",
+          "oklch(0.379 0.0187 27)",
+          "oklch(0.493 0.0228 27)",
+          "oklch(0.607 0.0228 27)",
+          "oklch(0.721 0.0187 27)",
+          "oklch(0.836 0.0146 27)",
+          "oklch(0.950 0.0104 27)"
+        ]
+      },
+      "on-rec": {
+        "role": "tertiary",
+        "displayName": "On Record Red",
+        "canonical": "oklch(0.990 0.0048 27)",
+        "darkCanonical": "oklch(0.160 0.0300 27)",
+        "tonalRamp": [
+          "oklch(0.150 0.0020 27)",
+          "oklch(0.264 0.0028 27)",
+          "oklch(0.379 0.0036 27)",
+          "oklch(0.493 0.0044 27)",
+          "oklch(0.607 0.0044 27)",
+          "oklch(0.721 0.0036 27)",
+          "oklch(0.836 0.0028 27)",
+          "oklch(0.950 0.0020 27)"
+        ]
+      },
+      "ok": {
+        "role": "feedback",
+        "displayName": "Measured Green",
+        "canonical": "oklch(0.500 0.1200 150)",
+        "darkCanonical": "oklch(0.780 0.1300 150)",
+        "tonalRamp": [
+          "oklch(0.150 0.0502 150)",
+          "oklch(0.264 0.0701 150)",
+          "oklch(0.379 0.0901 150)",
+          "oklch(0.493 0.1100 150)",
+          "oklch(0.607 0.1100 150)",
+          "oklch(0.721 0.0901 150)",
+          "oklch(0.836 0.0701 150)",
+          "oklch(0.950 0.0502 150)"
+        ]
+      },
+      "ok-soft": {
+        "role": "feedback",
+        "displayName": "Measured Green Wash",
+        "canonical": "oklch(0.950 0.0350 150)",
+        "darkCanonical": "oklch(0.280 0.0500 150)",
+        "tonalRamp": [
+          "oklch(0.150 0.0146 150)",
+          "oklch(0.264 0.0205 150)",
+          "oklch(0.379 0.0263 150)",
+          "oklch(0.493 0.0321 150)",
+          "oklch(0.607 0.0321 150)",
+          "oklch(0.721 0.0263 150)",
+          "oklch(0.836 0.0205 150)",
+          "oklch(0.950 0.0146 150)"
+        ]
+      },
+      "warn": {
+        "role": "feedback",
+        "displayName": "Short Brown-Amber",
+        "canonical": "oklch(0.520 0.1100 65)",
+        "darkCanonical": "oklch(0.820 0.1200 80)",
+        "tonalRamp": [
+          "oklch(0.150 0.0460 65)",
+          "oklch(0.264 0.0643 65)",
+          "oklch(0.379 0.0826 65)",
+          "oklch(0.493 0.1009 65)",
+          "oklch(0.607 0.1009 65)",
+          "oklch(0.721 0.0826 65)",
+          "oklch(0.836 0.0643 65)",
+          "oklch(0.950 0.0460 65)"
+        ]
+      },
+      "warn-soft": {
+        "role": "feedback",
+        "displayName": "Short Brown-Amber Wash",
+        "canonical": "oklch(0.955 0.0400 80)",
+        "darkCanonical": "oklch(0.300 0.0500 80)",
+        "tonalRamp": [
+          "oklch(0.150 0.0167 80)",
+          "oklch(0.264 0.0234 80)",
+          "oklch(0.379 0.0300 80)",
+          "oklch(0.493 0.0367 80)",
+          "oklch(0.607 0.0367 80)",
+          "oklch(0.721 0.0300 80)",
+          "oklch(0.836 0.0234 80)",
+          "oklch(0.950 0.0167 80)"
+        ]
+      },
+      "p1": {
+        "role": "part",
+        "displayName": "Part 1 Teal",
+        "canonical": "oklch(0.500 0.0853 200)",
+        "darkCanonical": "oklch(0.780 0.1000 200)",
+        "tonalRamp": [
+          "oklch(0.150 0.0357 200)",
+          "oklch(0.264 0.0499 200)",
+          "oklch(0.379 0.0640 200)",
+          "oklch(0.493 0.0782 200)",
+          "oklch(0.607 0.0782 200)",
+          "oklch(0.721 0.0640 200)",
+          "oklch(0.836 0.0499 200)",
+          "oklch(0.950 0.0357 200)"
+        ]
+      },
+      "p1-ink": {
+        "role": "part",
+        "displayName": "Part 1 Teal Text",
+        "canonical": "oklch(0.450 0.0769 200)",
+        "darkCanonical": "oklch(0.820 0.0900 200)",
+        "tonalRamp": [
+          "oklch(0.150 0.0322 200)",
+          "oklch(0.264 0.0449 200)",
+          "oklch(0.379 0.0577 200)",
+          "oklch(0.493 0.0705 200)",
+          "oklch(0.607 0.0705 200)",
+          "oklch(0.721 0.0577 200)",
+          "oklch(0.836 0.0449 200)",
+          "oklch(0.950 0.0322 200)"
+        ]
+      },
+      "p1-soft": {
+        "role": "part",
+        "displayName": "Part 1 Teal Wash",
+        "canonical": "oklch(0.945 0.0300 200)",
+        "darkCanonical": "oklch(0.290 0.0400 200)",
+        "tonalRamp": [
+          "oklch(0.150 0.0125 200)",
+          "oklch(0.264 0.0175 200)",
+          "oklch(0.379 0.0225 200)",
+          "oklch(0.493 0.0275 200)",
+          "oklch(0.607 0.0275 200)",
+          "oklch(0.721 0.0225 200)",
+          "oklch(0.836 0.0175 200)",
+          "oklch(0.950 0.0125 200)"
+        ]
+      },
+      "p2": {
+        "role": "part",
+        "displayName": "Part 2 Orange",
+        "canonical": "oklch(0.540 0.1500 45)",
+        "darkCanonical": "oklch(0.780 0.1300 55)",
+        "tonalRamp": [
+          "oklch(0.150 0.0627 45)",
+          "oklch(0.264 0.0877 45)",
+          "oklch(0.379 0.1126 45)",
+          "oklch(0.493 0.1375 45)",
+          "oklch(0.607 0.1375 45)",
+          "oklch(0.721 0.1126 45)",
+          "oklch(0.836 0.0877 45)",
+          "oklch(0.950 0.0627 45)"
+        ]
+      },
+      "p3": {
+        "role": "part",
+        "displayName": "Part 3 Violet",
+        "canonical": "oklch(0.480 0.1600 305)",
+        "darkCanonical": "oklch(0.760 0.1200 305)",
+        "tonalRamp": [
+          "oklch(0.150 0.0669 305)",
+          "oklch(0.264 0.0935 305)",
+          "oklch(0.379 0.1201 305)",
+          "oklch(0.493 0.1467 305)",
+          "oklch(0.607 0.1467 305)",
+          "oklch(0.721 0.1201 305)",
+          "oklch(0.836 0.0935 305)",
+          "oklch(0.950 0.0669 305)"
+        ]
+      },
+      "on-part": {
+        "role": "part",
+        "displayName": "On Part Colour",
+        "canonical": "oklch(0.990 0.0040 262)",
+        "darkCanonical": "oklch(0.170 0.0300 262)",
+        "tonalRamp": [
+          "oklch(0.150 0.0017 262)",
+          "oklch(0.264 0.0023 262)",
+          "oklch(0.379 0.0030 262)",
+          "oklch(0.493 0.0037 262)",
+          "oklch(0.607 0.0037 262)",
+          "oklch(0.721 0.0030 262)",
+          "oklch(0.836 0.0023 262)",
+          "oklch(0.950 0.0017 262)"
         ]
       }
     },
     "typographyMeta": {
-      "board-timer": {
-        "displayName": "Board timer",
-        "purpose": "Mock-test countdown; tabular figures."
-      },
-      "board-time": {
-        "displayName": "Board time",
-        "purpose": "Departure board time column and other bold numerals."
+      "display": {
+        "displayName": "Question",
+        "purpose": "The question being answered; 21px in the Part 2 cue card."
       },
       "headline": {
-        "displayName": "Question",
-        "purpose": "The question being answered."
-      },
-      "title-page": {
         "displayName": "Page title",
-        "purpose": "Page heads."
+        "purpose": "Page titles; 26px on Today."
       },
-      "title-row": {
-        "displayName": "Row title",
-        "purpose": "Departure names."
+      "title": {
+        "displayName": "Section title",
+        "purpose": "Card and section headings."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Running text, rows, inputs; proportional figures."
+        "purpose": "Running text, proportional digits."
       },
       "body-small": {
-        "displayName": "Small",
-        "purpose": "Row subtitles and meta."
+        "displayName": "Sub-line",
+        "purpose": "List sub-lines, hints, zone labels."
       },
-      "label-board": {
-        "displayName": "Board label",
-        "purpose": "Uppercase column header of the departure board only."
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, chips, links in section heads."
       },
-      "label-tab": {
-        "displayName": "Tab label",
-        "purpose": "Bottom tab captions."
+      "timer": {
+        "displayName": "Timer",
+        "purpose": "Ticking speaking timer, tabular digits."
       }
     },
     "shadows": [
       {
         "name": "lift",
-        "value": "0 1px 2px color-mix(in oklab,var(--ink) 10%,transparent),0 6px 20px color-mix(in oklab,var(--ink) 8%,transparent)",
-        "purpose": "Modal box and toast."
-      },
-      {
-        "name": "sheet",
-        "value": "0 -10px 34px color-mix(in oklab,var(--ink) 22%,transparent)",
-        "purpose": "Bottom sheet panel."
-      },
-      {
-        "name": "dock",
-        "value": "0 -6px 18px color-mix(in oklab,var(--ink) 7%,transparent)",
-        "purpose": "Record dock."
+        "value": "0 1px 2px color-mix(in oklab,var(--ink) 10%,transparent),0 8px 24px color-mix(in oklab,var(--ink) 10%,transparent)",
+        "purpose": "Bottom sheet, modal box, toast."
       },
       {
         "name": "record-glow",
-        "value": "0 4px 14px color-mix(in oklab,var(--rec) 30%,transparent)",
-        "purpose": "Record button; pulses to a 9px ring at 20% while live."
+        "value": "0 4px 14px color-mix(in oklab,var(--rec) 32%,transparent)",
+        "purpose": "Record button at rest."
       },
       {
-        "name": "live-line",
+        "name": "record-pulse",
+        "value": "0 0 0 10px color-mix(in oklab,var(--rec) 18%,transparent)",
+        "purpose": "Mid-point of the 1.4s pulse while recording."
+      },
+      {
+        "name": "switch-thumb",
+        "value": "0 1px 2px color-mix(in oklab,var(--ink) 14%,transparent)",
+        "purpose": "Selected half of the two-way switch."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 3px color-mix(in oklab,var(--act) 22%,transparent)",
+        "purpose": "Focused inputs."
+      },
+      {
+        "name": "recording-line",
         "value": "inset 0 -3px 0 var(--rec)",
-        "purpose": "Header bottom line while recording only."
+        "purpose": "Session header while recording."
       }
     ],
     "motion": [
       {
-        "name": "ease-out-expo",
-        "value": "cubic-bezier(.16,1,.3,1)",
-        "purpose": "Sheet entry (320ms) and days-left flip (500ms)."
+        "name": "button-bg",
+        "value": "background .12s",
+        "purpose": "Button hover."
       },
       {
-        "name": "state",
-        "value": "120ms",
-        "purpose": "Button background and border transitions."
+        "name": "switch",
+        "value": ".15s",
+        "purpose": "Settings switch track and knob; details chevron."
       },
       {
-        "name": "row-arrow",
-        "value": "150ms",
-        "purpose": "Departure row arrow shift on hover."
+        "name": "zone-fill",
+        "value": "width .25s linear",
+        "purpose": "Length bar fill while speaking."
+      },
+      {
+        "name": "sheet-in",
+        "value": ".3s cubic-bezier(.16,1,.3,1)",
+        "purpose": "Bottom sheet entry, 24px rise."
       },
       {
         "name": "record-pulse",
         "value": "1.4s ease-in-out infinite",
-        "purpose": "Live record button."
+        "purpose": "Record button while recording."
       },
       {
         "name": "reduced-motion",
         "value": "none",
-        "purpose": "All animation and transition removed under prefers-reduced-motion."
+        "purpose": "prefers-reduced-motion turns off all animation and transitions."
       }
     ],
     "breakpoints": [
       {
-        "name": "tiny",
-        "value": "359px"
+        "name": "compact-header",
+        "value": "max-width: 599px"
       },
       {
-        "name": "small-phone",
-        "value": "420px"
-      },
-      {
-        "name": "short-row",
-        "value": "479px"
-      },
-      {
-        "name": "phone",
-        "value": "599px"
-      },
-      {
-        "name": "tablet",
-        "value": "600px"
-      },
-      {
-        "name": "desktop",
-        "value": "900px"
+        "name": "rail",
+        "value": "min-width: 900px"
       }
-    ],
-    "layout": {
-      "contentMax": "760px",
-      "homeMax": "1120px",
-      "headerHeight": "56px",
-      "tabBarHeight": "60px",
-      "dockMinHeight": "88px",
-      "tapTarget": "44px",
-      "homeColumns": "7fr 5fr, 40px gap at 900px+"
-    },
-    "identity": {
-      "appIcon": "icon.svg / icon-192.png / icon-512.png: rounded board square (rx 112 of 512), paper microphone mark, amber dot top right",
-      "hexStandIns": {
-        "board": "#162c55",
-        "bg": "#f3f6fa",
-        "signal": "#fcbb39"
-      },
-      "manifest": {
-        "theme_color": "#162c55",
-        "background_color": "#f3f6fa"
-      }
-    }
+    ]
   },
   "components": [
     {
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Main action: Next, Save & next, Start.",
-      "html": "<button class=\"ds-btn ds-btn-primary\">Save &amp; next <svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg></button>",
-      "css": ".ds-btn{min-height:44px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:9px 15px;font:600 15px Onest,\"Segoe UI\",system-ui,sans-serif;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:background .12s,border-color .12s}.ds-btn-primary{background:var(--act);border-color:var(--act);color:var(--on-act)}.ds-btn-primary:hover{background:color-mix(in oklab,var(--act) 88%,var(--ink))}.ds-btn:focus-visible{outline:2px solid var(--act);outline-offset:2px}.ds-btn:active{transform:translateY(1px)}"
+      "description": "The single next step of a view, Action Blue fill.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Start Part 1 <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg></button>",
+      "css": ".ds-btn{min-height:48px;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:0 18px;font:600 16px Onest,'Segoe UI',system-ui,sans-serif;display:inline-flex;align-items:center;gap:8px;color:var(--ink);transition:background .12s;cursor:pointer}.ds-btn svg{width:18px;height:18px}.ds-btn-primary{background:var(--act);border-color:var(--act);color:var(--on-act)}.ds-btn-primary:hover{background:color-mix(in oklab,var(--act) 88%,var(--ink))}.ds-btn:active{transform:translateY(1px)}.ds-btn:focus-visible{outline:2px solid var(--act);outline-offset:2px}"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Tools under the question: Read aloud, Star, Ideas.",
-      "html": "<button class=\"ds-btn2\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"><path d=\"M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z\"/></svg>Star</button> <button class=\"ds-btn2 ds-on\">Starred</button>",
-      "css": ".ds-btn2{min-height:44px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:8px;padding:9px 15px;font:600 15px Onest,\"Segoe UI\",system-ui,sans-serif;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:background .12s}.ds-btn2:hover{background:var(--sunken)}.ds-btn2:focus-visible{outline:2px solid var(--act);outline-offset:2px}.ds-btn2:active{transform:translateY(1px)}.ds-btn2.ds-on{background:var(--signal-soft);border-color:color-mix(in oklab,var(--signal) 60%,var(--line));color:var(--signal-ink)}"
+      "description": "Every other action; white with a strong hairline.",
+      "html": "<button class=\"ds-btn2\">Check with coach</button>",
+      "css": ".ds-btn2{min-height:48px;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:0 18px;font:600 16px Onest,'Segoe UI',system-ui,sans-serif;color:var(--ink);transition:background .12s;cursor:pointer}.ds-btn2:hover{background:var(--sunken)}.ds-btn2:active{transform:translateY(1px)}.ds-btn2:focus-visible{outline:2px solid var(--act);outline-offset:2px}"
+    },
+    {
+      "name": "Filter Chips",
+      "kind": "chip",
+      "refersTo": "chip-filter-selected",
+      "description": "Pill filters; the selected one is Board Navy.",
+      "html": "<div class=\"ds-chips\"><button aria-pressed=\"true\">All</button><button aria-pressed=\"false\">Part 1</button><button aria-pressed=\"false\">Part 2</button><button aria-pressed=\"false\">Part 3</button></div>",
+      "css": ".ds-chips{display:flex;gap:8px;flex-wrap:wrap;font-family:Onest,'Segoe UI',system-ui,sans-serif}.ds-chips button{min-height:38px;padding:0 14px;border-radius:999px;font:500 14px inherit;font-family:inherit;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer}.ds-chips button:hover{background:var(--sunken)}.ds-chips button[aria-pressed=true]{background:var(--board);border-color:var(--board);color:var(--on-board);font-weight:600}.ds-chips button:focus-visible{outline:2px solid var(--act);outline-offset:2px}"
+    },
+    {
+      "name": "Test-date Chip",
+      "kind": "chip",
+      "refersTo": "exam-chip",
+      "description": "Header chip with the test date; amber when unset.",
+      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-exam\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/></svg>Test Sat 12 Dec · 26 days</button><button class=\"ds-exam ds-exam-unset\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/></svg>Set test date</button></div>",
+      "css": ".ds-exam{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:var(--sunken);font:600 14px Onest,'Segoe UI',system-ui,sans-serif;color:var(--ink);border:0;min-height:32px;cursor:pointer}.ds-exam svg{width:16px;height:16px}.ds-exam-unset{background:var(--signal-soft);color:var(--signal-ink)}.ds-exam:focus-visible{outline:2px solid var(--act);outline-offset:2px}"
+    },
+    {
+      "name": "Part Badges",
+      "kind": "custom",
+      "refersTo": "part-badge",
+      "description": "22px numeral badges in the three part colours.",
+      "html": "<div style=\"display:flex;gap:8px\"><span class=\"ds-badge\">1</span><span class=\"ds-badge ds-p2\">2</span><span class=\"ds-badge ds-p3\">3</span></div>",
+      "css": ".ds-badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:5px;color:var(--on-part);font:700 13px Onest,'Segoe UI',system-ui,sans-serif;line-height:1;background:var(--p1)}.ds-p2{background:var(--p2)}.ds-p3{background:var(--p3)}"
+    },
+    {
+      "name": "Length Zone Bar",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Part 1 zones: short to 20 s, target 20-30 s, over to 45 s; blue fill grows while speaking.",
+      "html": "<div class=\"ds-zonewrap\"><div class=\"ds-timer\">0:24</div><div class=\"ds-zone\"><span class=\"z1\"></span><span class=\"z2\"></span><span class=\"z3\"></span><i style=\"width:53%\"></i></div><div class=\"ds-zlab\"><span>0 s</span><span class=\"g\">20–30 s</span><span>45 s</span></div><div class=\"ds-zstate\">Good length</div></div>",
+      "css": ".ds-zonewrap{display:flex;flex-direction:column;gap:10px;font-family:Onest,'Segoe UI',system-ui,sans-serif;max-width:360px}.ds-timer{font-size:56px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)}.ds-zone{position:relative;height:12px;border-radius:6px;overflow:hidden;display:grid;gap:2px;grid-template-columns:20fr 10fr 15fr}.ds-zone .z1{background:var(--warn-soft)}.ds-zone .z2{background:var(--ok-soft)}.ds-zone .z3{background:var(--sunken)}.ds-zone i{position:absolute;left:0;top:0;bottom:0;background:var(--act);border-radius:6px 0 0 6px;transition:width .25s linear}.ds-zlab{display:grid;grid-template-columns:20fr 10fr 15fr;font-size:12.5px;color:var(--muted)}.ds-zlab .g{color:var(--ok);font-weight:600}.ds-zlab span:last-child{text-align:right}.ds-zstate{font-size:15px;font-weight:600;color:var(--ok)}"
+    },
+    {
+      "name": "Record Dock",
+      "kind": "custom",
+      "refersTo": "record-button",
+      "description": "Bottom dock while recording: soft red, 2px red edge, pulsing stop button.",
+      "html": "<div class=\"ds-dock\"><button class=\"ds-dbtn\">Skip</button><div class=\"ds-mid\"><button class=\"ds-rec\" aria-label=\"Stop\"><span></span></button><span class=\"ds-lbl\">Recording</span></div><span></span></div>",
+      "css": ".ds-dock{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:12px 18px;min-height:96px;background:var(--rec-soft);border-top:2px solid var(--rec);font-family:Onest,'Segoe UI',system-ui,sans-serif}.ds-mid{display:flex;flex-direction:column;align-items:center;gap:4px}.ds-rec{width:76px;height:76px;border-radius:50%;border:0;background:var(--rec);display:grid;place-items:center;box-shadow:0 4px 14px color-mix(in oklab,var(--rec) 32%,transparent);animation:dspulse 1.4s ease-in-out infinite;cursor:pointer}.ds-rec span{width:26px;height:26px;border-radius:5px;background:var(--on-rec)}.ds-rec:focus-visible{outline:2px solid var(--act);outline-offset:2px}@keyframes dspulse{50%{box-shadow:0 0 0 10px color-mix(in oklab,var(--rec) 18%,transparent)}}@media (prefers-reduced-motion:reduce){.ds-rec{animation:none}}.ds-lbl{font-size:14px;font-weight:600;color:var(--rec-ink)}.ds-dbtn{justify-self:start;min-height:48px;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:0 14px;font:600 16px inherit;font-family:inherit;color:var(--ink);cursor:pointer}.ds-dbtn:hover{background:var(--sunken)}"
+    },
+    {
+      "name": "List Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Hairline list in a 14px card; rows 56px with part badge and chevron.",
+      "html": "<div class=\"ds-list\"><a class=\"ds-li\" href=\"#\"><span class=\"ds-b\">1</span><span class=\"ds-g\"><span class=\"t\">Do you work or study?</span><span class=\"s\">2 answers · 0:27</span></span><span class=\"ds-chev\">&rsaquo;</span></a><a class=\"ds-li\" href=\"#\"><span class=\"ds-b ds-b3\">3</span><span class=\"ds-g\"><span class=\"t\">Why do people move to cities?</span><span class=\"s\">Not answered yet</span></span><span class=\"ds-chev\">&rsaquo;</span></a></div>",
+      "css": ".ds-list{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-family:Onest,'Segoe UI',system-ui,sans-serif;max-width:480px}.ds-li{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:56px;border-top:1px solid var(--line);color:var(--ink);text-decoration:none}.ds-li:first-child{border-top:0}.ds-li:hover{background:var(--sunken)}.ds-li:focus-visible{outline:2px solid var(--act);outline-offset:-2px}.ds-li .t{display:block;font-weight:600}.ds-li .s{display:block;font-size:14px;color:var(--muted)}.ds-g{flex:1;min-width:0}.ds-chev{color:var(--line-strong);font-size:22px}.ds-b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:5px;background:var(--p1);color:var(--on-part);font-weight:700;font-size:13px;flex:none}.ds-b3{background:var(--p3)}"
     },
     {
       "name": "Text Input",
       "kind": "input",
       "refersTo": "input",
-      "description": "Search, notes, settings fields.",
-      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Notes: keywords for each bullet\">",
-      "css": ".ds-input{background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;min-height:44px;width:100%;font:16px Onest,\"Segoe UI\",system-ui,sans-serif;color:var(--ink)}.ds-input::placeholder{color:var(--muted)}.ds-input:focus{outline:none;border-color:var(--act);box-shadow:0 0 0 3px color-mix(in oklab,var(--act) 22%,transparent)}"
+      "description": "White field, strong hairline, blue border and 3px ring on focus.",
+      "html": "<input class=\"ds-input\" type=\"search\" placeholder=\"Search words\">",
+      "css": ".ds-input{background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;padding:10px 12px;min-height:44px;width:100%;max-width:360px;font:400 16px Onest,'Segoe UI',system-ui,sans-serif;color:var(--ink)}.ds-input::placeholder{color:var(--muted)}.ds-input:focus{border-color:var(--act);outline:none;box-shadow:0 0 0 3px color-mix(in oklab,var(--act) 22%,transparent)}"
     },
     {
-      "name": "Tab Bar",
+      "name": "Bottom Tabs",
       "kind": "nav",
-      "refersTo": "segment-pressed",
-      "description": "Phone bottom tabs on board blue; current tab carries the amber bar.",
-      "html": "<nav class=\"ds-tabs\"><a aria-current=\"page\" href=\"#\">Practise</a><a href=\"#\">Takes</a><a href=\"#\">Vocabulary</a><a href=\"#\">Settings</a></nav>",
-      "css": ".ds-tabs{display:grid;grid-template-columns:repeat(4,1fr);height:60px;background:var(--board);font:500 12px Onest,\"Segoe UI\",system-ui,sans-serif}.ds-tabs a{position:relative;display:flex;align-items:center;justify-content:center;color:var(--on-board-muted);text-decoration:none}.ds-tabs a:hover{color:var(--on-board)}.ds-tabs a:focus-visible{outline:2px solid var(--signal);outline-offset:-4px}.ds-tabs a[aria-current=page]{color:var(--on-board);font-weight:650}.ds-tabs a[aria-current=page]::before{content:\"\";position:absolute;top:0;left:22%;right:22%;height:3px;background:var(--signal);border-radius:0 0 3px 3px}"
-    },
-    {
-      "name": "Departure Board",
-      "kind": "custom",
-      "refersTo": "departure-row",
-      "description": "Home timetable: duration, mode, what is left.",
-      "html": "<div class=\"ds-board\"><div class=\"ds-bh\"><span>Time</span><span>Practice</span><span>Status</span><span></span></div><a class=\"ds-dep\" href=\"#\"><span class=\"ds-time\">10<small>min</small></span><span><b class=\"ds-name\">Weak spots</b><span class=\"ds-what\">Low scores first.</span></span><span class=\"ds-left\"><b>6</b><small>to redo</small></span><span class=\"ds-go\">&rarr;</span></a><a class=\"ds-dep\" href=\"#\"><span class=\"ds-time\">5<small>min</small></span><span><b class=\"ds-name\">Vocabulary</b><span class=\"ds-what\">Phrases to review.</span></span><span class=\"ds-left\"><b class=\"ds-now\">2</b><small>phrases due</small></span><span class=\"ds-go\">&rarr;</span></a></div>",
-      "css": ".ds-board{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-family:Onest,\"Segoe UI\",system-ui,sans-serif;color:var(--ink)}.ds-bh,.ds-dep{display:grid;grid-template-columns:64px minmax(0,1fr) auto 18px;gap:0 14px;align-items:center}.ds-bh{padding:8px 16px;background:var(--board);color:var(--on-board-muted);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}.ds-bh span:nth-child(3){text-align:right}.ds-dep{padding:14px 16px;min-height:84px;border-top:1px solid var(--line);color:inherit;text-decoration:none}.ds-bh+.ds-dep{border-top:0}.ds-dep:hover{background:var(--sunken)}.ds-dep:hover .ds-go{color:var(--ink);transform:translateX(2px)}.ds-dep:focus-visible{outline:2px solid var(--act);outline-offset:-2px}.ds-time{font-weight:700;font-size:32px;line-height:1;letter-spacing:-.04em}.ds-time small{display:block;letter-spacing:0;font-size:12.5px;font-weight:500;color:var(--muted);margin-top:4px}.ds-name{display:block;font-size:18px;font-weight:650}.ds-what{display:block;font-size:14px;color:var(--muted)}.ds-left{text-align:right}.ds-left b{display:block;font-size:24px;font-weight:700;line-height:1}.ds-left b.ds-now{color:var(--signal-ink)}.ds-left small{font-size:12.5px;color:var(--muted)}.ds-go{color:var(--line-strong);transition:transform .15s,color .15s}"
-    },
-    {
-      "name": "Part Badges",
-      "kind": "chip",
-      "refersTo": "part-badge-1",
-      "description": "Square route-number badges for Parts 1, 2, 3.",
-      "html": "<span class=\"ds-pill\"><b>1</b>Part 1</span> <span class=\"ds-pill ds-p2\"><b>2</b>Part 2</span> <span class=\"ds-pill ds-p3\"><b>3</b>Part 3</span>",
-      "css": ".ds-pill{display:inline-flex;align-items:center;gap:6px;font:600 13px Onest,\"Segoe UI\",system-ui,sans-serif;color:var(--muted)}.ds-pill b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:5px;background:var(--p1);color:var(--on-part);font-weight:700;font-size:15px;line-height:1}.ds-p2 b{background:var(--p2)}.ds-p3 b{background:var(--p3)}"
-    },
-    {
-      "name": "Band Chips",
-      "kind": "chip",
-      "refersTo": "band-mid",
-      "description": "Band estimates: low ochre, mid neutral, high green.",
-      "html": "<span class=\"ds-band ds-lo\">5.5</span> <span class=\"ds-band\">6.5</span> <span class=\"ds-band ds-hi\">7.5</span>",
-      "css": ".ds-band{display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:28px;padding:0 8px;border-radius:6px;font:700 17px Onest,\"Segoe UI\",system-ui,sans-serif;background:var(--sunken);color:var(--ink)}.ds-lo{background:var(--warn-soft);color:var(--warn)}.ds-hi{background:var(--ok-soft);color:var(--ok)}"
-    },
-    {
-      "name": "Record Dock",
-      "kind": "custom",
-      "refersTo": "record-dock-live",
-      "description": "Thumb-zone record control; turns red-tinted only while live.",
-      "html": "<div class=\"ds-dock ds-live\"><button class=\"ds-rec\" aria-label=\"Stop\"><svg viewBox=\"0 0 24 24\" width=\"28\" height=\"28\"><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\" fill=\"currentColor\"/></svg></button><div class=\"ds-dt\"><span>0:42</span><small>of 2:00</small></div></div>",
-      "css": ".ds-dock{display:flex;align-items:center;gap:14px;padding:10px 16px;min-height:88px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 18px color-mix(in oklab,var(--ink) 7%,transparent);font-family:Onest,\"Segoe UI\",system-ui,sans-serif;color:var(--ink)}.ds-dock.ds-live{background:var(--rec-soft);border-top-color:var(--rec)}.ds-rec{width:64px;height:64px;border-radius:50%;border:0;background:var(--rec);color:var(--on-rec);display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px color-mix(in oklab,var(--rec) 30%,transparent)}.ds-live .ds-rec{animation:ds-pulse 1.4s ease-in-out infinite}.ds-rec:focus-visible{outline:2px solid var(--act);outline-offset:2px}@keyframes ds-pulse{50%{box-shadow:0 0 0 9px color-mix(in oklab,var(--rec) 20%,transparent)}}.ds-dt{display:flex;flex-direction:column}.ds-dt span{font-weight:700;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}.ds-dt small{font-size:13px;color:var(--muted)}"
+      "refersTo": "",
+      "description": "Four tabs; active tab is navy with a 3px navy bar on top (left edge on the 96px rail).",
+      "html": "<nav class=\"ds-tabs\"><a aria-current=\"page\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M3 11l9-7 9 7v9H3z\"/></svg><span>Today</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6M12 17h.01\"/></svg><span>Questions</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"/></svg><span>My answers</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H4zM20 5h-4a2 2 0 0 0-2 2\"/></svg><span>Words</span></a></nav>",
+      "css": ".ds-tabs{display:grid;grid-template-columns:repeat(4,1fr);height:64px;max-width:420px;background:var(--surface);border-top:1px solid var(--line);font-family:Onest,'Segoe UI',system-ui,sans-serif}.ds-tabs a{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none}.ds-tabs a:hover{color:var(--ink)}.ds-tabs a:focus-visible{outline:2px solid var(--act);outline-offset:-2px}.ds-tabs svg{width:22px;height:22px}.ds-tabs a[aria-current=page]{color:var(--board);font-weight:700}.ds-tabs a[aria-current=page]::before{content:'';position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--board)}"
     }
   ],
   "narrative": {
-    "northStar": "The Station Board",
-    "overview": "**Creative North Star: \"The Station Board\"**\n\nThe app reads like the departure hall of a Kazakh railway station. A deep board-blue band runs across the top and, on phones, across the bottom; between them is a cool near-white floor of ruled rows. The home screen is a timetable: each practice mode is a departure, its duration sits in the time column, and what is left for it sits in the status column. Exam day is the one fixed departure in the header, counted down in bold numerals.\n\nDensity is moderate and practical: rows are tall enough to hit with a thumb (56 to 84px), type is one family at a small number of weights, and colour is spent only where it carries information. Blue means the board and the action. Amber means now or next. Red means the microphone. Teal, orange and violet are the three lines (Parts 1, 2, 3). Everything else is ink on paper.\n\nProgress is shown as plain facts and counts, never as rewards: there are no rings, streak flames, trophies, confetti or celebratory colour anywhere in the build.",
+    "northStar": "The Quiet Test Room",
+    "overview": "A white, calm room with one job in it: say the next answer out loud. The page is plain white and pale blue-grey; colour is spent on meaning, never on decoration. Each strong colour has exactly one job (blue acts, navy marks where you are, amber marks what is next, red means the microphone is on), so a user can read the state of the screen from colour alone. The only constant chrome is a white header carrying the test-date chip, because the date is the reason the app exists.\n\nDensity is moderate and phone-first: one column, 44px touch targets, a bottom tab bar of four (Today / Questions / My answers / Words) with settings behind a gear. On a computer (900px and up) the same components stay the same size; the tab bar becomes a 96px left rail and pages split into a main column and a side column. Nothing grows into a dashboard.\n\nProgress is shown as plain measured facts (seconds spoken, pauses, band estimates from the coach) and never as a game. There are no streaks, points, badges, confetti or daily targets. The coach costs a request and runs only when the user presses its button.",
     "keyCharacteristics": [
-      "Board-blue header and tab bar framing a cool near-white ground.",
-      "One typeface, Onest, with bold numerals for every time, duration and countdown.",
-      "Rows divided by 1px rules inside lightly bordered containers; depth is mostly flat.",
-      "Amber kept for now/next, red kept for recording, part line colours kept for part identity.",
-      "Full light and dark themes from the same OKLCH token set, hue 262 for every neutral."
+      "White header and surfaces on a cool off-white page (hue 262 throughout the neutrals).",
+      "One family, Onest variable, for everything, including timers.",
+      "Colour by job: act blue, board navy, signal amber, record red, three part colours.",
+      "Part identity carried by 22px numeral badges, not by tinted screens.",
+      "A length-zone bar per part is the main piece of feedback while speaking.",
+      "Flat surfaces with 1px hairlines; shadows only on things that float.",
+      "Full light and dark themes from the same token names."
     ],
     "rules": [
       {
-        "name": "The Now-and-Next Rule",
-        "body": "Amber marks only what is current or due: days left, the selected tab, the current mock stop, phrases due today. A count of zero or a past item is never amber.",
+        "name": "The One Job Per Colour Rule",
+        "body": "Blue acts, navy marks the current place or selection, amber marks what is next or unset, red means recording. Never borrow one colour for another job; a primary button is never navy, a selected chip is never blue.",
         "section": "colors"
       },
       {
-        "name": "The Live Red Rule",
-        "body": "The record button is red at rest by convention. The 3px red line under the header and the red-tinted dock appear only while a recording is live, and go away when it stops.",
+        "name": "The Red Means Live Rule",
+        "body": "Record red appears only on the record control, the live-recording dock and header line, and the level meter. Destructive text buttons use `rec-ink` as text only, with no red fill.",
         "section": "colors"
       },
       {
-        "name": "The Line Colour Rule",
-        "body": "Teal, orange and violet identify Parts 1, 2 and 3 and nothing else: badges, mock-test stops, coverage meters.",
+        "name": "The Two Ambers Rule",
+        "body": "`signal` (bright, yellow-amber) is \"next / due / unset\". `warn` (dark, brown-amber) is \"too short / check this\". They do not swap.",
         "section": "colors"
       },
       {
-        "name": "The Bold Numeral Rule",
-        "body": "Times, durations, counts and countdowns are Onest 700. Digits are proportional everywhere except timers that tick (record, dock, prep, mock clock), which use tabular figures so they do not jitter.",
+        "name": "The Proportional Digits Rule",
+        "body": "Body text sets `proportional-nums`. Only ticking timers and counters (`tabular-nums`) get fixed-width digits, so they do not jitter while counting.",
         "section": "typography"
       },
       {
-        "name": "The Station Header Rule",
-        "body": "Uppercase tracked text is the board's column header and nowhere else.",
+        "name": "The Weight Not Size Rule",
+        "body": "Hierarchy comes from weight steps between 500 and 700 and a short size range (12.5px to 30px); the only large type is a running timer.",
         "section": "typography"
       },
       {
-        "name": "The Ruled Rows Rule",
-        "body": "Rows are divided by 1px rules, not by gaps between floating cards. A new surface earns a shadow only if it sits above the page.",
+        "name": "The Only Floaters Cast Shadows Rule",
+        "body": "Cards, lists and buttons never carry a shadow. If it does not sit above the page (sheet, modal, toast, record button), it is flat.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "**Do** set every time, duration and countdown in Onest 700, tabular only when it ticks.",
-      "**Do** keep amber for now/next: days left, current tab, current mock stop, phrases due.",
-      "**Do** keep the record button red at rest and switch the header line and dock to red only while live.",
-      "**Do** mark Parts 1, 2, 3 with teal, orange and violet square numeral badges and matching mock stops.",
-      "**Do** divide rows with 1px rules inside one bordered container; keep controls at 44px or taller.",
-      "**Do** take every colour from the OKLCH tokens so light and dark themes both hold."
+      "Do keep the header white and put the test-date chip in it on every main screen; switch it to the amber \"Set test date\" state when the date is missing.",
+      "Do use Action Blue for the single primary button of a view, and Board Navy only for the active tab marker, the selected chip or pill, and the current item.",
+      "Do label every question with its 22px part badge in teal (1), orange (2) or violet (3).",
+      "Do show the length zone bar for the question's part while recording, with the ranges Part 1 20-30 s, Part 2 90-120 s, Part 3 45-60 s.",
+      "Do report progress as measured facts (seconds, pauses, band estimates) in plain sentences.",
+      "Do use `tabular-nums` on ticking timers and counters only.",
+      "Do keep touch targets at 44px and reuse the same components on phone and computer; only the shell (tabs to 96px rail) and column count change.",
+      "Do honour `prefers-reduced-motion`: the build turns off all animation and transitions under it."
     ],
     "donts": [
-      "**Don't** add game mechanics or their visuals: streaks, badges, goal rings, confetti, celebratory colour.",
-      "**Don't** use amber for decoration, emphasis, warnings or zero counts.",
-      "**Don't** use red anywhere but recording, pause marks and destructive actions.",
-      "**Don't** reuse the part line colours for anything other than part identity.",
-      "**Don't** add uppercase tracked labels outside the departure board's column header.",
-      "**Don't** put shadows on cards or rows; shadows belong to the sheet, modal, toast, dock and record button.",
-      "**Don't** add a second typeface."
+      "Don't use red for anything except the record control, the live recording state and the level meter.",
+      "Don't use Signal Amber for warnings or Warn amber for \"next\"; the two ambers have separate jobs.",
+      "Don't add game mechanics: no streaks, points, badges, confetti, celebratory copy or daily targets.",
+      "Don't run the coach automatically; it runs only when the user presses \"Check with coach\".",
+      "Don't put shadows on cards, lists or buttons.",
+      "Don't tint whole screens or cards with a part colour; part colour lives on the badge.",
+      "Don't add a second typeface; timers and labels are Onest too.",
+      "Don't add small uppercase labels or kickers above headings; the \"Start here\" line on the first-run Today card is a known exception in the build, not a pattern."
     ]
   }
 }
