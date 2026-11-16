@@ -1,5 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { encode as msgpack } from "npm:@msgpack/msgpack@3";
+import { encodeBase64, decodeBase64 } from "jsr:@std/encoding@1/base64";
 
 const URL = Deno.env.get("SUPABASE_URL")!;
 const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -213,6 +215,60 @@ Return ONLY JSON: {"question": "...", "heard_ok": true}`;
   return { question: String(r.data.question || "").trim(), heard_ok: r.data.heard_ok !== false, model: r.model, usage };
 }
 
+/* ---------------- voice cloning test (admin only) ---------------- */
+const VOICE_MODELS: Record<string, { key: string; label: string }> = {
+  fish: { key: "fish_key", label: "Fish Audio S2.1 Pro (free)" },
+  f5: { key: "fal_key", label: "F5-TTS on fal" },
+  chatterbox: { key: "fal_key", label: "Chatterbox HD on fal" },
+};
+async function voiceTest(body: any) {
+  const m = VOICE_MODELS[body.provider];
+  if (!m) throw Object.assign(new Error("Unknown model."), { code: "bad_request" });
+  const key = await cfg(m.key);
+  if (!key) throw Object.assign(new Error(`No ${m.key === "fish_key" ? "Fish Audio" : "fal"} key saved yet.`), { code: "no_key" });
+  const text = String(body.text || "").trim().slice(0, 1500);
+  if (!text || typeof body.ref_audio !== "string") throw Object.assign(new Error("Need a voice sample and some text."), { code: "bad_request" });
+  const bytes = decodeBase64(body.ref_audio);
+  let refText = String(body.ref_text || "").trim();
+  if (!refText && body.provider === "fish") {
+    try {
+      const r = await gemini([{ text: 'Transcribe this English speech exactly as spoken, without fillers like um or uh. Return ONLY JSON {"text": "..."}' }, { inline_data: { mime_type: "audio/wav", data: body.ref_audio } }], true, 0);
+      refText = String(r.data.text || "").trim();
+    } catch { /* Fish can work without it */ }
+  }
+  const t0 = Date.now();
+  if (body.provider === "fish") {
+    const r = await fetch("https://api.fish.audio/v1/tts", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/msgpack", model: "s2.1-pro-free" },
+      body: msgpack({ text, references: [{ audio: bytes, text: refText }], format: "mp3", mp3_bitrate: 128, normalize: true, latency: "normal" }),
+    });
+    if (!r.ok) throw Object.assign(new Error("Fish Audio: " + (await r.text()).slice(0, 300)), { code: "voice_error" });
+    const ab = new Uint8Array(await r.arrayBuffer());
+    return { audio: encodeBase64(ab), mime: r.headers.get("content-type") || "audio/mpeg", ms: Date.now() - t0, ref_text: refText };
+  }
+  // fal models need the sample at a URL: put it in storage for 10 minutes
+  const path = `voicelab/${crypto.randomUUID()}.wav`;
+  const up = await admin.storage.from("recordings").upload(path, bytes, { contentType: "audio/wav", upsert: true });
+  if (up.error) throw up.error;
+  try {
+    const { data: su, error: se } = await admin.storage.from("recordings").createSignedUrl(path, 600);
+    if (se || !su) throw se || new Error("Could not share the sample.");
+    const [endpoint, input] = body.provider === "f5"
+      ? ["fal-ai/f5-tts", { gen_text: text, ref_audio_url: su.signedUrl, ref_text: refText, model_type: "F5-TTS", remove_silence: true }]
+      : ["resemble-ai/chatterboxhd/text-to-speech", { text, audio_url: su.signedUrl, high_quality_audio: true, exaggeration: 0.4, cfg: 0.5 }];
+    const r = await fetch(`https://fal.run/${endpoint}`, { method: "POST", headers: { Authorization: `Key ${key}`, "Content-Type": "application/json" }, body: JSON.stringify(input) });
+    const t = await r.text();
+    if (!r.ok) throw Object.assign(new Error("fal: " + t.slice(0, 300)), { code: "voice_error" });
+    const d = JSON.parse(t);
+    const url = d.audio_url?.url || d.audio?.url;
+    if (!url) throw Object.assign(new Error("fal returned no audio."), { code: "voice_error" });
+    return { url, ms: Date.now() - t0, ref_text: refText };
+  } finally {
+    await admin.storage.from("recordings").remove([path]);
+  }
+}
+
 /* ---------------- handler ---------------- */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -269,7 +325,7 @@ Deno.serve(async (req) => {
           const u = byEmail.get(emailOf(a.username));
           return { username: a.username, admin: a.is_admin, note: a.note, added: a.added_at, joined: !!u, last: u?.last_sign_in_at || null, mustChange: !!u?.user_metadata?.must_change, takes: u ? cnt.get(u.id) || 0 : 0, ai: u ? ai.get(u.id) || 0 : 0 };
         }),
-        config: { hasKey: !!key, keyHint: key ? "…" + key.slice(-4) : "", daily_limit: await cfg("daily_limit", "60"), model: await cfg("model", "gemini-flash-latest") },
+        config: { hasKey: !!key, keyHint: key ? "…" + key.slice(-4) : "", hasFish: !!(await cfg("fish_key")), hasFal: !!(await cfg("fal_key")), daily_limit: await cfg("daily_limit", "60"), model: await cfg("model", "gemini-flash-latest") },
       });
     }
     if (action === "admin_add") {
@@ -314,10 +370,14 @@ Deno.serve(async (req) => {
         const k = body.gemini_key.trim();
         if (k) await setCfg("gemini_key", k); else await admin.from("app_config").delete().eq("key", "gemini_key");
       }
+      for (const k of ["fish_key", "fal_key"]) {
+        if (typeof body[k] === "string") { const v = body[k].trim(); if (v) await setCfg(k, v); else await admin.from("app_config").delete().eq("key", k); }
+      }
       if (body.daily_limit) await setCfg("daily_limit", String(Math.max(1, Math.min(1000, parseInt(body.daily_limit) || 60))));
       if (body.model) await setCfg("model", String(body.model).trim());
       return j({ ok: true });
     }
+    if (action === "voicetest") return j(await voiceTest(body));
     if (action === "admin_test") {
       const r = await gemini([{ text: "Reply with exactly: ok" }], false, 0);
       return j({ ok: true, reply: r.text.trim().slice(0, 40), model: r.model });

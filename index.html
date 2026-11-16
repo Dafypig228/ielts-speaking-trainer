@@ -454,6 +454,13 @@ mark.voc{background:var(--act-soft);color:inherit;border-radius:4px;padding:0 2p
 .coachin{gap:14px}
 .coachin .fixfirst,.coachin .bandbox{box-shadow:none}
 
+/* voice test bench */
+.vlgrid{display:grid;gap:14px}
+@media (min-width:900px){.vlgrid{grid-template-columns:1fr 1fr}}
+.vlab h3{font-size:16px}
+.vlres{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.vlres input[type=checkbox]{width:20px;height:20px;flex:none}
+
 </style>
 </head>
 <body>
@@ -4001,6 +4008,97 @@ document.addEventListener('click', e => {
     case 'setgoal': S.set.goal = +d.v; saveMeta(); render(); toast(`Goal: band ${fmtB(+d.v)}. The next coach check aims at it.`); break;
     case 'vers': VERS[d.a] = d.v; render(); break;
     case 'seekp': { const dur = +d.d || 1; seekAtt(d.a, Math.max(0, +d.t - 1.5) / dur, dur); break; }
+  }
+});
+
+/* ================= v10: voice cloning test bench (Admin) ================= */
+const VL = {ref: null, refText: '', text: '', pick: '', res: {}, busy: false, models: {fish: true, f5: true, chatterbox: true}};
+const VL_MODELS = [
+  ['fish', 'Fish Audio S2.1 Pro', 'free right now', 0, 'fish'],
+  ['f5', 'F5-TTS (on fal)', '$0.05 per 1,000 characters', 0.05, 'fal'],
+  ['chatterbox', 'Chatterbox HD (on fal)', '$0.04 per 1,000 characters', 0.04, 'fal'],
+];
+async function vlDecode(blob, name) {
+  const ab = await blob.arrayBuffer();
+  const AC = window.AudioContext || window.webkitAudioContext; const ctx = new AC();
+  const buf = await new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej));
+  try { ctx.close(); } catch {}
+  const sr = 24000, len = Math.min(buf.duration, 20);
+  const off = new OfflineAudioContext(1, Math.ceil(len * sr), sr);
+  const src = off.createBufferSource(); src.buffer = buf; src.connect(off.destination); src.start(0);
+  const out = await off.startRendering();
+  const pcm = out.getChannelData(0);
+  let peak = 0; for (let i = 0; i < pcm.length; i++) peak = Math.max(peak, Math.abs(pcm[i]));
+  if (peak > 0 && peak < 0.5) for (let i = 0; i < pcm.length; i++) pcm[i] = pcm[i] / peak * 0.8;   // even out quiet phone recordings
+  const b64 = wavB64(pcm, sr);
+  if (VL.ref && VL.ref.url) URL.revokeObjectURL(VL.ref.url);
+  VL.ref = {b64, dur: len, full: buf.duration, name, url: URL.createObjectURL(new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], {type: 'audio/wav'}))};
+}
+function vlAnswers() {
+  return allAttempts().filter(a => a.asset || a.local || a.blob || a.rpath).sort((a, b) => b.ts - a.ts).slice(0, 15);
+}
+function voiceLab() {
+  const c = (AD.data && AD.data.config) || {};
+  const chars = (VL.text || '').length;
+  const ans = vlAnswers();
+  const lastCoach = allAttempts().filter(a => a.ai && a.ai.natural_version).sort((a, b) => b.ts - a.ts)[0];
+  const key = (id, label, has, hint) => `<div class="stack" style="gap:6px"><div class="row"><span class="grow" style="font-weight:600">${label}</span><span class="chip ${has ? 'ok' : 'warn'}">${has ? 'Key saved' : 'No key yet'}</span></div>
+    <div class="small muted">${hint}</div><div class="row" style="flex-wrap:nowrap"><input type="password" id="vk_${id}" autocomplete="off" placeholder="${has ? 'Paste a new key to replace it' : 'Paste the key'}" style="flex:1;min-width:0"><button class="btn" data-act="vlkey" data-k="${id}">Save</button></div></div>`;
+  const resRow = ([id, label, price, rate]) => {
+    const r = VL.res[id];
+    const cost = rate ? ` · ≈ $${(chars / 1000 * rate).toFixed(3)} for this text` : '';
+    return `<div class="vlres"><label class="row" style="gap:10px;flex-wrap:nowrap"><input type="checkbox" data-act="vlmodel" data-m="${id}" ${VL.models[id] ? 'checked' : ''}><span class="grow"><b>${label}</b><span class="small muted" style="display:block">${price}${cost}</span></span></label>
+      ${r ? (r.busy ? '<div class="small muted">Making the audio… (5–40 s)</div>' : r.err ? `<div class="small" style="color:var(--rec)">${esc(r.err)}</div>` : `<audio controls src="${esc(r.src)}" style="width:100%"></audio><div class="small muted">${(r.ms / 1000).toFixed(1)} s to make</div>`) : ''}</div>`;
+  };
+  return `<div class="card stack vlab" style="gap:14px;margin-top:16px"><div><h2>Voice test: your voice saying the better answer</h2><p class="small muted" style="margin:4px 0 0">Give it 10–20 s of you talking and a text. Each model then says that text in your voice so you can compare. Only admins see this.</p></div>
+    <div class="vlgrid">${key('fish', 'Fish Audio key', c.hasFish, 'fish.audio → sign in → API keys. The S2.1 Pro model is free at the moment.')}${key('fal', 'fal key', c.hasFal, 'fal.ai → sign in → Keys. Pay per use; one key covers F5-TTS and Chatterbox.')}</div>
+    <section class="stack" style="gap:8px"><h3 style="margin:0">1. Your voice sample</h3>
+      <div class="row"><label class="btn" style="cursor:pointer">${I.up} Upload a recording<input type="file" accept="audio/*,video/*" data-act="vlfile" hidden></label>
+        <select data-act="vlpick" aria-label="Or use one of your answers" style="flex:1;min-width:200px"><option value="">…or use one of your answers</option>${ans.map(a => `<option value="${a.id}" ${VL.pick === a.id ? 'selected' : ''}>${esc(qShort(Q.get(a.qid) || {t: '?'}).slice(0, 60))} · ${fmt(a.dur)}</option>`).join('')}</select></div>
+      ${VL.ref ? `<div class="row small" style="flex-wrap:nowrap"><audio controls src="${VL.ref.url}" style="flex:1;min-width:0"></audio><span class="muted">${VL.ref.dur.toFixed(0)} s${VL.ref.full > VL.ref.dur + .5 ? ' (first 20 s)' : ''}</span></div>` : '<div class="small muted">Best: you talking calmly, no music, close to the mic, 10–20 s.</div>'}
+      <textarea id="vlRefText" rows="2" placeholder="What you say in the sample (optional: leave empty and it's transcribed automatically)">${esc(VL.refText)}</textarea></section>
+    <section class="stack" style="gap:8px"><div class="row"><h3 class="grow" style="margin:0">2. The text to say</h3>${lastCoach ? `<button class="btn sm" data-act="vllast">Use my last “Try it like this”</button>` : ''}</div>
+      <textarea id="vlText" rows="4" placeholder="Paste the corrected answer here">${esc(VL.text)}</textarea><div class="small muted">${chars} characters</div></section>
+    <section class="stack" style="gap:8px"><h3 style="margin:0">3. Models</h3>${VL_MODELS.map(resRow).join('')}
+      <div><button class="btn primary" data-act="vlgo" ${VL.busy ? 'disabled' : ''}>${VL.busy ? 'Working…' : 'Make the audio'}</button></div></section></div>`;
+}
+const viewAdmin_v9 = viewAdmin;
+viewAdmin = function () { const h = viewAdmin_v9(); return SB.me && SB.me.admin ? h.replace(/<\/div>\s*$/, voiceLab() + '</div>') : h; };
+function vlSync() { const a = $('#vlText'), b = $('#vlRefText'); if (a) VL.text = a.value; if (b) VL.refText = b.value; }
+async function vlGo() {
+  vlSync();
+  if (!VL.ref) return toast('Add a voice sample first.');
+  if (!VL.text.trim()) return toast('Add the text to say.');
+  const ms = VL_MODELS.filter(m => VL.models[m[0]]);
+  if (!ms.length) return toast('Tick at least one model.');
+  VL.busy = true; ms.forEach(m => VL.res[m[0]] = {busy: true}); render();
+  await Promise.all(ms.map(async ([id]) => {
+    try {
+      const r = await api('voicetest', {provider: id, text: VL.text, ref_audio: VL.ref.b64, ref_text: VL.refText});
+      if (r.ref_text && !VL.refText) VL.refText = r.ref_text;
+      VL.res[id] = {src: r.url || `data:${r.mime || 'audio/mpeg'};base64,${r.audio}`, ms: r.ms};
+    } catch (e) { VL.res[id] = {err: e.message || 'Failed.'}; }
+    render();
+  }));
+  VL.busy = false; render();
+}
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const d = el.dataset;
+  switch (d.act) {
+    case 'vlkey': { vlSync(); const v = (($('#vk_' + d.k) || {}).value || '').trim(); if (!v) { toast('Paste the key first.'); break; } adminDo('admin_config', {[d.k + '_key']: v}, 'Key saved.'); break; }
+    case 'vllast': { vlSync(); const a = allAttempts().filter(x => x.ai && x.ai.natural_version).sort((x, y) => y.ts - x.ts)[0]; if (a) { VL.text = a.ai.natural_version; render(); } break; }
+    case 'vlgo': vlGo(); break;
+  }
+});
+document.addEventListener('change', async e => {
+  const t = e.target, act = t.dataset && t.dataset.act;
+  if (act === 'vlmodel') { VL.models[t.dataset.m] = t.checked; return; }
+  if (act === 'vlfile' && t.files && t.files[0]) { vlSync(); try { await vlDecode(t.files[0], t.files[0].name); VL.pick = ''; VL.res = {}; render(); } catch { toast("Couldn't read that file. Try an mp3, m4a or wav."); } return; }
+  if (act === 'vlpick' && t.value) {
+    vlSync(); const a = getAtt(t.value); if (!a) return;
+    try { const u = await getUrl(a); if (!u) throw 0; const blob = await (await fetch(u)).blob(); await vlDecode(blob, 'answer'); VL.pick = a.id; VL.res = {}; if (a.ai && a.ai.transcript && a.dur <= 20) VL.refText = a.ai.transcript.replace(/\[pause[^\]]*\]/gi, '').replace(/\b(um+|uh+|erm|er)\b,?/gi, '').replace(/\s+/g, ' ').trim(); render(); }
+    catch { toast("Couldn't load that recording."); }
   }
 });
 
