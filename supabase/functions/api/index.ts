@@ -122,7 +122,9 @@ function fmtPauses(stats: any) {
 async function analyze(body: any, userId: string) {
   const q = body.question || {};
   const usage = await bumpUsage(userId);
-  const target = body.target ? `\nThe student was challenged to use this naturally in the answer: "${body.target}". Say whether they used it and whether it sounded natural.` : "";
+  const targets: string[] = Array.isArray(body.targets) ? body.targets.filter((x: unknown) => typeof x === "string").slice(0, 4) : [];
+  const target = (body.target ? `\nThe student was challenged to use this naturally in the answer: "${body.target}". Say whether they used it and whether it sounded natural.` : "") +
+    (targets.length ? `\nBefore answering, the app suggested these phrases: ${targets.map((t) => `"${t}"`).join(", ")}.` : "");
   const prompt = `${STYLE}
 
 ${COURSE}
@@ -138,10 +140,13 @@ Listen carefully to the audio, then return ONLY a JSON object with these keys:
 "summary": 2-3 sentences, the most important thing about this answer.
 "fluency": 2-4 sentences about pauses, hesitation, fillers and speed: say where the long pauses were (quote the words around them) and what probably caused them (searching for a word, planning the next idea, grammar).
 "pronunciation": 1-3 sentences about specific words or sounds you actually heard as unclear, wrong word stress, or flat intonation. If it was clear, say so briefly.
-"grammar": array (0-5) of {"said": exact words, "better": corrected version, "why": under 12 words}.
+"fix_first": one or two plain sentences: the single most useful thing to change in THIS answer.
+"grammar": array (0-5) of {"said": exact words, "better": corrected version, "why": under 12 words, "rule": the general rule in 2-6 lowercase words, worded the same way every time for the same kind of mistake (for example "like + -ing", "past simple for finished time", "articles a/an/the", "plural -s", "third person -s", "present perfect with since/for")}.
+"repeats": array (0-2) of {"word": a word or filler they overused in this answer (e.g. "very", "good", "like", "basically"), "times": how many times, "instead": 2-3 natural alternatives}. Empty array if nothing was overused.
+"used_targets": array with one item per suggested phrase, in the same order: {"phrase": the phrase, "used": true if they used it or a close natural variant}. Empty array if no phrases were suggested.
 "vocab": array (2-6) of {"said": their plain or awkward phrase, "better": [1-3 more natural or precise alternatives], "note": when you'd use it, under 15 words}.
 "natural_version": their answer rewritten the way a confident band 8 speaker would actually SAY it, keeping their own ideas, facts and personal details, similar length, spoken style.
-"phrases": array of 3-4 useful phrases for this topic: {"phrase": ..., "meaning_ru": short Russian meaning, "example": one natural spoken example}.
+"phrases": array of 3-4 useful phrases for this topic: {"phrase": ..., "meaning_en": short plain-English meaning, "meaning_ru": short Russian meaning, "example": one natural spoken example}.
 "next_time": one concrete thing to do differently next time.`;
   const parts: any[] = [{ text: prompt }];
   if (body.audio) parts.push({ inline_data: { mime_type: body.mime || "audio/wav", data: body.audio } });
@@ -164,7 +169,7 @@ ${questionText(q)}
 
 Return ONLY a JSON object:
 "angles": 3 different directions they could take, one sentence each, concrete (real-life details a teenager in Kazakhstan might actually have).
-"phrases": 6 natural phrases or collocations for this topic: {"phrase", "meaning_ru", "example"}.
+"phrases": 6 natural phrases or collocations for this topic: {"phrase", "meaning_en", "meaning_ru", "example"}.
 "opening": one natural first sentence (not a template like "That's an interesting question").
 "sample": a sample answer as a real person would say it out loud (${q.part === 2 ? "about 230-260 words, covering every bullet, with a small personal story" : q.part === 3 ? "about 90-120 words, a clear view, a reason and an example" : "about 45-60 words"}). Use contractions and normal spoken rhythm.
 ${q.part === 2 ? '"outline": 4 short note lines a student could jot down in the 1 minute of preparation.' : ""}`;
