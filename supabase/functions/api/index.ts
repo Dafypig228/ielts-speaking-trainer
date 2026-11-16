@@ -147,7 +147,10 @@ Listen carefully to the audio, then return ONLY a JSON object with these keys:
 "vocab": array (2-6) of {"said": their plain or awkward phrase, "better": [1-3 more natural or precise alternatives], "note": when you'd use it, under 15 words}.
 "natural_version": their answer rewritten the way a confident band 8 speaker would actually SAY it, keeping their own ideas, facts and personal details, similar length, spoken style.
 "phrases": array of 3-4 useful phrases for this topic: {"phrase": ..., "meaning_en": short plain-English meaning, "meaning_ru": short Russian meaning, "example": one natural spoken example}.
-"next_time": one concrete thing to do differently next time.`;
+"next_time": one concrete thing to do differently next time.
+"audio_quality": "ok" if the speech is clear enough to judge individual sounds; "noisy" if background noise, music or other voices make sounds hard to judge; "quiet" if the voice is too quiet or far from the microphone.
+"pron_words": array (0-5) of {"word": the word as it should be said, "heard": how it actually sounded, as a simple respelling (e.g. "VEJ-uh-tuh-bul", "zis" for "this"), "tip": how to fix it, under 12 words}. Only words you clearly heard said wrongly (sounds or word stress). If audio_quality is not "ok", return [] and say in "pronunciation" that the recording was too noisy or quiet to judge sounds.
+"follow_up": ${q.part === 3 ? 'one follow-up question a real examiner would ask next, picking up something specific the candidate said (ask why, for an example, a comparison, or about society or the future). Natural spoken English, at most 20 words.' : 'empty string ""'}`;
   const parts: any[] = [{ text: prompt }];
   if (body.audio) parts.push({ inline_data: { mime_type: body.mime || "audio/wav", data: body.audio } });
   let r;
@@ -178,6 +181,24 @@ ${q.part === 2 ? '"outline": 4 short note lines a student could jot down in the 
   const data = { ...r.data, model: r.model };
   await admin.from("ideas").upsert({ qid: body.qid, data });
   return { ...data, usage };
+}
+
+async function followup(body: any, userId: string) {
+  const q = body.question || {};
+  const usage = await bumpUsage(userId);
+  const tr = typeof body.transcript === "string" ? body.transcript.slice(0, 4000) : "";
+  const prompt = `You are a friendly, experienced IELTS Speaking examiner in Part 3 (the discussion).
+${questionText(q)}
+${tr ? `The candidate answered: "${tr}"` : "The candidate's answer is in the audio."}
+
+Ask ONE follow-up question the way a real examiner would: pick up something specific the candidate said and ask them to explain why, give an example, compare, or say whether it applies to society or the future. Natural spoken English, at most 20 words, no preamble, no praise.
+If the audio is silent, mostly noise, or not in English, set "question" to "" and "heard_ok" to false.
+Return ONLY JSON: {"question": "...", "heard_ok": true}`;
+  const parts: any[] = [{ text: prompt }];
+  if (!tr && body.audio) parts.push({ inline_data: { mime_type: body.mime || "audio/wav", data: body.audio } });
+  let r;
+  try { r = await gemini(parts, true, 0.7); } catch (e) { await refund(userId, usage.used); throw e; }
+  return { question: String(r.data.question || "").trim(), heard_ok: r.data.heard_ok !== false, model: r.model, usage };
 }
 
 /* ---------------- handler ---------------- */
@@ -211,6 +232,7 @@ Deno.serve(async (req) => {
 
     if (action === "analyze") return j(await analyze(body, user.id));
     if (action === "ideas") return j(await ideas(body, user.id));
+    if (action === "followup") return j(await followup(body, user.id));
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);
       const { data } = await admin.from("ai_usage").select("count").eq("user_id", user.id).eq("day", day).maybeSingle();

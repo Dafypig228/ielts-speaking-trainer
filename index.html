@@ -372,6 +372,47 @@ body.in-session #toast{bottom:calc(112px + env(safe-area-inset-bottom))}
 .tryq .ex{font-size:13.5px;color:var(--muted);line-height:1.4}
 .tryq .why{opacity:.85}
 
+/* model answers */
+.model{padding:0}
+.model>summary{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;list-style:none;min-height:var(--tap)}
+.model>summary::-webkit-details-marker{display:none}
+.model[open]>summary{padding-bottom:6px}
+.model>:not(summary){margin:0 16px 12px}
+.mtext{font-size:15.5px;line-height:1.6;margin:0}
+mark.voc{background:var(--act-soft);color:inherit;border-radius:4px;padding:0 2px}
+.mrow{display:block;padding:0 16px}
+.mrow>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;min-height:52px}
+.mrow>summary::-webkit-details-marker{display:none}
+.mrow>summary svg{width:18px;height:18px;color:var(--muted);transition:transform .15s}
+.mrow[open]>summary svg{transform:rotate(90deg)}
+.mrow .mtext{margin:0 0 10px}
+/* repeat after */
+.rplist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px;counter-reset:rp}
+.rplist li{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:10px;font-size:17px;line-height:1.5;color:var(--muted)}
+.rplist li .s{flex:1}
+.rplist li.cur{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-strong)}
+.rplist li.done{color:var(--muted);opacity:.8}
+.rplist li:not(.cur):not(.done){color:var(--ink)}
+.rpbtns{display:flex;gap:6px;flex:none}
+.rpstate{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.rpstate>svg{width:20px;height:20px;flex:none;color:var(--muted)}
+.rpstate.you{border-color:var(--rec)}.rpstate.you>svg{color:var(--rec)}
+.rpbar{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:-6px}
+.rpbar i{display:block;height:100%;width:100%;background:var(--rec);transform-origin:left;animation:rpshrink linear forwards}
+@keyframes rpshrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.rpbar i{animation:none}}
+/* words to practise saying */
+.pw{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line)}
+.pw:first-of-type{border-top:0}
+/* bands over time */
+.bands{padding:6px 14px}
+.bandrow{display:grid;grid-template-columns:minmax(92px,auto) 1fr auto 44px;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+.bandrow:first-child{border-top:0}
+.bandrow .l{font-size:14px}
+.bandrow svg{width:100%;max-width:220px;height:34px;overflow:visible}
+.bandrow .v{font-size:15px;text-align:right}
+.bandrow .up{color:var(--ok-ink)}.bandrow .down{color:var(--warn-ink)}
+
 </style>
 </head>
 <body>
@@ -2795,6 +2836,7 @@ function viewAfter(q, stage) {
       <div class="note ${h.cls}">${h.html}</div>${P.mode === 'fix' ? fixNote(a) : ''}${coachCTA(a)}`;
     f2 = wide() ? tryUseHTML(q.id) + partListHTML() : '';
   }
+  f1 += afterExtras(q, a);
   const dock = `<div class="dock"><div class="dock-in two"><button class="btn" data-act="pnext">${nextLbl}</button>
     ${stage === 'again' ? `<button class="btn" data-act="pagain">${I.again} Once more</button>` : `<button class="btn primary" data-act="pagain">${I.again} Say it again</button>`}</div></div>`;
   const dock2 = stage === 'again' ? dock.replace(`<button class="btn" data-act="pnext">${nextLbl}</button>`, '').replace('</div></div>', `<button class="btn primary" data-act="pnext">${nextLbl} ${I.next}</button></div></div>`) : dock;
@@ -3317,7 +3359,7 @@ function fitPhrases(qid) {
     return out.slice(0, 3);
   }
   const low = q.t.toLowerCase();
-  const prefer = /\b(prefer|rather|which)\b/.test(low) || /\bor (do|are|is|would|did)\b/.test(low);
+  const prefer = /\b(would you rather|do you prefer|which do you|which (one|kind|type) .*prefer|prefer .* or )/.test(low) || /\bor (do|are|is|would|did)\b/.test(low);
   const change = /\b(change|changed|nowadays|years ago|compared|than before|in the past)\b/.test(low);
   const why = /\bwhy\b/.test(low);
   const memory = !change && !why && /\b(did you|when you were|as a child|childhood|used to|have you (ever|seen|been|had)|last time|first time|kept from)\b/.test(low);
@@ -3345,6 +3387,398 @@ function fitPhrases(qid) {
   }
   return out.slice(0, 3);
 }
+
+/* ================= v8: model answers, repeat-after, follow-ups, pronunciation, bands ================= */
+
+/* ---------- vocabulary from the files ---------- */
+// [phrase, Russian, English meaning, words to find it in a model answer]
+const FILE_VOCAB = [
+  ['Free time', [
+    ['now and then', 'время от времени', 'sometimes'],
+    ['recharge my batteries', 'восстановить силы', 'rest and get energy back'],
+    ['hit the reset button', 'начать с чистого листа', 'start again with a fresh mind', 'hitting the reset button'],
+    ['curl up with a good book', 'устроиться поудобнее с книгой', 'sit comfortably and read a book'],
+    ['kick back', 'расслабиться', 'relax and enjoy yourself'],
+    ['try my hand at', 'попробовать себя в', 'do something for the first time'],
+    ['unwind', 'отдохнуть, снять напряжение', 'relax and stop feeling stressed'],
+    ['whip up a nice dinner', 'быстро приготовить хороший ужин', 'cook a good meal quickly', 'whipped up a nice dinner'],
+    ['a laid-back evening', 'спокойный вечер', 'a relaxed and enjoyable evening', 'laid-back evening'],
+    ['a hectic week', 'суматошная неделя', 'a very busy week'],
+  ]],
+  ['Sleep and late nights', [
+    ['get caught up in', 'увлечься', 'get so involved in something that you forget the time', 'get caught up in'],
+    ['a gripping book', 'захватывающая книга', 'a very interesting and exciting book', 'gripping book'],
+    ['binge-worthy', 'такой, что смотришь серию за серией', 'so good you want to watch many episodes at once'],
+    ['make a habit of', 'иметь привычку', 'do something regularly'],
+    ['from time to time', 'время от времени', 'occasionally'],
+    ['catch up on rest', 'отоспаться', 'get enough sleep after being tired', 'catch up on rest'],
+    ['dive into', 'с головой погрузиться в', 'start doing something with energy'],
+    ['lose track of time', 'потерять счёт времени', 'forget what time it is because you are busy or enjoying yourself'],
+    ['be in the mood for', 'быть в настроении для', 'feel like doing something', 'in the mood for'],
+    ['stay up late', 'засиживаться допоздна', 'go to sleep much later than usual'],
+    ['groggy', 'вялый, сонный', 'tired and confused, especially after waking up'],
+    ['sluggish', 'медлительный, вялый', 'slow and without energy'],
+    ['kick-start my day', 'бодро начать день', 'start my day with energy'],
+  ]],
+  ['Getting around', [
+    ['get around', 'передвигаться', 'travel from place to place'],
+    ['it can be a hassle', 'это может быть морокой', 'it can be difficult and annoying', 'can be a hassle'],
+    ['hop on a bus', 'запрыгнуть в автобус', 'get on a bus quickly', 'hop on a bus'],
+    ['rush hour', 'час пик', 'the busiest time of day for travel'],
+    ['be squashed like a sardine', 'как сельди в бочке', 'be in a very crowded place', 'squashed like a sardine'],
+    ['off-putting', 'отталкивающий', 'unpleasant, makes you not want it'],
+    ["I'm all for...", 'я целиком за...', 'I completely support something', 'all for'],
+    ['cost-effective', 'выгодный', 'cheap but good value'],
+    ["it's a no-brainer", 'это очевидно', 'it is an easy decision', 'no-brainer'],
+  ]],
+  ['Films', [
+    ["That's a tough one!", 'Сложный вопрос!', "that's a difficult question", "tough one"],
+    ['soppy', 'слащавый', 'too sentimental'],
+    ['cheesy', 'банальный, пошлый', 'sentimental in an embarrassing way'],
+    ['a film that sticks with you', 'фильм, который запоминается', 'a film you remember for a long time', 'sticks with you'],
+    ['gravitate towards', 'тяготеть к', 'be naturally attracted to something', 'gravitate towards'],
+    ['be in the spotlight', 'быть в центре внимания', 'be famous and noticed by everyone', 'in the spotlight'],
+  ]],
+];
+for (const [g, l] of FILE_VOCAB) {
+  STUDY.vocab.push([g, l.map(([en, ru]) => [en, ru])]);
+  for (const [en, , mean] of l) STUDY_EN[en] = mean;
+}
+Object.assign(PHRASE_USE, {
+  'now and then': [/\b(how often|often|sometimes|ever)\b/i, 'say how often'],
+  'recharge my batteries': [/\b(relax|rest|free time|weekend|holiday|by yourself|alone|day off|days off|tired)\b/i, 'resting'],
+  'hit the reset button': [/\b(relax|by yourself|alone|break|holiday|day off|new start)\b/i, 'a fresh start'],
+  'curl up with a good book': [/\b(read|books?|evening|by yourself|alone|relax|rainy)\b/i, 'reading to relax'],
+  'kick back': [/\b(relax|weekend|free time|evening|day off|days off|holiday)\b/i, 'relaxing'],
+  'try my hand at': [/\b(new|hobby|hobbies|learn|try|cook|skill|art)\b/i, 'trying something new'],
+  'unwind': [/\b(relax|stress|free time|weekend|evening|park|walk|music|day off|days off|by yourself)\b/i, 'relaxing after stress'],
+  'whip up a nice dinner': [/\b(cook|food|dinner|meal|kitchen)\b/i, 'cooking fast'],
+  'a laid-back evening': [/\b(evening|weekend|relax|free time)\b/i, 'a calm evening'],
+  'a hectic week': [/\b(busy|week|routine|stress|tired|schedule)\b/i, 'a very busy week'],
+  'get caught up in': [/\b(late|night|time|series|book|game|interesting)\b/i, 'absorbed in something'],
+  'a gripping book': [/\b(read|books?|story|novel)\b/i, 'an exciting book'],
+  'binge-worthy': [/\b(tv|series|show|watch|programs?|programmes?|films?|movies?)\b/i, 'a great series'],
+  'make a habit of': [/\b(habit|usually|always|routine|every day|often)\b/i, 'a regular habit'],
+  'from time to time': [/\b(how often|often|sometimes|ever)\b/i, 'say how often'],
+  'catch up on rest': [/\b(sleep|tired|rest|weekend|late)\b/i, 'sleeping more'],
+  'dive into': [/\b(start|hobby|interest|project|new|bored)\b/i, 'starting with energy'],
+  'lose track of time': [/\b(time|computer|internet|phone|game|hobby|read|bored)\b/i, 'forgetting the time'],
+  'be in the mood for': [/\b(feel like|mood|prefer|want to|watch|eat)\b/i, 'feeling like it'],
+  'stay up late': [/\b(late|night|sleep|bed|evening)\b/i, 'going to bed late'],
+  'groggy': [/\b(tired|sleep|morning|wake|late)\b/i, 'tired after waking'],
+  'sluggish': [/\b(tired|sleep|morning|energy|lazy)\b/i, 'slow, no energy'],
+  'kick-start my day': [/\b(morning|breakfast|coffee|routine|wake|start)\b/i, 'starting the day'],
+  'get around': [/\b(transport|travel|bus|car|city|hometown|walk|get to|lost|bike)\b/i, 'moving around a place'],
+  'it can be a hassle': [/\b(difficult|annoy|problem|dislike|don.t like|transport|traffic|park)\b/i, 'something annoying'],
+  'hop on a bus': [/\b(bus|transport|travel|get to|commute)\b/i, 'taking a bus'],
+  'rush hour': [/\b(traffic|transport|bus|commute|morning|busy|crowd)\b/i, 'busy travel time'],
+  'be squashed like a sardine': [/\b(crowd|bus|metro|transport|busy)\b/i, 'very crowded'],
+  'off-putting': [/\b(dislike|don.t like|bad|problem|advert|dirty)\b/i, 'something unpleasant'],
+  "I'm all for...": [/\b(support|agree|should|good idea|future|prefer)\b/i, 'supporting an idea'],
+  'cost-effective': [/\b(cheap|cost|price|money|better|save)\b/i, 'good value'],
+  "it's a no-brainer": [/\b(easy|choose|decision|prefer|should|better)\b/i, 'an easy decision'],
+  "That's a tough one!": [/\b(favou?rite|best|most|which)\b/i, 'a hard choice'],
+  'soppy': [/\b(film|movie|romantic|story)\b/i, 'too sentimental'],
+  'cheesy': [/\b(film|movie|music|song|romantic|advert)\b/i, 'embarrassingly sentimental'],
+  'a film that sticks with you': [/\b(film|movie|remember)\b/i, 'a memorable film'],
+  'gravitate towards': [/\b(young people|people like|prefer|popular|kind of)\b/i, 'naturally liking something'],
+  'be in the spotlight': [/\b(famous|star|celebrit|singer|actor|attention)\b/i, 'being famous'],
+});
+Object.assign(TOPIC_BOOK, {
+  't-f-alone': ['recharge my batteries', 'unwind', 'curl up with a good book', 'kick back', 'hit the reset button'],
+  't-f-late': ['stay up late', 'burn the midnight oil', 'lose track of time', 'groggy', 'catch up on rest'],
+  't-f-transport': ['get around', 'rush hour', 'hop on a bus', 'be squashed like a sardine', 'cost-effective', 'carbon footprint'],
+  't-f-movies': ["That's a tough one!", 'a film that sticks with you', 'gravitate towards', 'be in the spotlight', 'cheesy'],
+  't-f-volunteer': ['go the extra mile', 'have a heart of gold', "broaden one's horizons", 'try my hand at'],
+});
+const preB = (id, l) => { TOPIC_BOOK[id] = [...l, ...(TOPIC_BOOK[id] || []).filter(x => !l.includes(x))]; };
+preB('t-daysoff', ['unwind', 'recharge my batteries', 'kick back']);
+preB('t-hobby', ['try my hand at', 'lose track of time', 'now and then']);
+preB('t-tired', ['groggy', 'catch up on rest', 'stay up late']);
+preB('t-morning', ['kick-start my day', 'groggy']);
+preB('t-routine', ['kick-start my day', 'a hectic week']);
+preB('t-reading', ['curl up with a good book', 'a gripping book']);
+preB('t-travelling', ['get around']);
+preB('t-gettinglost', ['get around']);
+preB('t-parks', ['unwind']);
+preB('t-food', ['whip up a nice dinner']);
+preB('t-bored', ['dive into']);
+preB('t-computers', ['lose track of time']);
+preB('t-sportsprog', ['binge-worthy']);
+preB('t-hometown', ['get around']);
+
+/* ---------- model answers from the files, with their questions added to the bank ---------- */
+const MODELS = [{"topic": "Spending Time by Yourself", "q": "Do you like spending time by yourself?", "a": "Absolutely, I do. I think it’s really important to have some “me time” now and then. It gives me a chance to recharge my batteries and be alone with my thoughts. I actually enjoy the peace and quiet—it’s like hitting the reset button.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Spending Time by Yourself", "q": "How do you usually spend your time by yourself?", "a": "I usually like to curl up with a good book or listen to some of my favorite music. If I’m feeling energetic, I might go for a long walk to clear my head. Other times, I just kick back at home with a movie or try my hand at cooking something new. It’s all about doing whatever helps me unwind and stay balanced.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Spending Time by Yourself", "q": "What did you do last time when you were by yourself?", "a": "The last time I had some time to myself, I spent the whole afternoon sleeping. After that, I whipped up a nice dinner and settled in to watch a movie. It was a perfect, laid-back evening—exactly what I needed to unwind after a hectic week.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Staying Up Late", "q": "Do you sometimes go to bed late?", "a": "Yes, I do occasionally go to bed late, especially if I get caught up in something interesting, like a gripping book or a binge-worthy TV series. Sometimes, when I have a project deadline or need to finish some work, I find myself burning the midnight oil. It's not something I make a habit of, but it does happen from time to time.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Staying Up Late", "q": "What do you do when you stay up late?", "a": "When I stay up late, I usually work on personal projects or catch up on entertainment. I might watch a movie, read a book, or even chat with friends online. Sometimes, I dive into random topics on the internet and lose track of time entirely. So, it really depends on what needs my attention or what I’m in the mood for at that moment.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Staying Up Late", "q": "How do you feel when you have stayed up late the night before?", "a": "When I’ve stayed up late the night before, I usually feel quite groggy and sluggish the next day. It can be a struggle to get out of bed and stay focused, especially if I have a busy schedule. I often rely on a cup of coffee to help kick-start my day and boost my energy. Lack of sleep definitely impacts my concentration and energy levels, so I try to catch up on rest as soon as I can to feel more refreshed.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Public Transport", "q": "Do you travel by public transport?", "a": "Yes, I use public transport fairly often. It’s a convenient way to get around, especially in busy urban areas where driving and parking can be a hassle. You just hop on a bus or train and you’re all set.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Public Transport", "q": "When was the last time you traveled by public transport?", "a": "That would be this morning. I took the metro to the city center as usual. It's a quick and easy way to get around, especially during rush hour.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Public Transport", "q": "What don’t you like about public transport?", "a": "Crowds, definitely. There’s nothing worse than being squashed like a sardine during rush hour. Additionally, the cleanliness and maintenance of public transport can vary, which can be off-putting.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Public Transport", "q": "Would you prefer to use public transport in the future?", "a": "Without a doubt. I'm all for using public transport in the future, especially in urban areas. It’s often more cost-effective than driving and allows me to avoid the stress of traffic and parking. So, it’s a no-brainer.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Movies", "q": "What’s your favorite movie?", "a": "That's a tough one! I’d probably have to say The Notebook. It’s such a powerful and inspiring film. The story is incredible, and the acting is phenomenal.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Movies", "q": "Do your friends like this movie?", "a": "Actually, not all of them. Some of my friends say that it’s too soppy and cheesy. But those who have seen it really appreciate it. For me, it’s definitely a film that sticks with you.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Movies", "q": "What kind of movies do young people like?", "a": "It depends, I guess. There’s a huge variety of tastes these days. A lot of young people seem to gravitate towards high-energy movies, like action and superhero films, but there’s also a growing interest in romantic movies and documentaries. It really varies.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Movies", "q": "Would you like to be a movie star?", "a": "I don’t think I would. The profession is challenging and highly demanding. You’re constantly in the spotlight and lose your privacy. Plus, the hard work that goes into making films is not always fully appreciated.", "src": "Get 8+ in IELTS Speaking (free)"}, {"topic": "Public Transport", "q": "Do you usually commute to work or school?", "a": "Yes, I commute to work every day. I live in a big city, so I usually take public transportation, like the bus or the subway. I try to avoid rush hour because the traffic is always terrible, and I don’t want to get stuck in a traffic jam.", "src": "Public transport answers"}, {"topic": "Public Transport", "q": "What kind of public transportation do people use in your country?", "a": "In my country, most people take the bus, especially in larger cities. Some people also use ride-sharing apps like Uber, especially when public transportation is delayed or too crowded.", "src": "Public transport answers"}, {"topic": "Public Transport", "q": "Have you ever been late because of a traffic problem?", "a": "Yes, absolutely. Once, there was a huge traffic jam on the main road, and my bus was delayed for over 30 minutes. I had to get off the bus and book a car using a ride-sharing app. Luckily, the driver picked me up quickly and used the back streets to help me arrive on time.", "src": "Public transport answers"}, {"topic": "Public Transport", "q": "Do you think using public transportation is better than driving a car?", "a": "Yes, I do. Public transportation is more eco-friendly because it helps reduce carbon emissions. Also, it’s cheaper and more efficient, especially if you live in a place with heavy traffic. Driving a car every day can be stressful and bad for the environment.", "src": "Public transport answers"}, {"topic": "Public Transport", "q": "What are some ways people can help the environment through their daily travel?", "a": "One way is to walk to work or ride a bike instead of driving. These are eco-friendly options that don’t produce carbon emissions. Another way is to take public transportation, which helps reduce the number of cars on the road.", "src": "Public transport answers"}, {"topic": "Work", "q": "Have you ever worked before?", "a": "Yes, I have. I actually started working when I was about 15. Over the years, I’ve done all sorts of jobs — from hospitality and tourism to retail. But for the past 10 years or so, I’ve mostly been working in education, teaching English to non-native speakers.", "src": "Part 1 answers"}, {"topic": "Work", "q": "What was your first day at work like?", "a": "My first real office job was at a small hotel where I worked as a reservation agent. I remember being super excited but also a bit anxious because I’d never worked in a team before. I was worried about fitting in, but luckily, I ended up getting along really well with everyone.", "src": "Part 1 answers"}, {"topic": "Work", "q": "What responsibilities did you have at work?", "a": "My main tasks were replying to emails, confirming bookings, and sometimes handling customer complaints. It wasn’t anything too complicated, but I did learn how to stay organized and communicate professionally.", "src": "Part 1 answers"}, {"topic": "Work", "q": "What was your typical day like at work?", "a": "It was a pretty standard 9-to-5 routine. I’d check in at 9, go through emails, do some admin tasks, have lunch around 1, and then wrap things up by 6. Nothing too exciting, but it gave me structure.", "src": "Part 1 answers"}, {"topic": "Volunteering", "q": "Have you done any volunteer work?", "a": "Yes! I volunteered at the Eurovision Song Contest nearly ten years ago when I was still a student. I applied on a whim and got accepted. It turned out to be one of the coolest experiences of my life — I got to meet people from all over the world and see famous singers in person.", "src": "Part 1 answers"}, {"topic": "Volunteering", "q": "Why did you do the volunteer work?", "a": "Honestly, I just wanted to try something new. I hadn’t worked before, so I thought volunteering would be a good way to gain some experience, meet new people, and maybe build a bit of a network. Plus, I figured it’d look good on my CV.", "src": "Part 1 answers"}, {"topic": "Volunteering", "q": "Do you know any volunteers?", "a": "Yes, I do. There’s a local organization called DOST — which actually means “friend” — and they do a lot of amazing work helping vulnerable people. I know a few people involved, and they’re really passionate about what they do.", "src": "Part 1 answers"}, {"topic": "Volunteering", "q": "How do you define volunteer work?", "a": "For me, volunteer work means giving your time and energy to help others without expecting anything in return. It’s all about community and making a difference, even in small ways.", "src": "Part 1 answers"}, {"topic": "Hometown", "q": "Can you tell me about your hometown?", "a": "Sure! I was born in a tiny town in southern Russia, near the Kazakhstan border. My family moved there when I was seven — before that, we lived in Azerbaijan, where my parents are originally from. It’s a quiet, friendly place where everyone knows everyone.", "src": "Part 1 answers"}, {"topic": "Hometown", "q": "How has your hometown changed over the years?", "a": "To be honest, not much has changed. It still feels the same in many ways — peaceful and familiar. But yeah, there are a few more shops now and some small improvements here and there, like better roads and a new playground.", "src": "Part 1 answers"}, {"topic": "Hometown", "q": "Is there any way your hometown could be made better?", "a": "Definitely. It’s a lovely place, but we really lack sports facilities. A gym or a small fitness center would be great — especially for young people who want to stay active.", "src": "Part 1 answers"}, {"topic": "Hometown", "q": "Are there good transportation links to your hometown?", "a": "Well, it’s so small that you can walk pretty much anywhere, so public transport isn’t really needed. That said, there are school buses and the occasional taxi, but nothing like a bus or train system.", "src": "Part 1 answers"}, {"topic": "Hometown", "q": "What kind of jobs do the people in your hometown do?", "a": "Most people work in agriculture — farming is the main source of income. They grow crops like potatoes, tomatoes, watermelons, and so on, and they usually sell them in nearby towns or cities.", "src": "Part 1 answers"}];
+SRC.F = 'Your files'; NEW_SRC.push('F');
+const FILE_TOPICS = {'Spending Time by Yourself': ['t-f-alone', 'Spending time by yourself'], 'Staying Up Late': ['t-f-late', 'Staying up late'], 'Public Transport': ['t-f-transport', 'Public transport'], 'Movies': ['t-f-movies', 'Films'], 'Volunteering': ['t-f-volunteer', 'Volunteering'], 'Work': ['t-work'], 'Hometown': ['t-hometown']};
+const MODEL_BY_Q = new Map();
+MODELS.forEach((m, i) => {
+  const [tid, title] = FILE_TOPICS[m.topic];
+  let t = TM.get(tid);
+  if (!t) { t = {id: tid, title, src: ['F'], qs: []}; topics.push(t); TM.set(tid, t); }
+  const id = 'f' + hashN(m.q, 1e9).toString(36);
+  m.i = i; m.qid = id;
+  if (!Q.has(id)) { t.qs.push({id, t: m.q}); Q.set(id, {id, t: m.q, part: 1, pid: tid, src: ['F']}); TOTAL[1]++; }
+  MODEL_BY_Q.set(id, m);
+});
+const VOCAB_FIND = FILE_VOCAB.flatMap(([, l]) => l.map(([en, , , lit]) => (lit || en).replace(/\.\.\.$/, '')));
+function hlModel(text) {
+  let h = esc(text);
+  for (const v of VOCAB_FIND.sort((a, b) => b.length - a.length)) {
+    const re = new RegExp('(' + esc(v).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/'/g, "['’]") + ')', 'i');
+    h = h.replace(re, '<mark class="voc">$1</mark>');
+  }
+  return h;
+}
+function modelCard(m, open) {
+  return `<details class="card model" ${open ? 'open' : ''}><summary><span class="grow"><b>Model answer</b><span class="small muted"> · from your files</span></span><span class="small muted">${open ? '' : 'Show'}</span></summary>
+    <p class="mtext">${hlModel(m.a)}</p>
+    <div class="row"><button class="btn sm" data-act="saytext" data-t="${esc(m.a)}">${I.speak} Listen</button><button class="btn sm" data-act="repeat" data-src="m:${m.i}">${I.again} Repeat after it</button></div>
+    <p class="small muted" style="margin:0">Don't learn it by heart: examiners mark memorised answers down. Take the highlighted phrases and the shape, then say it about your own life.</p></details>`;
+}
+
+/* ---------- repeat after (echo practice) ---------- */
+const RP = {title: '', q: '', sents: [], i: 0, phase: 'idle', recs: [], back: 'words', stream: null, mr: null, timer: 0, until: 0, run: 0};
+function splitSents(t) {
+  const raw = String(t).replace(/\s+/g, ' ').trim().split(/(?<=[.!?…])\s+(?=[A-Z“"'(])/);
+  const out = [];
+  for (const s of raw) { if (out.length && out[out.length - 1].split(' ').length < 5) out[out.length - 1] += ' ' + s; else out.push(s); }
+  return out.filter(Boolean);
+}
+function openRepeat(src) {
+  rpStop(true);
+  let q = '', text = '', back = r6() === 'practice' ? 'practice' : r6();
+  if (src.startsWith('m:')) { const m = MODELS[+src.slice(2)]; q = m.q; text = m.a; }
+  else if (src.startsWith('a:')) { const a = getAtt(src.slice(2)); if (!a || !a.ai) return; q = qShort(Q.get(a.qid)); text = a.ai.natural_version; }
+  else if (src.startsWith('t:')) { text = src.slice(2); }
+  Object.assign(RP, {q, sents: splitSents(text), i: 0, phase: 'idle', recs: [], back});
+  location.hash = 'repeat';
+}
+function rpStop(full) {
+  RP.run++; clearTimeout(RP.timer); stopSpeak();
+  try { if (RP.mr && RP.mr.state !== 'inactive') { RP.mr.ondataavailable = null; RP.mr.onstop = null; RP.mr.stop(); } } catch {}
+  RP.mr = null;
+  if (full) { try { RP.stream && RP.stream.getTracks().forEach(t => t.stop()); } catch {} RP.stream = null; RP.recs.forEach(u => u && URL.revokeObjectURL(u)); }
+}
+async function rpGo() {
+  const run = ++RP.run;
+  if (!RP.stream) { try { RP.stream = await getMic({echoCancellation: true, noiseSuppression: true}); } catch { toast('The microphone is blocked, so only the listening part works.'); } }
+  while (RP.i < RP.sents.length && run === RP.run) {
+    RP.phase = 'model'; render();
+    const t0 = Date.now(); await speak(RP.sents[RP.i], true); const ms = Date.now() - t0;
+    if (run !== RP.run) return;
+    await new Promise(res => setTimeout(res, 250));
+    RP.phase = 'you'; const secs = Math.max(2.5, ms / 1000 * 1.35 + 1); RP.until = Date.now() + secs * 1000; render();
+    const url = await rpRecord(secs * 1000, run);
+    if (run !== RP.run) return;
+    if (url) { if (RP.recs[RP.i]) URL.revokeObjectURL(RP.recs[RP.i]); RP.recs[RP.i] = url; }
+    RP.i++;
+  }
+  if (run === RP.run) { RP.phase = 'done'; try { RP.stream && RP.stream.getTracks().forEach(t => t.stop()); } catch {} RP.stream = null; render(); }
+}
+function rpRecord(ms, run) {
+  return new Promise(res => {
+    if (!RP.stream) { RP.timer = setTimeout(() => res(null), ms); RP.done = () => { clearTimeout(RP.timer); res(null); }; return; }
+    const chunks = []; let mr;
+    try { mr = new MediaRecorder(RP.stream); } catch { RP.timer = setTimeout(() => res(null), ms); return; }
+    RP.mr = mr;
+    mr.ondataavailable = e => e.data && e.data.size && chunks.push(e.data);
+    mr.onstop = () => { RP.mr = null; res(run === RP.run && chunks.length ? URL.createObjectURL(new Blob(chunks, {type: (mr.mimeType || 'audio/webm').split(';')[0]})) : null); };
+    mr.start(200);
+    RP.timer = setTimeout(() => { try { mr.stop(); } catch { res(null); } }, ms);
+    RP.done = () => { clearTimeout(RP.timer); try { mr.stop(); } catch { res(null); } };
+  });
+}
+function viewRepeat() {
+  if (!RP.sents.length) return `<div class="card empty">Nothing to repeat. <a href="#words">Back to Words</a></div>`;
+  const backH = RP.back === 'practice' && P.deck.length ? '#practice' : '#' + (RP.back || 'words');
+  const list = RP.sents.map((s, i) => {
+    const st = RP.phase === 'done' ? '' : i < RP.i ? 'done' : i === RP.i && RP.phase !== 'idle' ? 'cur' : '';
+    const after = RP.phase === 'done' ? `<span class="rpbtns"><button class="btn sm" data-act="rpsay" data-i="${i}" aria-label="Hear the model">${I.speak}</button>${RP.recs[i] ? `<button class="btn sm" data-act="rpyou" data-i="${i}">${I.play} You</button>` : ''}</span>` : '';
+    return `<li class="${st}"><span class="s">${esc(s)}</span>${after}</li>`;
+  }).join('');
+  let ctl;
+  if (RP.phase === 'model') ctl = `<div class="rpstate">${I.speak}<span class="grow"><b>Listen</b> to sentence ${RP.i + 1} of ${RP.sents.length}</span><button class="btn sm" data-act="rppause">Pause</button></div>`;
+  else if (RP.phase === 'you') ctl = `<div class="rpstate you">${I.mic}<span class="grow"><b>Your turn.</b> Say it the same way.</span><button class="btn sm primary" data-act="rpnext">Done ${I.next}</button></div><div class="rpbar"><i style="animation-duration:${Math.max(0, RP.until - Date.now())}ms"></i></div>`;
+  else if (RP.phase === 'done') ctl = `<div class="note ok">Done. Compare each sentence: the speaker icon plays the model, “You” plays your try. Listen for speed, stressed words and where the pauses fall.</div><div class="row"><button class="btn" data-act="rpstart" data-from="0">${I.again} Once more</button></div>`;
+  else ctl = `<div class="row"><button class="btn primary big" data-act="rpstart">${I.play} ${RP.i ? 'Continue' : 'Start'}</button></div>`;
+  return `<div class="stack" style="max-width:720px"><a class="back" href="${backH}" data-act="rpleave">${I.back} Back</a>
+    <div><h1>Repeat after</h1>${RP.q ? `<p class="lead" style="margin-top:4px">${esc(RP.q)}</p>` : ''}</div>
+    ${RP.phase === 'idle' && !RP.i ? '<p class="small muted" style="margin:0">The examiner voice reads one sentence, then it records you saying it back. Copy the speed, the stressed words and the pauses, not just the words. Your tries are kept only until you leave this page.</p>' : ''}
+    ${ctl}<ol class="rplist">${list}</ol></div>`;
+}
+
+/* ---------- follow-up questions (Part 3) ---------- */
+const FU_BUSY = new Set();
+function ensureFU() {
+  const fu = S.set.fu || {};
+  for (const [id, f] of Object.entries(fu)) if (!Q.has(id)) { const p = Q.get(f.p); if (p) Q.set(id, {id, t: f.t, part: 3, pid: p.pid, src: p.src, fu: f.p}); }
+}
+ensureFU();
+async function askFollowUp(aid) {
+  const a = getAtt(aid); if (!a || FU_BUSY.has(aid)) return;
+  const q = Q.get(a.qid);
+  let text = a.ai && a.ai.follow_up;
+  if (!text) {
+    if (!SB.user) return toast('Sign in first (Settings).');
+    FU_BUSY.add(aid); render();
+    try {
+      const tr = (a.ai && a.ai.transcript) || '';
+      const body = {question: qPayload(a.qid), dur: a.dur};
+      if (tr) body.transcript = tr;
+      else { const m = await measureAttempt(aid, true); if (!m) throw new Error("Couldn't read the audio of this answer."); body.audio = wavB64(m.pcm.length > 16000 * 120 ? m.pcm.subarray(0, 16000 * 120) : m.pcm); body.mime = 'audio/wav'; }
+      const res = await api('followup', body);
+      if (SB.me && res.usage) { SB.me.used = res.usage.used; SB.me.limit = res.usage.limit; }
+      if (!res.question) { toast(res.heard_ok === false ? "The examiner couldn't hear your answer clearly (noise or silence). Try recording it again somewhere quieter." : 'No follow-up this time.', 6000); return; }
+      text = res.question;
+    } catch (e) { toast(e.message || 'Could not get a follow-up.', 6000); return; }
+    finally { FU_BUSY.delete(aid); render(); }
+  }
+  const id = 'fu' + hashN(a.id + text, 1e9).toString(36);
+  S.set.fu = {...(S.set.fu || {}), [id]: {t: text, p: q.fu || q.id, ts: Date.now()}}; saveMeta(); ensureFU();
+  if (r6() !== 'practice' || curQ() !== q) return;
+  P.deck.splice(P.i + 1, 0, id); P.i++; enterQuestion(); render(); window.scrollTo(0, 0);
+}
+function followCard(q, a) {
+  if (q.part !== 3 || !STANDALONE) return '';
+  const nxt = Q.get(P.deck[P.i + 1]);
+  if (nxt && nxt.fu) return '';
+  const busy = FU_BUSY.has(a.id);
+  return `<section class="card stack" style="gap:8px;padding:14px"><div><h2>Follow-up question</h2><p class="small muted" style="margin:4px 0 0">In Part 3 the examiner usually asks one more question about what you just said. ${a.ai && a.ai.follow_up ? '' : 'It uses one coach check.'}</p></div>
+    <div>${busy ? '<span class="small muted">The examiner is listening to your answer…</span>' : `<button class="btn" data-act="pfollow" data-a="${a.id}">${I.speak} Answer a follow-up</button>`}</div></section>`;
+}
+
+/* ---------- pronunciation: words to practise ---------- */
+function pronSection(ai) {
+  if (!ai) return '';
+  if (ai.audio_quality && ai.audio_quality !== 'ok') return `<div class="note amber"><b>No pronunciation check this time.</b> ${ai.audio_quality === 'quiet' ? 'The recording was too quiet.' : 'There was too much background noise.'} Record somewhere quieter, closer to the microphone, to get words to practise.</div>`;
+  const l = (ai.pron_words || []).filter(w => w && w.word);
+  if (!l.length) return '';
+  return `<section class="stack" style="gap:6px"><h2>Words to practise saying</h2>${l.map(w => `<div class="pw"><button class="btn sm" data-act="saytext" data-t="${esc(w.word)}" aria-label="Hear ${esc(w.word)}">${I.speak}</button><span class="grow"><b>${esc(w.word)}</b>${w.heard ? ` <span class="small muted">you said “${esc(w.heard)}”</span>` : ''}${w.tip ? `<span class="small muted" style="display:block">${esc(w.tip)}</span>` : ''}</span></div>`).join('')}
+    <p class="small muted" style="margin:0">They're collected in Words → Say it right.</p></section>`;
+}
+function pronList() {
+  const ok = S.set.pronOK || {}, m = new Map();
+  for (const a of allAttempts()) {
+    const ai = a.ai; if (!ai || !Array.isArray(ai.pron_words) || (ai.audio_quality && ai.audio_quality !== 'ok')) continue;
+    for (const w of ai.pron_words) {
+      if (!w || !w.word) continue;
+      const k = w.word.toLowerCase().trim();
+      if (ok[k] && ok[k] > a.ts) continue;
+      const e = m.get(k) || {word: w.word, n: 0, ts: 0};
+      e.n++; if (a.ts > e.ts) Object.assign(e, {heard: w.heard, tip: w.tip, ts: a.ts});
+      m.set(k, e);
+    }
+  }
+  return [...m.values()].sort((x, y) => y.n - x.n || y.ts - x.ts);
+}
+const SR = {k: '', on: false, url: {}, mr: null, stream: null};
+async function srRecord(k) {
+  if (SR.on) { try { SR.mr.stop(); } catch {} return; }
+  try { SR.stream = await getMic({echoCancellation: true, noiseSuppression: true}); } catch { return toast('The microphone is blocked.'); }
+  const chunks = []; const mr = new MediaRecorder(SR.stream); SR.mr = mr; SR.k = k; SR.on = true; render();
+  mr.ondataavailable = e => e.data && e.data.size && chunks.push(e.data);
+  mr.onstop = () => { SR.on = false; SR.stream.getTracks().forEach(t => t.stop()); if (SR.url[k]) URL.revokeObjectURL(SR.url[k]); SR.url[k] = URL.createObjectURL(new Blob(chunks, {type: (mr.mimeType || 'audio/webm').split(';')[0]})); render(); new Audio(SR.url[k]).play().catch(() => {}); };
+  mr.start(200); setTimeout(() => { if (SR.mr === mr && SR.on) try { mr.stop(); } catch {} }, 3500);
+}
+function pronPage() {
+  const l = pronList();
+  if (!l.length) return `<div class="list">${emptyRow('No words yet', 'When the coach hears a word said wrongly, it lands here. You hear the right way, record yourself, and compare. If a recording is too noisy, the coach says so and skips this.')}</div>`;
+  return `<p class="small muted" style="margin:0 0 4px">Hear the word, record yourself (3 s), compare. Press “Got it” when it sounds right.</p><div class="list">${l.map(w => { const k = w.word.toLowerCase().trim(); const rec = SR.on && SR.k === k; return `<div class="went"><div class="grow" style="min-width:180px"><div class="t">${esc(w.word)}${w.n > 1 ? ` <span class="small muted">· ${w.n} times</span>` : ''}</div>${w.heard ? `<div class="s">you said “${esc(w.heard)}”</div>` : ''}${w.tip ? `<div class="s">${esc(w.tip)}</div>` : ''}</div>
+    <div class="acts"><button class="btn sm" data-act="saytext" data-t="${esc(w.word)}" aria-label="Hear it">${I.speak}</button><button class="btn sm ${rec ? 'danger' : ''}" data-act="srrec" data-k="${esc(k)}">${rec ? I.stop + ' Stop' : I.mic + ' Me'}</button>${SR.url[k] ? `<button class="btn sm" data-act="srplay" data-k="${esc(k)}">${I.play} Me</button>` : ''}<button class="btn sm" data-act="srok" data-k="${esc(k)}">Got it</button></div></div>`; }).join('')}</div>`;
+}
+
+/* ---------- model answers page ---------- */
+function modelsPage() {
+  const by = new Map();
+  for (const m of MODELS) { const k = (FILE_TOPICS[m.topic][1] || TM.get(FILE_TOPICS[m.topic][0]).title); if (!by.has(k)) by.set(k, []); by.get(k).push(m); }
+  return `<p class="small muted" style="margin:0 0 4px">Band 8 answers from your files. Listen, then “Repeat after” sentence by sentence. Highlighted phrases are in Topic words.</p>` + [...by].map(([t, l]) => `<h2 class="dayh" style="margin-top:6px">${esc(t)}</h2><div class="list">${l.map(m => `<details class="went mrow"><summary><span class="grow"><span class="t">${esc(m.q)}</span></span>${I.chev}</summary>
+    <p class="mtext">${hlModel(m.a)}</p><div class="row" style="padding-bottom:4px"><button class="btn sm" data-act="saytext" data-t="${esc(m.a)}">${I.speak} Listen</button><button class="btn sm" data-act="repeat" data-src="m:${m.i}">${I.again} Repeat after</button><button class="btn sm" data-act="mpractice" data-q="${m.qid}">${I.mic} Answer it yourself</button></div></details>`).join('')}</div>`).join('');
+}
+
+/* ---------- bands over time (small multiples, one line each) ---------- */
+function bandsCard() {
+  const l = allAttempts().filter(a => a.ai && a.ai.bands && a.ai.bands.overall != null).sort((a, b) => a.ts - b.ts);
+  if (l.length < 3) return `<section><h2 style="margin-bottom:6px">Your bands</h2><div class="list">${emptyRow(l.length ? `${l.length} of 3 coached answers` : 'No coached answers yet', 'After 3 answers checked with the coach, you see how each band moves.')}</div></section>`;
+  // average per day, last 12 days with coached answers
+  const days = new Map();
+  for (const a of l) { const k = dayKey(a.ts); if (!days.has(k)) days.set(k, []); days.get(k).push(a.ai.bands); }
+  const ks = [...days.keys()].slice(-12);
+  const avg = (bs, k) => { const v = bs.map(b => +b[k]).filter(x => !isNaN(x)); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+  const rows = [['fc', 'Fluency'], ['lr', 'Vocabulary'], ['gra', 'Grammar'], ['p', 'Pronunciation']].map(([k, label]) => {
+    const pts = ks.map(d => [d, avg(days.get(d), k)]).filter(p => p[1] != null);
+    if (!pts.length) return '';
+    const W = 160, H = 34, lo = 4, hi = 9, x = i => pts.length < 2 ? W / 2 : 4 + i * (W - 8) / (pts.length - 1), y = v => H - 4 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (H - 8);
+    const last = pts[pts.length - 1][1], first = pts[0][1];
+    const line = pts.length > 1 ? `<polyline points="${pts.map((p, i) => x(i).toFixed(1) + ',' + y(p[1]).toFixed(1)).join(' ')}" fill="none" stroke="var(--act)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>` : '';
+    const dots = pts.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p[1]).toFixed(1)}" r="${i === pts.length - 1 ? 4 : 9}" fill="${i === pts.length - 1 ? 'var(--act)' : 'transparent'}" ${i === pts.length - 1 ? 'stroke="var(--surface)" stroke-width="2"' : ''}><title>${new Date(p[0] + 'T12:00').toLocaleDateString('en-GB', {day: 'numeric', month: 'short'})}: ${p[1].toFixed(1)}</title></circle>`).join('');
+    const d = last - first, ch = pts.length > 1 && Math.abs(d) >= .25 ? `<span class="small ${d > 0 ? 'up' : 'down'}">${d > 0 ? '+' : '−'}${Math.abs(d).toFixed(1)}</span>` : '<span class="small muted">–</span>';
+    return `<div class="bandrow"><span class="l">${label}</span><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${label}: from ${first.toFixed(1)} to ${last.toFixed(1)}"><line x1="0" x2="${W}" y1="${y(7).toFixed(1)}" y2="${y(7).toFixed(1)}" stroke="var(--line)" stroke-dasharray="3 3"/>${line}${dots}</svg><b class="v">${last.toFixed(1)}</b>${ch}</div>`;
+  }).join('');
+  return `<section><div class="sec-h" style="margin-top:0"><h2>Your bands</h2><span class="small muted">daily average · dashed line = 7</span></div><div class="card bands">${rows}</div></section>`;
+}
+
+/* ---------- wiring into existing screens ---------- */
+const coachDetail_v7 = coachDetail;
+coachDetail = function (a, q) {
+  const cd = coachDetail_v7(a, q);
+  if (a.ai && a.ai.natural_version) cd.main = cd.main.replace(`${I.speak} Listen</button></div></section>`, `${I.speak} Listen</button><button class="btn sm" data-act="repeat" data-src="a:${a.id}">${I.again} Repeat after it</button></div></section>`);
+  cd.main += pronSection(a.ai);
+  return cd;
+};
+function afterExtras(q, a) {
+  const m = MODEL_BY_Q.get(q.id);
+  return followCard(q, a) + (m ? modelCard(m, false) : '');
+}
+const qPayload_v7 = qPayload;
+qPayload = function (qid) { const q = Q.get(qid); if (q && q.fu) { const p = Q.get(q.fu); return {part: 3, text: q.t + (p ? ` (follow-up after: "${p.t}")` : '')}; } return qPayload_v7(qid); };
+const questionHead_v7 = questionHead;
+questionHead = function (q, small) { const h = questionHead_v7(q, small); return q.fu ? h.replace('The examiner asked:', 'Follow-up question:') : h; };
+const mistakesCard_v7 = mistakesCard;
+mistakesCard = function (full) { return bandsCard() + mistakesCard_v7(full); };
+const viewToday_v7 = viewToday;
+viewToday = function () { return r6() === 'repeat' ? viewRepeat() : viewToday_v7(); };
+const render_v7 = render;
+render = function () { ensureFU(); return render_v7.apply(this, arguments); };
+window.addEventListener('hashchange', () => { if (r6() !== 'repeat' && (RP.stream || RP.mr || RP.phase === 'model' || RP.phase === 'you')) { rpStop(true); RP.phase = RP.phase === 'done' ? 'done' : 'idle'; } });
+WGROUPS.push(['models', 'Model answers'], ['pron', 'Say it right']);
+const wEntries_v7 = wEntries;
+wEntries = function (g) { return g === 'models' || g === 'pron' ? [] : wEntries_v7(g); };
+const viewWords_v7 = viewWords;
+viewWords = function () {
+  const special = W.tab === 'books' && !W.q.trim() && (W.group === 'models' || W.group === 'pron');
+  const keep = W.group;
+  if (special) W.group = 'structures';
+  let h = viewWords_v7();
+  W.group = keep;
+  // counts and current item for the two new groups
+  h = h.replace(/(<a href="#words" data-act="wgroup" data-v="models"[^>]*><span>Model answers<\/span><span>)[^<]*(<\/span>)/, `$1${MODELS.length}$2`)
+       .replace(/(<a href="#words" data-act="wgroup" data-v="pron"[^>]*><span>Say it right<\/span><span>)[^<]*(<\/span>)/, `$1${pronList().length}$2`);
+  if (!special) return h;
+  h = h.replace(/ aria-current="true"/g, '').replace(`data-v="${keep}" >`, `data-v="${keep}" aria-current="true">`).replace(`data-v="${keep}" ><span>`, `data-v="${keep}" aria-current="true"><span>`);
+  const a = h.indexOf('<div class="wmain">'), b = h.lastIndexOf('</div></div></div>');
+  const search = (h.slice(a).match(/<div class="search">[\s\S]*?<\/div>/) || [''])[0];
+  return h.slice(0, a) + `<div class="wmain">${search}${keep === 'models' ? modelsPage() : pronPage()}` + h.slice(b);
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const d = el.dataset;
+  switch (d.act) {
+    case 'repeat': openRepeat(d.src); break;
+    case 'rpstart': if (d.from === '0') { RP.i = 0; RP.recs.forEach(u => u && URL.revokeObjectURL(u)); RP.recs = []; } rpGo(); break;
+    case 'rppause': rpStop(false); RP.phase = 'idle'; render(); break;
+    case 'rpnext': if (RP.done) RP.done(); break;
+    case 'rpsay': speak(RP.sents[+d.i], true); break;
+    case 'rpyou': if (RP.recs[+d.i]) new Audio(RP.recs[+d.i]).play().catch(() => {}); break;
+    case 'rpleave': rpStop(true); RP.phase = 'idle'; break;
+    case 'pfollow': askFollowUp(d.a); break;
+    case 'srrec': srRecord(d.k); break;
+    case 'srplay': if (SR.url[d.k]) new Audio(SR.url[d.k]).play().catch(() => {}); break;
+    case 'srok': S.set.pronOK = {...(S.set.pronOK || {}), [d.k]: Date.now()}; saveMeta(); render(); break;
+    case 'mpractice': startPractice([d.q], {back: 'words'}); break;
+  }
+});
 
 init();
 </script>
