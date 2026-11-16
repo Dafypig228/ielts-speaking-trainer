@@ -176,6 +176,13 @@ label.sw input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 #modal{position:fixed;inset:0;z-index:70;display:none;place-items:center;background:rgba(10,12,25,.5);padding:20px}
 #modal.open{display:grid}
 #modal .box{background:var(--surface);border-radius:16px;padding:18px;max-width:380px;width:100%;display:flex;flex-direction:column;gap:14px}
+.tr{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.55;white-space:pre-wrap}
+mark.pz{background:color-mix(in srgb,var(--rec) 22%,transparent);color:inherit;border-radius:4px;padding:0 3px;font-family:var(--mono);font-size:12px}
+mark.fl{background:color-mix(in srgb,var(--warn) 28%,transparent);color:inherit;border-radius:3px;padding:0 2px}
+.fix{font-size:14px} .fix s{color:var(--muted)}
+.coach{border-top:1px solid var(--line);padding-top:10px}
+.challenge{border:1.5px dashed var(--accent);background:var(--accent-soft)}
+nav.tabs .in{grid-template-columns:repeat(6,1fr)!important}
 #toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;font-size:14px;max-width:min(92vw,520px);display:none}
 #toast.show{display:block}
 .empty{padding:22px;text-align:center;color:var(--muted);font-size:14px}
@@ -260,8 +267,8 @@ const parentTitle = q => q.part === 1 ? TM.get(q.pid).title : CM.get(q.pid).cue;
 const cueShort = c => c.cue.replace(/^Describe\s+/i, '').replace(/\.$/, '').replace(/\s*\(.*?\)\s*/g, ' ').trim();
 
 /* ---------- state ---------- */
-const DEF = {voice: true, rate: 1, tvoice: 'buttery', hideText: false, autoRec: true, autoNext: true, p1Target: 30, p3Target: 60, forceFile: false, transcribe: true, src: 'all', p1Topics: 3, speed: 1, theme: ''};
-const S = {att: new Map(), byQ: new Map(), pending: new Map(), starred: new Set(), set: {...DEF}, notes: {}, sessions: [], ideas: {}, mode: 'connecting', metaLoaded: false, liveOK: null};
+const DEF = {voice: true, rate: 1, tvoice: 'buttery', hideText: false, autoRec: true, autoNext: true, p1Target: 30, p3Target: 60, forceFile: false, transcribe: true, src: 'all', p1Topics: 3, speed: 1, theme: '', goal: 10, autoCoach: false};
+const S = {att: new Map(), byQ: new Map(), pending: new Map(), phrases: new Map(), starred: new Set(), set: {...DEF}, notes: {}, sessions: [], ideas: {}, mode: 'connecting', metaLoaded: false, liveOK: null};
 let db = null, assets = null, tts = null, dict = null, dlc = null, sample = null, userCap = null;
 try { const m = JSON.parse(localStorage.getItem('ist-meta') || 'null'); if (m) { S.set = {...DEF, ...(m.settings || {})}; S.starred = new Set(m.starred || []); S.notes = m.notes || {}; } } catch {}
 applyTheme();
@@ -348,6 +355,7 @@ async function localMode() {
     const meta = kv.find(k => k.id === 'meta');
     if (meta) { S.starred = new Set(meta.starred || []); S.set = {...DEF, ...(meta.settings || {})}; S.notes = meta.notes || {}; applyTheme(); }
     S.sessions = kv.filter(k => k.id.startsWith('sess:')).map(k => ({...k, id: k.id.slice(5)})).sort((x, y) => y.ts - x.ts);
+    S.phrases = new Map(kv.filter(k => k.id.startsWith('ph:')).map(k => [k.id.slice(3), {...k, id: k.id.slice(3)}]));
   } catch {}
   reindex();
 }
@@ -428,6 +436,7 @@ async function saveRecording(qid, blob, dur, extra = {}) {
     if (!asset) { try { await IDB.put('blob', {id, blob}); local = true; } catch { } }
   }
   const doc = {qid, part: q.part, ts: p.ts, dur: p.dur, asset, enc, mime: p.mime, size: p.size, tr: p.tr, score: null, note: '', sid: p.sid, local};
+  if (STANDALONE && CH.on && CH.target && CH.qid === qid) doc.stats = {target: CH.target.t};
   if (STANDALONE) { doc.dirty = true; doc.pushed = false; }
   try {
     if (db) await writeDoc('attempts/' + id, doc); else await IDB.put('att', {id, ...doc});
@@ -437,6 +446,7 @@ async function saveRecording(qid, blob, dur, extra = {}) {
   }
   if (STANDALONE && has && !p.failed) { const fn = await fsWrite(S.att.get(id), blob); if (fn) updAtt(id, {file: fn}, false); }
   if (STANDALONE) syncSoon(800);
+  if (STANDALONE && has && !p.failed) measureAttempt(id, true).then(() => { render(); if (S.set.autoCoach && coachReady()) coachAttempt(id); });
   reindex(); softRefresh();
   if (has && local && db) toast(assets ? 'Upload failed, so this clip is saved on this device only. Open it later to retry.' : 'Saved on this device only (uploads need edit access).');
   return id;
@@ -620,7 +630,7 @@ function confirmBox(title, body, ok = 'OK') {
   });
 }
 const route = () => (location.hash || '#home').slice(1) || 'home';
-const TABS = [['home', 'Home', I.home], ['mock', 'Mock test', I.exam], ['drill', 'Mix drill', I.shuffle], ['browse', 'Questions', I.book], ['history', 'History', I.clock]];
+const TABS = [['home', 'Home', I.home], ['mock', 'Mock', I.exam], ['drill', 'Drill', I.shuffle], ['browse', 'Questions', I.book], ['study', 'Study', I.text], ['history', 'History', I.clock]];
 function renderTabs() { const r = route(); $('#tabs').innerHTML = TABS.map(([k, l, i]) => `<a href="#${k}" ${r === k ? 'aria-current="page"' : ''}>${i}<span>${l}</span></a>`).join(''); }
 $('#prefsBtn').innerHTML = I.gear;
 let dirty = false;
@@ -635,7 +645,7 @@ function render() {
   const y = window.scrollY, sb = $('#pbody').scrollTop;
   renderTabs();
   const v = $('#view'); const r = route();
-  v.innerHTML = r === 'mock' ? viewMock() : r === 'drill' ? viewDrill() : r === 'browse' ? viewBrowse() : r === 'history' ? viewHistory() : r === 'prefs' ? viewPrefs() : viewHome();
+  v.innerHTML = r === 'mock' ? viewMock() : r === 'drill' ? viewDrill() : r === 'browse' ? viewBrowse() : r === 'history' ? viewHistory() : r === 'prefs' ? viewPrefs() : r === 'study' ? viewStudy() : r === 'admin' ? viewAdmin() : viewHome();
   renderSheet();
   window.scrollTo(0, y); $('#pbody').scrollTop = sb;
   playIcons();
@@ -702,10 +712,14 @@ function attemptRow(a, n, o = {}) {
       ${o.showQ ? `<div class="small" style="font-weight:500;margin-bottom:2px"><button class="linkbtn" style="text-decoration:none;color:inherit;text-align:left" data-act="openq" data-q="${a.qid}">${partPill(q.part)} ${esc(q.t)}</button></div>` : ''}
       <div class="att-top">${n ? `<span class="n">#${n}</span>` : ''}<span class="muted">${when(a.ts)}</span><span class="muted">· ${fmt(a.dur)}</span>${tags.join('')}</div>
       <div class="prog"><i data-prog="${a.id}"></i></div>
+      ${hasStats(a.stats) ? `<div class="small muted" style="margin-top:4px">${statsLine(a.stats)}${a.ai && a.ai.bands ? ` · coach ${esc(a.ai.bands.overall)}` : ''}</div>` : ''}${a.stats && a.stats.target ? `<div class="small" style="margin-top:2px">Challenge: <b>${esc(a.stats.target)}</b></div>` : ''}
     </div>
-    <div class="side">${a.pending ? '' : `<select data-act="score" data-a="${a.id}" aria-label="Self score (band)">${BANDS.map(b => `<option value="${b}" ${String(a.score ?? '') === b ? 'selected' : ''}>${b ? 'Band ' + b : 'Score'}</option>`).join('')}</select>`}</div>
-    ${a.pending ? '' : `<details ${o.open ? 'open' : ''}><summary>Notes${a.tr ? ', transcript' : ''}${hasAudio && dlc ? ', download' : ''}</summary>
+    <div class="side">${STANDALONE && hasAudio && !a.pending && SB.user ? `<button class="iconbtn ${a.ai ? 'on' : ''}" data-act="coach" data-a="${a.id}" aria-label="Coach feedback" title="${a.ai ? 'Coach feedback (done)' : 'Get coach feedback'}" ${COACH.busy.has(a.id) ? 'disabled' : ''}>${I.spark}</button>` : ''}${a.pending ? '' : `<select data-act="score" data-a="${a.id}" aria-label="Self score (band)">${BANDS.map(b => `<option value="${b}" ${String(a.score ?? '') === b ? 'selected' : ''}>${b ? 'Band ' + b : 'Score'}</option>`).join('')}</select>`}</div>
+    ${a.pending ? '' : `<details ${o.open || OPEN.has(a.id) ? 'open' : ''} data-det="${a.id}"><summary>${a.ai ? 'Coach feedback, ' : COACH.busy.has(a.id) ? 'Coach is listening… ' : ''}${STANDALONE && hasAudio ? 'pauses, ' : ''}notes${a.tr ? ', transcript' : ''}${hasAudio && dlc ? ', download' : ''}</summary>
       <div class="stack" style="margin-top:8px;gap:8px">
+        ${STANDALONE && hasAudio ? (hasStats(a.stats) ? waveSVG(a.stats) : `<div><button class="btn" data-act="measure" data-a="${a.id}">Measure pauses</button></div>`) : ''}
+        ${STANDALONE ? coachBlock(a) : ''}
+        ${STANDALONE && hasAudio && !a.ai && !COACH.busy.has(a.id) ? (SB.user ? `<div><button class="btn primary" data-act="coach" data-a="${a.id}">${I.spark} Get coach feedback</button> <span class="small muted">${SB.me && !SB.me.hasKey ? 'Waiting for the admin to add a Gemini key' : 'Transcript, pauses, pronunciation, better phrasing'}</span></div>` : '<div class="small muted">Sign in (Settings) to get coach feedback on this take.</div>') : ''}
         ${a.tr ? `<div><div class="small muted">${trStats(a)}</div><div style="margin-top:4px">${esc(a.tr)}</div></div>` : ''}
         ${a.tr && sample ? (a.fb ? `<div class="ideas">${esc(a.fb)}</div>` : `<button class="btn" data-act="feedback" data-a="${a.id}">${I.spark} Feedback on this transcript</button>`) : ''}
         <textarea data-note="${a.id}" rows="2" placeholder="What to fix next time (e.g. more linking words, slower)">${esc(a.note || '')}</textarea>
@@ -736,7 +750,7 @@ function toolsBlock(qid) {
   return `<div class="tools">
     <button class="btn" data-act="say" data-q="${qid}">${I.speak} Read aloud</button>
     <button class="btn ${st ? 'on' : ''}" data-act="star" data-q="${qid}" aria-pressed="${st}">${st ? I.starF : I.star} ${st ? 'Starred' : 'Star'}</button>
-    ${sample ? `<button class="btn" data-act="ideas" data-q="${qid}">${I.spark} Ideas &amp; vocabulary</button>` : ''}
+    ${STANDALONE ? (SB.user ? `<button class="btn" data-act="coachideas" data-q="${qid}">${I.spark} Ideas &amp; sample answer</button>` : '') : sample ? `<button class="btn" data-act="ideas" data-q="${qid}">${I.spark} Ideas &amp; vocabulary</button>` : ''}
   </div>`;
 }
 function prepBlock(cardId) {
@@ -767,7 +781,7 @@ function questionPanel(qid) {
     <div class="qmeta">${partPill(q.part)} <button class="linkbtn" data-act="${q.part === 1 ? 'opentopic' : 'opencard'}" data-id="${q.pid}">${esc(q.part === 1 ? par.title : (q.part === 3 ? 'From: ' + cueShort(par) : 'Card + Part 3 questions'))}</button> ${srcTags(q.src)}</div>
     ${questionBlock(qid)}
     ${toolsBlock(qid)}
-    ${ideasBlock(qid)}
+    ${STANDALONE ? ideasCoachBlock(qid) : ideasBlock(qid)}
     ${q.part === 2 ? prepBlock(q.pid) : ''}
     ${recorderBlock(qid, {limit: q.part === 2 ? 120 : 0})}
     ${attemptsBlock(qid)}
@@ -799,6 +813,7 @@ function viewHome() {
       <div class="tile"><b>${Math.round(st.secs / 60)}</b><span>minutes spoken</span></div>
       <div class="tile"><b>${st.streak}</b><span>day streak</span></div>
     </div>
+    ${STANDALONE ? goalCard() : ''}
     <div class="actions">
       <button class="action hero" data-act="go" data-to="mock"><strong>Full mock test</strong><span>Part 1 → cue card with 1 min prep and 2 min talk → Part 3 · about 12 minutes</span></button>
       <button class="action" data-act="quickdrill" data-p="123"><strong>Mixed drill</strong><span>Random questions from every topic</span></button>
@@ -837,6 +852,7 @@ function viewDrill() {
     <div class="row small muted"><span class="grow">Question ${DR.i + 1} of ${DR.deck.length}</span>
       <button class="btn" data-act="dprev" ${DR.i ? '' : 'disabled'} aria-label="Previous">${I.back}</button>
       <button class="btn primary" data-act="dnext">Next ${I.next}</button></div>
+    ${STANDALONE ? challengeCard(qid) : ''}
     <div class="card">${questionPanel(qid)}</div>
     <div class="small muted" style="text-align:center">Keyboard: <span class="kbd">Space</span> record/stop · <span class="kbd">N</span> next${q.part === 2 ? ' · 2-minute limit stops recording automatically' : ''}</div>
   </div>`;
@@ -896,8 +912,9 @@ function viewPrefs() {
       ${dict ? sw('transcribe', 'Transcribe while recording', 'Adds word count, speed and filler count where speech-to-text is available') : ''}
       ${sw('autoRec', 'Start recording automatically in mock tests', 'Only when the microphone works in-page')}
       ${sw('autoNext', 'Go to the next question after saving')}
-      <div class="row" style="padding-top:10px;border-top:1px solid var(--line)"><button class="btn" data-act="testmic">${I.mic} Test microphone</button></div>
     </div>
+    ${micTestCard()}
+    ${STANDALONE ? `<div class="card"><strong>Coach &amp; goals</strong>${sw('autoCoach', 'Coach analyses every take automatically', 'Uses your daily coach allowance. Off: tap the spark button on a take when you want feedback.')}<label class="sw"><span style="font-weight:500">Daily goal (answers)</span><select data-act="setv" data-k="goal">${[5, 10, 15, 20, 30].map(v => `<option value="${v}" ${S.set.goal == v ? 'selected' : ''}>${v}</option>`).join('')}</select></label>${SB.me ? `<div class="small muted" style="padding-top:8px;border-top:1px solid var(--line)">Coach today: ${SB.me.used}/${SB.me.limit} used${SB.me.hasKey ? '' : ' · not set up yet (admin needs to add a Gemini key)'}</div>` : ''}</div>` : ''}
     <div class="card">
       <strong>Examiner</strong>
       ${sw('voice', 'Read questions aloud', 'Like the real test, where you only hear the question')}
@@ -1052,12 +1069,12 @@ function viewSummary(sess) {
   const sc = sess.scores || {};
   const crit = [['fc', 'Fluency & coherence'], ['lr', 'Lexical resource'], ['gra', 'Grammar range & accuracy'], ['p', 'Pronunciation']];
   let lastPart = 0;
-  const rows = (sess.plan || []).map(qid => { const q = Q.get(qid); if (!q) return ''; const head = q.part !== lastPart ? `<div class="small muted" style="padding:10px 14px 4px;font-weight:600;border-top:1px solid var(--line)">PART ${q.part}</div>` : ''; lastPart = q.part; const aid = items.get(qid); const a = aid && getAtt(aid); return head + `<div class="att" style="border-top:0;padding-top:4px"><button class="play ${a ? '' : 'textonly'}" data-act="play" data-a="${aid || ''}" ${a ? '' : 'disabled'} aria-label="Play">${I.play}</button><div class="grow"><button class="linkbtn" style="text-decoration:none;color:inherit;text-align:left;font-weight:500" data-act="openq" data-q="${qid}">${esc(q.part === 2 ? cueShort(card) : q.t)}</button><div class="small muted">${a ? fmt(a.dur) : 'Skipped'}</div>${a ? `<div class="prog"><i data-prog="${a.id}"></i></div>` : ''}</div><span></span></div>`; }).join('');
+  const rows = (sess.plan || []).map(qid => { const q = Q.get(qid); if (!q) return ''; const head = q.part !== lastPart ? `<div class="small muted" style="padding:10px 14px 4px;font-weight:600;border-top:1px solid var(--line)">PART ${q.part}</div>` : ''; lastPart = q.part; const aid = items.get(qid); const a = aid && getAtt(aid); return head + `<div class="att" style="border-top:0;padding-top:4px"><button class="play ${a ? '' : 'textonly'}" data-act="play" data-a="${aid || ''}" ${a ? '' : 'disabled'} aria-label="Play">${I.play}</button><div class="grow"><button class="linkbtn" style="text-decoration:none;color:inherit;text-align:left;font-weight:500" data-act="openq" data-q="${qid}">${esc(q.part === 2 ? cueShort(card) : q.t)}</button><div class="small muted">${a ? fmt(a.dur) + (hasStats(a.stats) ? ' · ' + a.stats.nPause + ' pauses' : '') + (a.ai && a.ai.bands ? ' · coach ' + esc(a.ai.bands.overall) : '') : 'Skipped'}</div>${a ? `<div class="prog"><i data-prog="${a.id}"></i></div>` : ''}</div><span></span></div>`; }).join('');
   const avg = avgScore(sc);
   return `<div class="stack">
     <div class="row"><h2 class="grow" style="font-size:22px">Test results</h2>${M.on && M.sess === sess ? `<button class="btn" data-act="mclose">Done</button>` : ''}</div>
     <div class="small muted">${when(sess.ts)} · ${sess.set ? 'Real set #' + sess.set : 'Random mix'} · ${(sess.items || []).length}/${(sess.plan || []).length} answered${sess.dur ? ' · ' + fmt(sess.dur) + ' total' : ''}</div>
-    <div class="row"><button class="btn primary" data-act="playall" data-s="${sess.id}">${I.play} Play whole test</button><button class="btn" data-act="redo" data-s="${sess.id}">Retake same questions</button></div>
+    <div class="row"><button class="btn primary" data-act="playall" data-s="${sess.id}">${I.play} Play whole test</button><button class="btn" data-act="redo" data-s="${sess.id}">Retake same questions</button>${STANDALONE && SB.user ? `<button class="btn" data-act="coachall" data-s="${sess.id}">${I.spark} Coach feedback on all answers</button>` : ''}</div>
     <div class="list">${rows}</div>
     <div class="card stack" style="gap:8px"><div class="row"><strong class="grow">Self-assessment</strong>${avg ? `<span class="pill">Overall ${avg}</span>` : ''}</div>
       <div class="small muted">Listen back, then score yourself against the four IELTS criteria.</div>
@@ -1208,27 +1225,44 @@ $('#impFile').addEventListener('change', async e => {
 });
 if (STANDALONE && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
+
 /* ---------- account sync (Supabase) ---------- */
-const SB = {client: null, user: null, state: 'off', running: false, again: false, timer: null, err: '', recovery: false};
+const TG_DOMAIN = 'tg.ielts-trainer.app';
+const SB = {client: null, user: null, me: null, state: 'off', running: false, again: false, timer: null, err: '', msg: '', lastUser: ''};
 const sbOn = () => !!(STANDALONE && SUPA_URL && SUPA_KEY);
 const kvGet = async k => { try { const r = await IDB.get('kv', k); return r ? r.v : null; } catch { return null; } };
 const kvSet = (k, v) => IDB.put('kv', {id: k, v}).catch(() => {});
+const tgName = u => String(u || '').trim().replace(/^@/, '').toLowerCase();
+const tgOk = u => /^[a-z0-9_]{3,32}$/.test(u);
+const tgEmail = u => u + '@' + TG_DOMAIN;
+const tgPw = p => 'ist:' + p;
+const myName = () => SB.user && SB.user.email ? SB.user.email.split('@')[0] : '';
+async function api(action, body = {}) {
+  let tok = SUPA_KEY;
+  if (SB.client) { try { const {data} = await SB.client.auth.getSession(); if (data && data.session) tok = data.session.access_token; } catch {} }
+  let r;
+  try { r = await fetch(SUPA_URL + '/functions/v1/api', {method: 'POST', headers: {'Content-Type': 'application/json', apikey: SUPA_KEY, Authorization: 'Bearer ' + tok}, body: JSON.stringify({action, ...body})}); }
+  catch { throw Object.assign(new Error("Can't reach the server. Check your internet."), {code: 'offline'}); }
+  let j; try { j = await r.json(); } catch { j = {error: 'bad_response', message: 'Server error (' + r.status + ')'}; }
+  if (!r.ok || j.error) throw Object.assign(new Error(j.message || j.error || ('HTTP ' + r.status)), {code: j.error});
+  return j;
+}
+async function sbStatus() { if (!SB.user) { SB.me = null; return; } try { SB.me = await api('status'); } catch (e) { if (e.code === 'not_allowed') { toast('Your access was removed by the admin.'); } } render(); }
 async function sbInit() {
   if (!sbOn()) return;
   if (!window.supabase || !window.supabase.createClient) { SB.state = 'offline'; return; }
   try {
-    SB.client = window.supabase.createClient(SUPA_URL, SUPA_KEY, {auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: true}});
+    SB.client = window.supabase.createClient(SUPA_URL, SUPA_KEY, {auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: false}});
     const {data} = await SB.client.auth.getSession();
     SB.user = (data && data.session && data.session.user) || null;
     SB.state = SB.user ? 'ok' : 'out';
     SB.client.auth.onAuthStateChange((ev, sess) => {
-      if (ev === 'PASSWORD_RECOVERY') { SB.recovery = true; render(); }
       const u = (sess && sess.user) || null;
       const changed = (u && u.id) !== (SB.user && SB.user.id);
-      SB.user = u; SB.state = u ? 'ok' : 'out';
-      if (changed) { if (u) syncNow(); chip(); render(); }
+      SB.user = u; SB.state = u ? (SB.state === 'syncing' ? 'syncing' : 'ok') : 'out';
+      if (changed) { if (u) { syncNow(); sbStatus(); } else SB.me = null; chip(); render(); }
     });
-    if (SB.user) syncNow();
+    if (SB.user) { syncNow(); sbStatus(); }
     setInterval(() => { if (SB.user && document.visibilityState === 'visible') syncNow(); }, 90000);
     window.addEventListener('focus', () => SB.user && syncSoon(300));
     window.addEventListener('online', () => SB.user && syncSoon(300));
@@ -1240,32 +1274,29 @@ async function syncNow() {
   if (SB.running) { SB.again = true; return; }
   SB.running = true; SB.state = 'syncing'; chip();
   const uidv = SB.user.id;
-  try {
-    await sbPull(uidv);
-    await sbPush(uidv);
-    SB.state = 'ok'; SB.err = '';
-  } catch (e) {
-    console.warn('sync', e);
-    SB.state = navigator.onLine === false ? 'offline' : 'error';
-    SB.err = (e && (e.message || e.error_description)) || 'error';
-  }
+  try { await sbPull(uidv); await sbPush(uidv); SB.state = 'ok'; SB.err = ''; }
+  catch (e) { console.warn('sync', e); SB.state = navigator.onLine === false ? 'offline' : 'error'; SB.err = (e && (e.message || e.error_description)) || 'error'; }
   SB.running = false; chip();
   if (SB.again) { SB.again = false; syncSoon(500); }
 }
-function rowOf(a, uidv) { return {user_id: uidv, id: a.id, qid: a.qid, part: a.part, ts: a.ts, dur: a.dur || 0, mime: a.mime || '', size: a.size || 0, tr: a.tr || '', score: a.score || null, note: a.note || '', sid: a.sid || null, fb: a.fb || null, path: a.rpath || null, deleted: false}; }
+function rowOf(a, uidv) { return {user_id: uidv, id: a.id, qid: a.qid, part: a.part, ts: a.ts, dur: a.dur || 0, mime: a.mime || '', size: a.size || 0, tr: a.tr || '', score: a.score || null, note: a.note || '', sid: a.sid || null, fb: a.fb || null, path: a.rpath || null, stats: a.stats || null, ai: a.ai || null, deleted: false}; }
+const stripMem = a => { const o = {...a}; delete o.blob; delete o.pending; delete o.failed; return o; };
+/* generic doc tables: sessions + phrases */
+const DOCS = {
+  sessions: {kv: 'sess:', list: () => S.sessions, set: l => { S.sessions = l.sort((x, y) => y.ts - x.ts); }},
+  phrases: {kv: 'ph:', list: () => [...S.phrases.values()], set: l => { S.phrases = new Map(l.map(p => [p.id, p])); }},
+};
+async function sbMarkDoc(table, id) { if (!SB.user) return; const k = 'sb-dirty-' + table + ':' + SB.user.id; const l = (await kvGet(k)) || []; if (!l.includes(id)) { l.push(id); await kvSet(k, l); } syncSoon(); }
+const sbMarkSess = id => sbMarkDoc('sessions', id);
 async function sbPush(uidv) {
   const sb = SB.client;
-  // deletions
   let tombs = (await kvGet('sb-tombs:' + uidv)) || [];
-  if (tombs.length) {
-    for (const t of tombs.slice()) {
-      const {error} = await sb.from('attempts').upsert({user_id: uidv, id: t.id, qid: t.qid || '-', deleted: true, path: null}, {onConflict: 'user_id,id'});
-      if (error) throw error;
-      if (t.path) await sb.storage.from('recordings').remove([t.path]);
-      tombs = tombs.filter(x => x.id !== t.id); await kvSet('sb-tombs:' + uidv, tombs);
-    }
+  for (const t of tombs.slice()) {
+    const {error} = await sb.from('attempts').upsert({user_id: uidv, id: t.id, qid: t.qid || '-', deleted: true, path: null, ai: null, stats: null}, {onConflict: 'user_id,id'});
+    if (error) throw error;
+    if (t.path) await sb.storage.from('recordings').remove([t.path]);
+    tombs = tombs.filter(x => x.id !== t.id); await kvSet('sb-tombs:' + uidv, tombs);
   }
-  // attempts (audio first, then the row)
   for (const a of [...S.att.values()].filter(x => x.dirty || !x.pushed)) {
     if (!a.rpath && (a.local || a.blob)) {
       const b = await getBlob(a).catch(() => null);
@@ -1282,22 +1313,23 @@ async function sbPush(uidv) {
     a.dirty = false; a.pushed = true;
     await IDB.put('att', stripMem(a));
   }
-  // sessions
-  let sd = (await kvGet('sb-sessdirty:' + uidv)) || [];
-  for (const id of sd.slice()) {
-    const s = S.sessions.find(x => x.id === id);
-    const {error} = s ? await sb.from('sessions').upsert({user_id: uidv, id, data: {...s, id: undefined}, deleted: false}, {onConflict: 'user_id,id'}) : await sb.from('sessions').upsert({user_id: uidv, id, data: {}, deleted: true}, {onConflict: 'user_id,id'});
-    if (error) throw error;
-    sd = sd.filter(x => x !== id); await kvSet('sb-sessdirty:' + uidv, sd);
+  for (const [table, cfgD] of Object.entries(DOCS)) {
+    const k = 'sb-dirty-' + table + ':' + uidv;
+    let dl = (await kvGet(k)) || [];
+    for (const id of dl.slice()) {
+      const d = cfgD.list().find(x => x.id === id);
+      const row = d ? {user_id: uidv, id, data: {...d, id: undefined}, deleted: false} : {user_id: uidv, id, data: {}, deleted: true};
+      const {error} = await sb.from(table).upsert(row, {onConflict: 'user_id,id'});
+      if (error) throw error;
+      dl = dl.filter(x => x !== id); await kvSet(k, dl);
+    }
   }
-  // stars + notes
   if (await kvGet('sb-metadirty:' + uidv)) {
-    const {error} = await sb.from('meta').upsert({user_id: uidv, data: {starred: [...S.starred], notes: S.notes}}, {onConflict: 'user_id'});
+    const {error} = await sb.from('meta').upsert({user_id: uidv, data: {starred: [...S.starred], notes: S.notes, goal: S.set.goal}}, {onConflict: 'user_id'});
     if (error) throw error;
     await kvSet('sb-metadirty:' + uidv, false);
   }
 }
-const stripMem = a => { const o = {...a}; delete o.blob; delete o.pending; delete o.failed; return o; };
 async function sbPull(uidv) {
   const sb = SB.client;
   let since = (await kvGet('sb-pull:' + uidv)) || '1970-01-01T00:00:00Z';
@@ -1311,10 +1343,10 @@ async function sbPull(uidv) {
       if (r.deleted) { if (loc) { S.att.delete(r.id); await IDB.del('att', r.id).catch(() => {}); await IDB.del('blob', r.id).catch(() => {}); urlCache.delete(r.id); changed = true; } continue; }
       if (!Q.has(r.qid)) continue;
       if (!loc) {
-        const a = {id: r.id, qid: r.qid, part: r.part, ts: Number(r.ts), dur: r.dur, mime: r.mime, size: r.size, tr: r.tr || '', score: r.score, note: r.note || '', sid: r.sid, fb: r.fb, rpath: r.path, asset: null, enc: null, local: false, pushed: true, dirty: false};
+        const a = {id: r.id, qid: r.qid, part: r.part, ts: Number(r.ts), dur: r.dur, mime: r.mime, size: r.size, tr: r.tr || '', score: r.score, note: r.note || '', sid: r.sid, fb: r.fb, rpath: r.path, stats: r.stats, ai: r.ai, asset: null, enc: null, local: false, pushed: true, dirty: false};
         S.att.set(a.id, a); await IDB.put('att', a); changed = true;
       } else if (!loc.dirty) {
-        Object.assign(loc, {tr: r.tr || '', score: r.score, note: r.note || '', fb: r.fb, rpath: loc.rpath || r.path, pushed: true});
+        Object.assign(loc, {tr: r.tr || '', score: r.score, note: r.note || '', fb: r.fb, rpath: loc.rpath || r.path, stats: r.stats || loc.stats, ai: r.ai || loc.ai, pushed: true});
         await IDB.put('att', stripMem(loc)); changed = true;
       }
     }
@@ -1322,20 +1354,24 @@ async function sbPull(uidv) {
     await kvSet('sb-pull:' + uidv, since);
     if (data.length < 500) break;
   }
-  // sessions
-  const ssince = (await kvGet('sb-spull:' + uidv)) || '1970-01-01T00:00:00Z';
-  const sres = await sb.from('sessions').select('*').gt('updated_at', ssince).order('updated_at', {ascending: true}).limit(500);
-  if (sres.error) throw sres.error;
-  const sdirty = (await kvGet('sb-sessdirty:' + uidv)) || [];
-  for (const r of sres.data) {
-    if (sdirty.includes(r.id)) continue;
-    S.sessions = S.sessions.filter(x => x.id !== r.id);
-    if (r.deleted) { await IDB.del('kv', 'sess:' + r.id).catch(() => {}); }
-    else { const s = {...r.data, id: r.id}; S.sessions.push(s); const {id, ...body} = s; await IDB.put('kv', {id: 'sess:' + r.id, ...body}); }
-    changed = true;
+  for (const [table, cfgD] of Object.entries(DOCS)) {
+    const pk = 'sb-pull-' + table + ':' + uidv;
+    const s0 = (await kvGet(pk)) || '1970-01-01T00:00:00Z';
+    const res = await sb.from(table).select('*').gt('updated_at', s0).order('updated_at', {ascending: true}).limit(1000);
+    if (res.error) throw res.error;
+    if (!res.data.length) continue;
+    const dirty = (await kvGet('sb-dirty-' + table + ':' + uidv)) || [];
+    let list = cfgD.list();
+    for (const r of res.data) {
+      if (dirty.includes(r.id)) continue;
+      list = list.filter(x => x.id !== r.id);
+      if (r.deleted) await IDB.del('kv', cfgD.kv + r.id).catch(() => {});
+      else { const d = {...r.data, id: r.id}; list.push(d); const {id, ...body} = d; await IDB.put('kv', {id: cfgD.kv + r.id, ...body}); }
+      changed = true;
+    }
+    cfgD.set(list);
+    await kvSet(pk, res.data[res.data.length - 1].updated_at);
   }
-  if (sres.data.length) { S.sessions.sort((x, y) => y.ts - x.ts); await kvSet('sb-spull:' + uidv, sres.data[sres.data.length - 1].updated_at); }
-  // stars + notes
   if (!(await kvGet('sb-metadirty:' + uidv))) {
     const {data, error} = await sb.from('meta').select('data,updated_at').maybeSingle();
     if (error) throw error;
@@ -1343,9 +1379,10 @@ async function sbPull(uidv) {
     if (data && data.updated_at !== seen) {
       const first = !seen;
       const rs = new Set((data.data && data.data.starred) || []);
-      if (first) { S.starred.forEach(x => rs.add(x)); }
+      if (first) S.starred.forEach(x => rs.add(x));
       S.starred = rs;
       S.notes = first ? {...((data.data && data.data.notes) || {}), ...S.notes} : ((data.data && data.data.notes) || {});
+      if (data.data && data.data.goal) S.set.goal = data.data.goal;
       metaLocal();
       await kvSet('sb-mpull:' + uidv, data.updated_at);
       if (first) await kvSet('sb-metadirty:' + uidv, true);
@@ -1355,9 +1392,7 @@ async function sbPull(uidv) {
   if (changed) { reindex(); softRefresh(); }
 }
 function metaLocal() { const body = {starred: [...S.starred], settings: S.set, notes: S.notes}; try { localStorage.setItem('ist-meta', JSON.stringify(body)); } catch {} IDB.put('kv', {id: 'meta', ...body}).catch(() => {}); }
-/* hooks called by the rest of the app */
 function sbMarkMeta() { if (SB.user) { kvSet('sb-metadirty:' + SB.user.id, true); syncSoon(); } }
-async function sbMarkSess(id) { if (!SB.user) return; const k = 'sb-sessdirty:' + SB.user.id; const l = (await kvGet(k)) || []; if (!l.includes(id)) { l.push(id); await kvSet(k, l); } syncSoon(); }
 async function sbTomb(a) { if (!SB.user || !a || !a.pushed) return; const k = 'sb-tombs:' + SB.user.id; const l = (await kvGet(k)) || []; l.push({id: a.id, qid: a.qid, path: a.rpath || null}); await kvSet(k, l); syncSoon(); }
 async function sbDownload(a) {
   if (!SB.client || !a.rpath) return null;
@@ -1369,57 +1404,420 @@ async function sbDownload(a) {
 }
 /* account UI */
 function sbChip() {
-  const m = {off: ['', ''], out: ['Sign in to sync', 'warn'], ok: ['Synced', 'ok'], syncing: ['Syncing…', ''], offline: ['Offline — will sync', 'warn'], error: ['Sync problem', 'warn']}[SB.state] || ['', ''];
-  return m;
+  return ({off: ['', ''], out: ['Sign in to sync', 'warn'], ok: ['Synced', 'ok'], syncing: ['Syncing…', ''], offline: ['Offline — will sync', 'warn'], error: ['Sync problem', 'warn']})[SB.state] || ['', ''];
+}
+function mustChange() { return !!(SB.user && SB.user.user_metadata && SB.user.user_metadata.must_change); }
+function pwCard(force) {
+  return `<div class="card stack" style="gap:10px;${force ? 'border-color:var(--warn)' : ''}">
+    <div><strong>${force ? 'Set your own password' : 'Change password'}</strong>${force ? '<div class="small muted">Right now your password is your username, so anyone who knows it can sign in as you.</div>' : ''}</div>
+    <input type="password" id="pwNew" autocomplete="new-password" placeholder="New password (6+ characters)">
+    <input type="password" id="pwNew2" autocomplete="new-password" placeholder="Repeat new password">
+    <div class="row"><button class="btn primary" data-act="pwsave">Save password</button>${force ? '<button class="btn ghost" data-act="pwlater">Later</button>' : ''}</div></div>`;
 }
 function accountCard(home) {
   if (!sbOn()) return '';
-  if (SB.recovery) return `<div class="card stack" style="gap:10px"><strong>Set a new password</strong><input type="password" id="sbNewPass" autocomplete="new-password" placeholder="New password (6+ characters)"><button class="btn primary" data-act="sbsetpass">Save password</button></div>`;
   if (!SB.client) return home ? '' : `<div class="card small muted">Sync isn't reachable right now (no internet?). Everything still saves on this device.</div>`;
   if (SB.user) {
-    if (home) return '';
+    if (home) return mustChange() && !SB.pwLater ? pwCard(true) : '';
     const err = SB.state === 'error' ? `<div class="small" style="color:var(--rec)">Last sync failed: ${esc(SB.err)}</div>` : '';
-    return `<div class="card stack" style="gap:10px"><div class="row"><div class="grow"><strong>Account sync</strong><div class="small muted">Signed in as ${esc(SB.user.email || '')}. Recordings, scores, notes, stars and mock tests sync between your devices.</div></div></div>${err}
-      <div class="row"><button class="btn primary" data-act="sbsync">Sync now</button><span class="grow"></span><button class="btn" data-act="sbout">Sign out</button></div></div>`;
+    return `<div class="card stack" style="gap:10px"><div class="row"><div class="grow"><strong>Account</strong><div class="small muted">Signed in as @${esc(myName())}. Takes, coach feedback, scores, notes, stars, phrases and mock tests sync between your devices.</div></div></div>${err}
+      <div class="row"><button class="btn primary" data-act="sbsync">Sync now</button>${SB.me && SB.me.admin ? `<a class="btn" href="#admin">Admin panel</a>` : ''}<span class="grow"></span><button class="btn" data-act="sbout">Sign out</button></div></div>
+      ${mustChange() ? pwCard(true) : pwCard(false)}`;
   }
   return `<div class="card stack" style="gap:10px">
-    <div><strong>${home ? 'Sync your phone and PC' : 'Account sync'}</strong><div class="small muted">Sign in to keep your recordings on every device. Each person has their own private account; nobody else can see your takes.</div></div>
-    <input type="email" id="sbEmail" autocomplete="email" placeholder="Email" value="${esc(SB.lastEmail || '')}">
-    <input type="password" id="sbPass" autocomplete="current-password" placeholder="Password (6+ characters)">
+    <div><strong>${home ? 'Sign in to sync your phone and PC' : 'Sign in'}</strong><div class="small muted">Use your Telegram username. The first time, your password is your username too; you'll set your own right after. Only people the admin has added can sign in.</div></div>
+    <input type="text" id="sbUser" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Telegram username (without @)" value="${esc(SB.lastUser || '')}">
+    <input type="password" id="sbPass" autocomplete="current-password" placeholder="Password">
     <div class="small" id="sbMsg" style="color:var(--rec)">${esc(SB.msg || '')}</div>
-    <div class="row"><button class="btn primary" data-act="sbin">Sign in</button><button class="btn" data-act="sbup">Create account</button><span class="grow"></span><button class="linkbtn" data-act="sbforgot">Forgot password?</button></div>
+    <div class="row"><button class="btn primary" data-act="sbin">Sign in</button><span class="grow"></span><span class="small muted">Forgot it? Ask the admin to reset it.</span></div>
   </div>`;
 }
-const siteUrl = () => location.protocol === 'https:' ? location.origin + location.pathname : SITE_URL;
-async function sbAuth(kind) {
-  const email = ($('#sbEmail') || {}).value || '', pass = ($('#sbPass') || {}).value || '';
-  SB.lastEmail = email.trim(); SB.msg = '';
-  if (!email.includes('@')) { SB.msg = 'Enter your email.'; return render(); }
-  if (kind !== 'forgot' && pass.length < 6) { SB.msg = 'Password needs at least 6 characters.'; return render(); }
+async function sbAuth() {
+  const u = tgName(($('#sbUser') || {}).value), pass = ($('#sbPass') || {}).value || '';
+  SB.lastUser = u; SB.msg = '';
+  if (!tgOk(u)) { SB.msg = 'Enter your Telegram username (letters, digits, underscore).'; return render(); }
+  if (!pass) { SB.msg = 'Enter your password.'; return render(); }
   try {
-    if (kind === 'in') {
-      const {error} = await SB.client.auth.signInWithPassword({email: email.trim(), password: pass});
-      if (error) SB.msg = /confirm/i.test(error.message) ? 'Confirm your email first: open the link we sent you, then sign in.' : /invalid/i.test(error.message) ? 'Wrong email or password.' : error.message;
-      else toast('Signed in. Syncing…');
-    } else if (kind === 'up') {
-      const {data, error} = await SB.client.auth.signUp({email: email.trim(), password: pass, options: {emailRedirectTo: siteUrl()}});
-      if (error) SB.msg = error.message;
-      else if (!data.session) { SB.msg = ''; toast('Account created. Check your email and open the confirmation link, then sign in here.', 9000); }
-      else toast('Account created. Syncing…');
-    } else {
-      const {error} = await SB.client.auth.resetPasswordForEmail(email.trim(), {redirectTo: siteUrl()});
-      if (error) SB.msg = error.message; else toast('Password reset email sent.');
+    let r = await SB.client.auth.signInWithPassword({email: tgEmail(u), password: tgPw(pass)});
+    if (r.error && /invalid/i.test(r.error.message)) {
+      if (pass === u) {
+        try { await api('claim', {username: u, password: pass}); r = await SB.client.auth.signInWithPassword({email: tgEmail(u), password: tgPw(pass)}); }
+        catch (e) { SB.msg = e.code === 'exists' ? "Wrong password. You've already set your own password; ask the admin to reset it if you forgot." : e.message; return render(); }
+      } else { SB.msg = 'Wrong username or password. First time here? Your password is your username.'; return render(); }
     }
-  } catch (e) { SB.msg = "Couldn't reach the sync server. Check your internet."; }
+    if (r.error) SB.msg = r.error.message;
+    else { SB.msg = ''; toast('Signed in as @' + u + '. Syncing…'); }
+  } catch (e) { SB.msg = "Couldn't reach the server. Check your internet."; }
+  render();
+}
+async function sbSavePw() {
+  const a = ($('#pwNew') || {}).value || '', b = ($('#pwNew2') || {}).value || '';
+  if (a.length < 6) return toast('Use at least 6 characters.');
+  if (a !== b) return toast("The two passwords don't match.");
+  if (a.toLowerCase() === myName()) return toast("Pick something other than your username.");
+  const {error} = await SB.client.auth.updateUser({password: tgPw(a), data: {must_change: false}});
+  if (error) return toast(error.message);
+  toast('Password saved. Use it next time you sign in.');
   render();
 }
 async function sbSignOut() {
   const pending = [...S.att.values()].filter(a => a.dirty || !a.pushed).length;
   if (!await confirmBox('Sign out on this device?', (pending ? pending + ' take(s) have not synced yet and will be lost. ' : '') + 'Recordings are removed from this device but stay in your account.', 'Sign out')) return;
   try { await SB.client.auth.signOut(); } catch {}
-  try { for (const a of [...S.att.keys()]) { await IDB.del('att', a); await IDB.del('blob', a).catch(() => {}); } for (const s of S.sessions) await IDB.del('kv', 'sess:' + s.id).catch(() => {}); } catch {}
-  S.att = new Map(); S.pending.clear(); S.sessions = []; S.starred = new Set(); S.notes = {}; urlCache.clear(); metaLocal(); reindex();
-  SB.user = null; SB.state = 'out'; render(); chip();
+  try { for (const a of [...S.att.keys()]) { await IDB.del('att', a); await IDB.del('blob', a).catch(() => {}); } for (const s of S.sessions) await IDB.del('kv', 'sess:' + s.id).catch(() => {}); for (const p of S.phrases.keys()) await IDB.del('kv', 'ph:' + p).catch(() => {}); } catch {}
+  S.att = new Map(); S.pending.clear(); S.sessions = []; S.phrases = new Map(); S.starred = new Set(); S.notes = {}; urlCache.clear(); metaLocal(); reindex();
+  SB.user = null; SB.me = null; SB.state = 'out'; render(); chip();
+}
+
+/* ================= v3: study material, phrases, fluency analysis, coach, admin, mic test ================= */
+const STUDY = {
+  structures: [
+    ['Giving your opinion', [["To be perfectly honest, I'd say that...", 'Честно говоря, я бы сказал, что...'], ['From my perspective, it seems that...', 'С моей точки зрения, кажется, что...'], ['What strikes me the most is...', 'Больше всего меня поражает то, что...'], ["If I had to choose, I'd probably go for...", 'Если бы пришлось выбрать, я бы выбрал...']]],
+    ['Contrast and comparison', [['On the one hand..., on the other hand...', 'С одной стороны..., с другой стороны...'], ['Compared to the past, nowadays people tend to...', 'По сравнению с прошлым, сегодня люди склонны...'], ['In contrast to..., I personally believe that...', 'В отличие от..., я лично считаю, что...'], ['What makes it different is...', 'Что делает это отличающимся, так это...']]],
+    ['Cause and effect', [['The main reason why I think so is...', 'Основная причина, почему я так думаю...'], ['This is largely because...', 'Это в значительной степени потому, что...'], ['As a consequence...', 'В результате...'], ["That's exactly why...", 'Вот именно поэтому...']]],
+    ['Examples', [['For instance, I vividly remember when...', 'Например, я отчётливо помню, когда...'], ['To illustrate my point...', 'Чтобы проиллюстрировать мою мысль...'], ['A good example that comes to mind is...', 'Хороший пример, который приходит в голову...'], ['What I mean by this is...', 'Что я имею в виду, так это...']]],
+    ['Buying time (use lightly)', [["That's a thought-provoking question...", 'Это наводящий на размышления вопрос...'], ['Let me think for a moment...', 'Дайте-ка подумать...'], ['Well, it really depends on the situation...', 'Ну, это зависит от ситуации...'], ["Honestly, I've never thought about it deeply, but...", 'Честно, я никогда глубоко не задумывался, но...']]],
+    ['Ending an answer', [['All in all, I strongly believe that...', 'В целом, я твёрдо верю, что...'], ['At the end of the day, what really matters is...', 'В конце концов, главное это...'], ['So, to sum it up...', 'Итак, подводя итог...']]],
+    ['Part 2 storytelling', [["I'd like to talk about..., which...", 'Я хотел бы рассказать о..., который...'], ['The reason why it is so special to me is that...', 'Причина, по которой это так важно для меня...'], ['First of all, let me give you a bit of background...', 'Для начала немного предыстории...'], ['After that, what happened was...', 'После этого произошло вот что...'], ['Eventually, it turned out that...', 'В итоге оказалось, что...'], ['Looking back, I realise that...', 'Оглядываясь назад, я понимаю, что...'], ['What impressed me the most was...', 'Больше всего меня впечатлило...'], ["I couldn't believe my eyes when...", 'Я не мог поверить своим глазам, когда...']]],
+  ],
+  idioms: [
+    ['once in a blue moon', 'очень редко', 'I go to the cinema once in a blue moon, because I prefer watching movies at home.'],
+    ['a piece of cake', 'очень легко', 'For me, reading English books is a piece of cake now.'],
+    ['break the ice', 'растопить лёд', 'I usually tell a joke to break the ice when I meet new people.'],
+    ['hit the nail on the head', 'попасть в точку', 'When she said I was lazy, she really hit the nail on the head.'],
+    ['burn the midnight oil', 'работать допоздна', 'I had to burn the midnight oil to finish my essay.'],
+    ['cost an arm and a leg', 'стоить целое состояние', 'That car must have cost him an arm and a leg.'],
+    ['under the weather', 'нехорошо себя чувствовать', "I'm feeling a bit under the weather today, so I'll stay at home."],
+    ['a rule of thumb', 'практическое правило', 'As a rule of thumb, I drink two litres of water a day.'],
+    ['be on cloud nine', 'быть на седьмом небе', 'I was on cloud nine when I passed my exam.'],
+    ['over the moon', 'очень счастлив', 'I was over the moon when I got the offer.'],
+    ['have a heart of gold', 'иметь золотое сердце', 'My grandmother has a heart of gold; she helps everyone.'],
+    ['in hot water', 'в неприятностях', 'He got into hot water after missing the deadline.'],
+    ['cry over spilt milk', 'жалеть о прошлом', "There's no point crying over spilt milk, just move on."],
+    ['snowed under (with work)', 'завален работой', "This week I'm snowed under with assignments."],
+    ['fed up with', 'сыт по горло', "I'm fed up with the traffic jams in my city."],
+    ['hit the roof', 'выйти из себя', 'My dad hit the roof when I broke his phone.'],
+    ['at a crossroads', 'на распутье', "I'm at a crossroads, deciding whether to study abroad or stay here."],
+    ['the ball is in your court', 'дело за тобой', "I've given you all the information, so the ball is in your court."],
+    ['make ends meet', 'сводить концы с концами', 'Many people find it hard to make ends meet nowadays.'],
+    ['play it safe', 'действовать осторожно', 'I prefer to play it safe and save money rather than spend it.'],
+    ['go the extra mile', 'сделать больше, чем нужно', 'To get a high score you really need to go the extra mile.'],
+    ['kill two birds with one stone', 'убить двух зайцев', 'By studying online I kill two birds with one stone: I save time and money.'],
+    ['bite the bullet', 'решиться на трудное', 'I had to bite the bullet and retake the exam.'],
+  ],
+  vocab: [
+    ['Education', [['hit the books', 'зубрить'], ['learn the ropes', 'освоить основы'], ["broaden one's horizons", 'расширять горизонты'], ['the school of hard knocks', 'школа жизни'], ['Education paves the way for success.', '']]],
+    ['Technology', [['cutting-edge technology', 'передовые технологии'], ['tech-savvy', 'разбирающийся в технике'], ['a double-edged sword', 'палка о двух концах'], ['break new ground', 'открывать новое'], ['The downside of modern technology is...', '']]],
+    ['Work', [['climb the career ladder', 'подниматься по карьерной лестнице'], ['work against the clock', 'работать в спешке'], ['a dead-end job', 'работа без перспектив'], ['Work-life balance is becoming more and more important.', '']]],
+    ['Environment', [['carbon footprint', 'углеродный след'], ['sustainable development', 'устойчивое развитие'], ['throwaway society', 'общество потребления'], ['Environmental issues are more pressing than ever.', '']]],
+    ['Health', [['fit as a fiddle', 'в отличной форме'], ['kick the habit', 'бросить привычку'], ['Prevention is better than cure.', 'профилактика лучше лечения'], ['People nowadays are more health-conscious.', '']]],
+    ['Society', [['the rat race', 'крысиные бега'], ['generation gap', 'разрыв поколений'], ['silver lining', 'луч надежды'], ['The gap between rich and poor is widening.', '']]],
+  ],
+  grammar: [
+    ['Inversion after negative adverbs', 'Инверсия', 'Negative/limiting word + auxiliary + subject + verb', [['Modern technology is not only efficient, but it also saves time.', 'Not only is modern technology efficient, but it also saves time.'], ['People rarely think about the environmental impact of their choices.', 'Rarely do people think about the environmental impact of their choices.'], ['The policy was introduced and immediately failed.', 'Hardly had the policy been introduced when it failed.']]],
+    ['Conditional inversion', 'Формальные условные', 'Should / Were ... to / Had + subject', [['If you need help, call me.', 'Should you need help, call me.'], ['If the government invested more in green energy, pollution would drop.', 'Were the government to invest more in green energy, pollution would drop.'], ['If we had acted earlier, we would have avoided the damage.', 'Had we acted earlier, we would have avoided the damage.']]],
+    ['Mixed conditional: past → present', 'Смешанные условные', 'If + had + V3, would + V1', [["I didn't study medicine, so I'm not a doctor.", 'If I had studied medicine, I would be a doctor now.'], ['Governments didn\'t invest in roads, so traffic is bad now.', "If governments had invested in roads ten years ago, we wouldn't have such traffic now."]]],
+    ['Mixed conditional: present → past', 'Смешанные условные', 'If + V2/were, would have + V3', [["I'm afraid of heights, so I didn't go skydiving.", "If I weren't afraid of heights, I would have gone skydiving."], ["The company isn't flexible, so it went bankrupt.", "If the company were more flexible, it wouldn't have gone bankrupt."]]],
+    ['Complex passive: It is ... that', 'Сложный пассив', 'It is + believed/thought/argued + that...', [['People believe AI will change the job market.', 'It is widely believed that AI will change the job market.'], ['Many argue that university should be free.', 'It is often argued that university should be free.']]],
+    ['Complex passive: Subject + is ... to', 'Сложный пассив', 'Subject + is thought/believed + to V / to have V3', [['People think exercise improves mental health.', 'Exercise is thought to improve mental health.'], ['Historians believe ancient people built it for astronomy.', 'Ancient people are believed to have built it for astronomy.']]],
+  ],
+};
+function challengePool() {
+  const out = [];
+  STUDY.structures.forEach(([g, l]) => l.forEach(([en, ru]) => out.push({t: en, ru, kind: 'structure'})));
+  STUDY.idioms.forEach(([en, ru, ex]) => out.push({t: en, ru, ex, kind: 'idiom'}));
+  STUDY.vocab.forEach(([g, l]) => l.forEach(([en, ru]) => ru && out.push({t: en, ru, kind: 'vocab'})));
+  STUDY.grammar.forEach(([n, ru, f, ex]) => out.push({t: n + ' (' + f + ')', ru, ex: ex[0][1], kind: 'grammar'}));
+  return out;
+}
+
+/* ---------- phrase notebook (spaced review) ---------- */
+const BOX_DAYS = [0, 1, 2, 4, 8, 16, 32];
+function addPhrase(p) {
+  const exists = [...S.phrases.values()].find(x => x.phrase.toLowerCase() === String(p.phrase).toLowerCase());
+  if (exists) return toast('Already in your phrases.');
+  const id = uid('p');
+  const ph = {id, phrase: String(p.phrase).slice(0, 200), meaning: p.meaning || '', example: p.example || '', qid: p.qid || null, ts: Date.now(), box: 0, due: Date.now()};
+  S.phrases.set(id, ph); savePhrase(ph); toast('Saved to My phrases.'); render();
+}
+function savePhrase(ph) { const {id, ...body} = ph; IDB.put('kv', {id: 'ph:' + id, ...body}).catch(() => {}); if (STANDALONE) sbMarkDoc('phrases', id); }
+function delPhrase(id) { S.phrases.delete(id); IDB.del('kv', 'ph:' + id).catch(() => {}); if (STANDALONE) sbMarkDoc('phrases', id); render(); }
+function reviewPhrase(id, ok) { const p = S.phrases.get(id); if (!p) return; p.box = ok ? Math.min(6, (p.box || 0) + 1) : 0; p.due = Date.now() + (ok ? BOX_DAYS[p.box] * 864e5 : 10 * 60e3); savePhrase(p); ST.revealed = false; render(); }
+const duePhrases = () => [...S.phrases.values()].filter(p => (p.due || 0) <= Date.now()).sort((a, b) => (a.due || 0) - (b.due || 0));
+
+/* ---------- audio: decode, fluency stats, WAV for the coach ---------- */
+async function decodeBlob(blob) {
+  const ab = await blob.arrayBuffer();
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ac = new AC();
+  try { return await new Promise((res, rej) => { const p = ac.decodeAudioData(ab.slice(0), res, rej); if (p && p.then) p.then(res, rej); }); }
+  finally { try { ac.close(); } catch {} }
+}
+async function to16k(buf) {
+  const len = Math.max(1, Math.ceil(buf.duration * 16000));
+  const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const oc = new OC(1, len, 16000);
+  const s = oc.createBufferSource(); s.buffer = buf; s.connect(oc.destination); s.start(0);
+  const r = await oc.startRendering();
+  return r.getChannelData(0);
+}
+function fluencyStats(pcm, sr = 16000) {
+  const fl = Math.round(sr * 0.05), n = Math.floor(pcm.length / fl);
+  if (n < 4) return null;
+  const rms = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let s = 0; for (let k = i * fl; k < (i + 1) * fl; k++) s += pcm[k] * pcm[k]; rms[i] = Math.sqrt(s / fl); }
+  const sorted = Array.from(rms).sort((a, b) => a - b);
+  const pct = q => sorted[Math.min(n - 1, Math.floor(q * n))];
+  const noise = pct(0.12), peak = pct(0.95);
+  const thr = Math.max(noise * 2.2, noise + (peak - noise) * 0.1, 0.003);
+  const sp = Array.from(rms, v => v > thr);
+  for (let i = 1; i < n - 1; i++) if (!sp[i] && sp[i - 1] && sp[i + 1]) sp[i] = true;
+  const first = sp.indexOf(true), last = sp.lastIndexOf(true);
+  const dur = n * 0.05;
+  if (first < 0) return {dur, speechRatio: 0, startDelay: dur, pauses: [], nPause: 0, nLong: 0, longest: 0, env: []};
+  const pauses = []; let run = 0, runStart = 0, speechF = 0;
+  for (let i = first; i <= last; i++) {
+    if (sp[i]) { if (run * 0.05 >= 0.6) pauses.push([+(runStart * 0.05).toFixed(1), +(run * 0.05).toFixed(1)]); run = 0; speechF++; }
+    else { if (!run) runStart = i; run++; }
+  }
+  const span = Math.max(1, last - first + 1);
+  const B = 160, env = [];
+  for (let b = 0; b < B; b++) { const a = Math.floor(b * n / B), z = Math.max(a + 1, Math.floor((b + 1) * n / B)); let m = 0; for (let i = a; i < z; i++) m = Math.max(m, rms[i]); env.push(Math.min(99, Math.round(m / (peak || 1) * 80))); }
+  return {dur: +dur.toFixed(1), speechRatio: +(speechF / span).toFixed(2), startDelay: +(first * 0.05).toFixed(1), pauses, nPause: pauses.length, nLong: pauses.filter(p => p[1] >= 1.5).length, longest: pauses.reduce((m, p) => Math.max(m, p[1]), 0), env};
+}
+function wavB64(pcm, sr = 16000) {
+  const n = pcm.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) { const s = Math.max(-1, Math.min(1, pcm[i])); v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); }
+  const bytes = new Uint8Array(buf); let bin = ''; const CH = 0x8000;
+  for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+  return btoa(bin);
+}
+const STATS_BUSY = new Set();
+async function measureAttempt(id, quiet) {
+  const a = getAtt(id); if (!a || STATS_BUSY.has(id)) return null;
+  STATS_BUSY.add(id);
+  try {
+    const b = await getBlob(a); if (!b) return null;
+    const pcm = await to16k(await decodeBlob(b));
+    const st = fluencyStats(pcm);
+    if (st && S.att.has(id)) { if (a.stats && a.stats.target) st.target = a.stats.target; updAtt(id, {stats: st}); }
+    return {pcm, st};
+  } catch (e) { if (!quiet) toast("Couldn't read this audio to measure pauses."); return null; }
+  finally { STATS_BUSY.delete(id); if (!quiet) render(); }
+}
+const hasStats = st => !!(st && st.env && st.dur != null);
+function statsLine(st) {
+  if (!hasStats(st)) return '';
+  return `speaking ${Math.round(st.speechRatio * 100)}% · ${st.nPause} pause${st.nPause === 1 ? '' : 's'}${st.nLong ? ` (${st.nLong} long)` : ''} · longest ${st.longest.toFixed(1)}s · started after ${st.startDelay.toFixed(1)}s`;
+}
+function waveSVG(st) {
+  if (!st || !st.env || !st.env.length) return '';
+  const W = 320, H = 48, n = st.env.length, bw = W / n, sx = W / Math.max(st.dur, 0.1);
+  const pauses = st.pauses.map(([t, d]) => `<rect x="${(t * sx).toFixed(1)}" y="0" width="${Math.max(1.5, d * sx).toFixed(1)}" height="${H}" fill="${d >= 1.5 ? 'var(--rec)' : 'var(--warn)'}" opacity=".18"/>`).join('');
+  const bars = st.env.map((v, i) => { const h = Math.max(1, v / 99 * (H - 4)); return `<rect x="${(i * bw).toFixed(1)}" y="${((H - h) / 2).toFixed(1)}" width="${Math.max(0.8, bw - 0.6).toFixed(1)}" height="${h.toFixed(1)}" rx=".5" fill="var(--accent)"/>`; }).join('');
+  const ticks = []; for (let t = 10; t < st.dur; t += 10) ticks.push(`<text x="${(t * sx).toFixed(1)}" y="${H + 11}" font-size="9" text-anchor="middle" fill="var(--muted)" font-family="var(--mono)">${t}s</text>`);
+  return `<svg viewBox="0 0 ${W} ${H + 13}" width="100%" style="display:block;max-width:520px" role="img" aria-label="Waveform with pauses shaded">${pauses}${bars}${ticks.join('')}</svg>
+    <div class="small muted" style="margin-top:2px"><span style="display:inline-block;width:9px;height:9px;background:var(--warn);opacity:.45;border-radius:2px"></span> pause 0.6–1.5s <span style="display:inline-block;width:9px;height:9px;background:var(--rec);opacity:.45;border-radius:2px;margin-left:8px"></span> 1.5s+</div>`;
+}
+
+/* ---------- Gemini coach ---------- */
+const COACH = {busy: new Set(), ideas: {}};
+const coachReady = () => STANDALONE && SB.user && SB.me && SB.me.hasKey;
+function qPayload(qid) { const q = Q.get(qid); if (q.part === 2) { const c = CM.get(q.pid); return {part: 2, text: c.cue, bullets: c.bullets}; } return {part: q.part, text: q.t}; }
+async function coachAttempt(id) {
+  const a = getAtt(id); if (!a) return;
+  if (!SB.user) return toast('Sign in first (Settings).');
+  if (SB.me && !SB.me.hasKey) return toast("The coach isn't set up yet: the admin needs to add a Gemini key.");
+  if (COACH.busy.has(id)) return;
+  COACH.busy.add(id); render();
+  try {
+    const m = await measureAttempt(id, true);
+    if (!m) throw new Error("Couldn't read the audio of this take.");
+    const pcm = m.pcm.length > 16000 * 240 ? m.pcm.subarray(0, 16000 * 240) : m.pcm;
+    const res = await api('analyze', {audio: wavB64(pcm), mime: 'audio/wav', question: qPayload(a.qid), dur: a.dur, stats: m.st, target: a.stats && a.stats.target});
+    if (SB.me && res.usage) { SB.me.used = res.usage.used; SB.me.limit = res.usage.limit; }
+    const {usage, ...ai} = res; ai.at = Date.now();
+    updAtt(id, {ai});
+    OPEN.add(id);
+  } catch (e) { toast(e.message || 'The coach failed.', 6000); }
+  finally { COACH.busy.delete(id); render(); }
+}
+async function coachIdeas(qid, fresh) {
+  if (!SB.user) return toast('Sign in first (Settings).');
+  COACH.ideas[qid] = {loading: true}; render();
+  try { COACH.ideas[qid] = await api('ideas', {qid, question: qPayload(qid), fresh: !!fresh}); }
+  catch (e) { COACH.ideas[qid] = {err: e.message}; }
+  render();
+}
+const OPEN = new Set();
+function bandPills(b) {
+  if (!b) return '';
+  const k = [['overall', 'Overall'], ['fc', 'Fluency'], ['lr', 'Vocab'], ['gra', 'Grammar'], ['p', 'Pron.']];
+  return `<div class="row" style="gap:6px">${k.map(([x, l]) => b[x] != null ? `<span class="pill ${x === 'overall' ? '' : 'p3'}" title="${l}">${l} ${esc(b[x])}</span>` : '').join('')}</div>`;
+}
+function hlTranscript(t) { return esc(t).replace(/\[(pause[^\]]*)\]/gi, '<mark class="pz">[$1]</mark>').replace(/\b(um+|uh+|erm|er)\b/gi, '<mark class="fl">$1</mark>'); }
+function phraseBtn(p, qid) { return `<button class="btn ghost" style="padding:4px 8px" data-act="addph" data-p="${esc(JSON.stringify({phrase: p.phrase, meaning: p.meaning_ru || p.meaning || '', example: p.example || '', qid}))}">+ Save</button>`; }
+function coachBlock(a) {
+  const ai = a.ai;
+  if (COACH.busy.has(a.id)) return `<div class="ideas">Listening to your answer and writing feedback… (10–30 s)</div>`;
+  if (!ai) return '';
+  const sec = (t, body) => body ? `<div><div class="small muted" style="font-weight:600;letter-spacing:.04em;text-transform:uppercase;font-size:11px">${t}</div><div style="margin-top:3px">${body}</div></div>` : '';
+  const list = (arr, f) => Array.isArray(arr) && arr.length ? `<div class="stack" style="gap:6px">${arr.map(f).join('')}</div>` : '';
+  return `<div class="coach stack" style="gap:12px">
+    ${bandPills(ai.bands)}
+    ${sec('In short', esc(ai.summary))}
+    ${sec('What you said', ai.transcript ? `<div class="tr">${hlTranscript(ai.transcript)}</div>` : '')}
+    ${sec('Fluency and pauses', esc(ai.fluency))}
+    ${sec('Pronunciation', esc(ai.pronunciation))}
+    ${sec('Grammar', list(ai.grammar, g => `<div class="fix"><s>${esc(g.said)}</s> → <b>${esc(g.better)}</b>${g.why ? `<div class="small muted">${esc(g.why)}</div>` : ''}</div>`))}
+    ${sec('Say it better', list(ai.vocab, v => `<div class="fix">${esc(v.said)} → <b>${esc((v.better || []).join(' / '))}</b>${v.note ? `<div class="small muted">${esc(v.note)}</div>` : ''}</div>`))}
+    ${ai.natural_version ? sec('How a band 8 speaker might say it', `<div class="tr">${esc(ai.natural_version)}</div><div class="row" style="margin-top:6px"><button class="btn" data-act="saytext" data-t="${esc(ai.natural_version)}">${I.speak} Listen (for shadowing)</button></div>`) : ''}
+    ${sec('Useful phrases', list(ai.phrases, p => `<div class="row" style="align-items:flex-start"><div class="grow"><b>${esc(p.phrase)}</b> <span class="muted small">${esc(p.meaning_ru || '')}</span>${p.example ? `<div class="small muted">${esc(p.example)}</div>` : ''}</div>${phraseBtn(p, a.qid)}</div>`))}
+    ${sec('Next time', esc(ai.next_time))}
+    <div class="small muted">Coach: ${esc(ai.model || 'Gemini')} · ${when(ai.at || a.ts)} · <button class="linkbtn" data-act="coach" data-a="${a.id}">Analyse again</button></div>
+  </div>`;
+}
+function ideasCoachBlock(qid) {
+  const s = COACH.ideas[qid]; if (!s) return '';
+  if (s.loading) return `<div class="ideas">Thinking of ideas…</div>`;
+  if (s.err) return `<div class="ideas">${esc(s.err)}</div>`;
+  return `<div class="ideas stack" style="gap:10px;white-space:normal">
+    ${s.angles ? `<div><b>Ways to answer</b><ul style="margin:4px 0 0;padding-left:18px">${s.angles.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+    ${s.outline ? `<div><b>1-minute notes</b><ul style="margin:4px 0 0;padding-left:18px">${s.outline.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+    ${s.opening ? `<div><b>A natural first sentence</b><div>${esc(s.opening)}</div></div>` : ''}
+    ${s.phrases ? `<div><b>Phrases</b><div class="stack" style="gap:6px;margin-top:4px">${s.phrases.map(p => `<div class="row" style="align-items:flex-start"><div class="grow"><b>${esc(p.phrase)}</b> <span class="muted small">${esc(p.meaning_ru || '')}</span>${p.example ? `<div class="small muted">${esc(p.example)}</div>` : ''}</div>${phraseBtn(p, qid)}</div>`).join('')}</div></div>` : ''}
+    ${s.sample ? `<div><b>Sample answer</b><div style="white-space:pre-wrap">${esc(s.sample)}</div><div class="row" style="margin-top:6px"><button class="btn" data-act="saytext" data-t="${esc(s.sample)}">${I.speak} Listen</button><button class="linkbtn" data-act="ideasfresh" data-q="${qid}">Get a different one</button></div></div>` : ''}
+  </div>`;
+}
+
+/* ---------- mic test (5 s) ---------- */
+const MT = {on: false, t0: 0, mr: null, stream: null, chunks: [], url: null, timer: 0, err: ''};
+async function micTestStart() {
+  if (MT.on) return;
+  MT.err = '';
+  try { MT.stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true}}); }
+  catch (e) { MT.err = 'The microphone is blocked (' + ((e && e.name) || 'error') + '). ' + (STANDALONE ? 'Allow it in the browser address bar and try again.' : "Claude doesn't allow the microphone here; use the website."); S.liveOK = STANDALONE ? S.liveOK : false; render(); return; }
+  S.liveOK = true;
+  MT.chunks = []; MT.on = true; MT.t0 = Date.now();
+  try { MT.mr = new MediaRecorder(MT.stream); } catch { MT.err = 'Recording is not supported in this browser.'; MT.on = false; render(); return; }
+  MT.mr.ondataavailable = e => e.data && e.data.size && MT.chunks.push(e.data);
+  MT.mr.onstop = () => { const b = new Blob(MT.chunks, {type: (MT.mr.mimeType || 'audio/webm').split(';')[0]}); if (MT.url) URL.revokeObjectURL(MT.url); MT.url = URL.createObjectURL(b); MT.stream.getTracks().forEach(t => t.stop()); render(); const au = $('#mtAudio'); if (au) au.play().catch(() => {}); };
+  MT.mr.start(250);
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const an = actx.createAnalyser(); an.fftSize = 512; actx.createMediaStreamSource(MT.stream).connect(an); const buf = new Uint8Array(512);
+    const loop = () => { if (!MT.on) return; an.getByteTimeDomainData(buf); let m = 0; for (const v of buf) m = Math.max(m, Math.abs(v - 128)); const el = $('#mtLvl'); if (el) el.style.width = Math.min(100, m / 64 * 100) + '%'; requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  } catch {}
+  clearInterval(MT.timer);
+  MT.timer = setInterval(() => { const left = Math.max(0, 5 - (Date.now() - MT.t0) / 1000); const el = $('#mtLeft'); if (el) el.textContent = left.toFixed(1) + ' s'; if (left <= 0) micTestStop(); }, 100);
+  render();
+}
+function micTestStop() { if (!MT.on) return; MT.on = false; clearInterval(MT.timer); try { MT.mr.stop(); } catch {} }
+function micTestCard() {
+  return `<div class="card stack" style="gap:10px"><div class="row"><strong class="grow">Microphone test</strong>${MT.on ? '<span class="chip" style="color:var(--rec);border-color:var(--rec)">● Recording</span>' : ''}</div>
+    <div class="small muted">Records up to 5 seconds, then plays it back so you can hear how you sound.</div>
+    ${MT.on ? `<div class="row"><span class="rtime" id="mtLeft" style="font-size:22px">5.0 s</span><div class="grow"><div class="lvl" style="height:8px;background:var(--line)"><i id="mtLvl"></i></div></div><button class="btn danger" data-act="mtstop">${I.stop} Stop</button></div>`
+      : `<div class="row"><button class="btn primary" data-act="mtstart">${I.mic} ${MT.url ? 'Record again' : 'Record 5 seconds'}</button></div>`}
+    ${MT.url && !MT.on ? `<audio id="mtAudio" controls src="${MT.url}" style="width:100%"></audio>` : ''}
+    ${MT.err ? `<div class="small" style="color:var(--rec)">${esc(MT.err)}</div>` : ''}</div>`;
+}
+
+/* ---------- study view ---------- */
+const ST = {tab: 'review', q: '', revealed: false};
+function viewStudy() {
+  const tabs = [['review', `Review (${duePhrases().length})`], ['mine', `My phrases (${S.phrases.size})`], ['structures', 'Structures'], ['idioms', 'Idioms'], ['vocab', 'Topic vocab'], ['grammar', 'Grammar']];
+  const seg = `<div class="seg">${tabs.map(([v, l]) => `<button data-act="sttab" data-v="${v}" aria-pressed="${ST.tab === v}">${l}</button>`).join('')}</div>`;
+  const useBtn = t => `<button class="btn ghost" style="padding:4px 8px" data-act="usechallenge" data-t="${esc(t)}">Use it</button>`;
+  const saveBtn = (phrase, meaning, example) => `<button class="btn ghost" style="padding:4px 8px" data-act="addph" data-p="${esc(JSON.stringify({phrase, meaning, example}))}">+ Save</button>`;
+  let body = '';
+  if (ST.tab === 'review') {
+    const due = duePhrases();
+    if (!S.phrases.size) body = `<div class="card empty">Save phrases from the coach's feedback, the ideas, or the lists here, and they'll come back for review on a schedule (1, 2, 4, 8… days).</div>`;
+    else if (!due.length) body = `<div class="card empty">Nothing to review right now. Next one: ${when(Math.min(...[...S.phrases.values()].map(p => p.due || 0)))}.</div>`;
+    else { const p = due[0]; body = `<div class="card stack" style="gap:12px;text-align:center;padding:24px 16px"><div class="small muted">${due.length} to review</div>
+      <div style="font-size:20px">${esc(p.meaning || '(no meaning saved)')}</div>
+      ${ST.revealed ? `<div class="qtext" style="font-size:24px">${esc(p.phrase)}</div>${p.example ? `<div class="muted">${esc(p.example)}</div>` : ''}
+        <div class="row" style="justify-content:center"><button class="btn" data-act="phagain" data-id="${p.id}">Didn't know</button><button class="btn primary" data-act="phok" data-id="${p.id}">Knew it</button><button class="btn" data-act="saytext" data-t="${esc(p.phrase + '. ' + (p.example || ''))}">${I.speak}</button></div>`
+      : `<button class="btn primary big" data-act="phshow">Show the English phrase</button>`}
+      <div class="small muted">Say a sentence with it out loud before you check.</div></div>`; }
+  } else if (ST.tab === 'mine') {
+    const l = [...S.phrases.values()].sort((a, b) => b.ts - a.ts);
+    body = l.length ? `<div class="list">${l.map(p => `<div class="li"><div class="grow"><div class="t">${esc(p.phrase)}</div><div class="s">${esc(p.meaning)}${p.example ? ' · ' + esc(p.example) : ''}</div><div class="s">box ${p.box || 0} · next ${when(p.due || p.ts)}</div></div>${useBtn(p.phrase)}<button class="iconbtn" data-act="phdel" data-id="${p.id}" aria-label="Delete">${I.trash}</button></div>`).join('')}</div>` : '<div class="card empty">No saved phrases yet.</div>';
+  } else if (ST.tab === 'structures') {
+    body = STUDY.structures.map(([g, l]) => `<div class="sec-h"><h3>${esc(g)}</h3></div><div class="list">${l.map(([en, ru]) => `<div class="li"><div class="grow"><div class="t">${esc(en)}</div><div class="s">${esc(ru)}</div></div>${useBtn(en)}${saveBtn(en, ru, '')}</div>`).join('')}</div>`).join('') + `<div class="small muted" style="margin-top:10px">Examiners notice memorised openers. Use these to connect real ideas, not as decoration, and never start every answer the same way.</div>`;
+  } else if (ST.tab === 'idioms') {
+    body = `<div class="list">${STUDY.idioms.map(([en, ru, ex]) => `<div class="li"><div class="grow"><div class="t">${esc(en)} <span class="muted small">${esc(ru)}</span></div><div class="s">${esc(ex)}</div></div>${useBtn(en)}${saveBtn(en, ru, ex)}</div>`).join('')}</div><div class="small muted" style="margin-top:10px">One idiom that fits naturally is worth more than three forced ones.</div>`;
+  } else if (ST.tab === 'vocab') {
+    body = STUDY.vocab.map(([g, l]) => `<div class="sec-h"><h3>${esc(g)}</h3></div><div class="list">${l.map(([en, ru]) => `<div class="li"><div class="grow"><div class="t">${esc(en)}</div>${ru ? `<div class="s">${esc(ru)}</div>` : ''}</div>${useBtn(en)}${saveBtn(en, ru, '')}</div>`).join('')}</div>`).join('');
+  } else {
+    body = STUDY.grammar.map(([n, ru, f, ex]) => `<div class="card stack" style="gap:8px;margin-top:10px"><div class="row"><strong class="grow">${esc(n)}</strong><span class="small muted">${esc(ru)}</span></div><div class="small" style="font-family:var(--mono)">${esc(f)}</div>${ex.map(([a, b]) => `<div class="small"><span class="muted">${esc(a)}</span><br><b>${esc(b)}</b></div>`).join('')}<div class="row">${useBtn(n + ' (' + f + ')')}</div></div>`).join('') + `<div class="small muted" style="margin-top:10px">These fit Part 3 best. In Part 1 they can sound stiff.</div>`;
+  }
+  return `<div class="stack"><h2 style="font-size:24px">Study</h2>${seg}${body}</div>`;
+}
+
+/* ---------- admin view ---------- */
+const AD = {data: null, loading: false, err: '', msg: ''};
+async function adminLoad() { AD.loading = true; AD.err = ''; render(); try { AD.data = await api('admin_list'); } catch (e) { AD.err = e.message; } AD.loading = false; render(); }
+async function adminDo(action, body, okMsg) { try { const r = await api(action, body); if (okMsg) toast(typeof okMsg === 'function' ? okMsg(r) : okMsg); await adminLoad(); if (action === 'admin_config') sbStatus(); return r; } catch (e) { toast(e.message, 6000); } }
+function viewAdmin() {
+  if (!SB.me || !SB.me.admin) return `<div class="card empty">Admins only. ${SB.user ? '' : 'Sign in first.'}</div>`;
+  if (!AD.data && !AD.loading && !AD.err) { setTimeout(adminLoad, 0); }
+  const d = AD.data;
+  const cfgc = d ? d.config : {};
+  const users = d ? d.users : [];
+  return `<div class="stack">
+    <div class="row"><h2 class="grow" style="font-size:24px">Admin</h2><button class="btn" data-act="adreload">Refresh</button></div>
+    ${AD.err ? `<div class="card small" style="color:var(--rec)">${esc(AD.err)}</div>` : ''}
+    <div class="card stack" style="gap:10px"><strong>Add people</strong>
+      <div class="small muted">Telegram usernames, without @, separated by spaces, commas or new lines. Their first password is their username; they'll be asked to change it.</div>
+      <textarea id="adNames" rows="2" placeholder="friend_one, friend_two"></textarea>
+      <div class="row"><button class="btn primary" data-act="adadd">Add</button></div></div>
+    <div class="sec-h"><h3>People (${users.length})</h3></div>
+    <div class="list">${AD.loading && !d ? '<div class="empty">Loading…</div>' : users.map(u => `<div class="li" style="flex-wrap:wrap"><div class="grow"><div class="t">@${esc(u.username)} ${u.admin ? '<span class="pill">admin</span>' : ''}</div>
+      <div class="s">${u.joined ? `signed in ${u.last ? when(Date.parse(u.last)) : '—'}${u.mustChange ? ' · still using username as password' : ''}` : 'not signed in yet'} · ${u.takes} takes · ${u.ai} coach uses</div></div>
+      <div class="row" style="gap:6px">${u.joined ? `<button class="btn ghost" style="padding:5px 9px" data-act="adreset" data-u="${esc(u.username)}">Reset password</button>` : ''}
+      ${u.username !== myName() ? `<button class="btn ghost" style="padding:5px 9px" data-act="adadmin" data-u="${esc(u.username)}" data-v="${u.admin ? '' : '1'}">${u.admin ? 'Remove admin' : 'Make admin'}</button><button class="btn ghost danger" style="padding:5px 9px" data-act="adremove" data-u="${esc(u.username)}">Remove</button>` : ''}</div></div>`).join('')}</div>
+    <div class="card stack" style="gap:10px"><div class="row"><strong class="grow">Gemini coach</strong><span class="chip ${cfgc.hasKey ? 'ok' : 'warn'}">${cfgc.hasKey ? 'Key saved ' + esc(cfgc.keyHint) : 'No key yet'}</span></div>
+      <div class="small muted">Get a free key at aistudio.google.com/apikey and paste it here. It's stored on the server only; nobody using the app can read it.</div>
+      <input type="password" id="adKey" autocomplete="off" placeholder="${cfgc.hasKey ? 'Paste a new key to replace it' : 'Paste your Gemini API key'}">
+      <div class="row"><button class="btn primary" data-act="adkey">Save key</button><button class="btn" data-act="adtest" ${cfgc.hasKey ? '' : 'disabled'}>Test</button>${cfgc.hasKey ? '<button class="btn ghost danger" data-act="adkeydel">Remove key</button>' : ''}</div>
+      <label class="sw"><span><span style="font-weight:500">Coach uses per person per day</span><br><span class="small muted">Protects your free Gemini quota</span></span><input type="text" id="adLimit" value="${esc(cfgc.daily_limit || '60')}" style="width:80px"></label>
+      <label class="sw"><span><span style="font-weight:500">Model</span><br><span class="small muted">gemini-flash-latest follows Google's newest Flash model</span></span><input type="text" id="adModel" value="${esc(cfgc.model || 'gemini-flash-latest')}" style="width:190px"></label>
+      <div class="row"><button class="btn" data-act="adcfg">Save limits</button></div></div>
+  </div>`;
+}
+
+/* ---------- home extras: goal + trends ---------- */
+function goalCard() {
+  const goal = S.set.goal || 10, today = allAttempts().filter(a => dayKey(a.ts) === dayKey(Date.now())).length;
+  const pct = Math.min(1, today / goal), R0 = 26, C = 2 * Math.PI * R0;
+  const analysed = allAttempts().filter(a => a.ai && a.ai.bands && a.ai.bands.overall).sort((a, b) => a.ts - b.ts).slice(-20);
+  const pts = analysed.map(a => +a.ai.bands.overall);
+  let spark = '<div class="small muted">Analyse a few takes with the coach to see your band trend here.</div>';
+  if (pts.length >= 2) {
+    const W = 200, H = 50, lo = 4, hi = 9, x = i => (i / (pts.length - 1)) * W, y = v => H - ((v - lo) / (hi - lo)) * H;
+    spark = `<svg viewBox="-4 -4 ${W + 8} ${H + 8}" width="100%" style="max-width:260px" role="img" aria-label="Band estimates over time"><line x1="0" x2="${W}" y1="${y(7)}" y2="${y(7)}" stroke="var(--line)" stroke-dasharray="3 3"/><polyline fill="none" stroke="var(--accent)" stroke-width="2" points="${pts.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ')}"/><circle cx="${x(pts.length - 1)}" cy="${y(pts[pts.length - 1])}" r="3.5" fill="var(--accent)"/></svg><div class="small muted">Coach band estimates, last ${pts.length} · latest ${pts[pts.length - 1]} · dashed line = 7.0</div>`;
+  }
+  const withStats = allAttempts().filter(a => hasStats(a.stats) && a.stats.dur > 5).sort((a, b) => b.ts - a.ts).slice(0, 15);
+  const avgLong = withStats.length ? (withStats.reduce((s, a) => s + a.stats.nLong / (a.stats.dur / 60), 0) / withStats.length).toFixed(1) : null;
+  return `<div class="card row" style="gap:16px;align-items:center">
+    <svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Daily goal ${today} of ${goal}"><circle cx="32" cy="32" r="${R0}" fill="none" stroke="var(--line)" stroke-width="7"/><circle cx="32" cy="32" r="${R0}" fill="none" stroke="var(--ok)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C * pct).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 32 32)"/><text x="32" y="37" text-anchor="middle" font-size="15" font-family="var(--mono)" fill="var(--ink)">${today}/${goal}</text></svg>
+    <div class="grow"><strong>Today's goal</strong><div class="small muted">${today >= goal ? 'Done for today. Anything more is a bonus.' : `${goal - today} more answer${goal - today === 1 ? '' : 's'} to go.`}${avgLong !== null ? ` Long pauses lately: ${avgLong} per minute.` : ''}</div>
+    <div style="margin-top:6px">${spark}</div></div></div>`;
+}
+
+const CH = {on: false, target: null, qid: null};
+function challengeCard(qid) {
+  if (!CH.on) return `<div class="row"><button class="btn ghost" data-act="chtoggle">Challenge: use a phrase or structure in your answer</button></div>`;
+  CH.qid = qid;
+  const t = CH.target || {};
+  return `<div class="card challenge stack" style="gap:6px"><div class="row"><strong class="grow">Use this in your answer</strong><button class="btn ghost" style="padding:4px 8px" data-act="chnew">Another</button><button class="iconbtn" data-act="chtoggle" aria-label="Turn off challenge">${I.x}</button></div>
+    <div style="font-size:18px;font-weight:600">${esc(t.t || '')}</div>${t.ru ? `<div class="small muted">${esc(t.ru)}</div>` : ''}${t.ex ? `<div class="small muted">e.g. ${esc(t.ex)}</div>` : ''}
+    <div class="small muted">Make it sound natural. The coach will tell you if it did.</div></div>`;
 }
 
 /* ---------- events ---------- */
@@ -1474,12 +1872,38 @@ document.addEventListener('click', e => {
     case 'playall': { const s = S.sessions.find(x => x.id === d.s) || M.sess; if (!s) break; if (M.playingSess === s.id && (playQueue.length || !player.paused)) { playQueue = []; player.pause(); M.playingSess = null; playIcons(); break; } const ids = s.plan.map(q => (s.items || []).find(x => x.qid === q)).filter(Boolean).map(x => x.aid); if (!ids.length) return toast('No answers recorded in this test.'); M.playingSess = s.id; playQueue = ids.slice(1); playAtt(ids[0], true); break; }
     case 'delsess': (async () => { if (!await confirmBox('Remove this test from history?', 'The recordings stay in your attempts list.', 'Remove')) return; const id = d.s; S.sessions = S.sessions.filter(x => x.id !== id); closeSheetAll(); render(); try { if (db) await db.doc('sessions/' + id).delete(); else { await IDB.del('kv', 'sess:' + id); if (STANDALONE) sbMarkSess(id); } } catch {} })(); break;
     case 'fspick': fsPick(); break;
-    case 'sbin': sbAuth('in'); break;
-    case 'sbup': sbAuth('up'); break;
-    case 'sbforgot': sbAuth('forgot'); break;
+    case 'sbin': sbAuth(); break;
+    case 'pwsave': sbSavePw(); break;
+    case 'pwlater': SB.pwLater = true; render(); break;
+    case 'sttab': ST.tab = d.v; ST.revealed = false; render(); break;
+    case 'phshow': ST.revealed = true; render(); break;
+    case 'phok': reviewPhrase(d.id, true); break;
+    case 'phagain': reviewPhrase(d.id, false); break;
+    case 'phdel': delPhrase(d.id); break;
+    case 'addph': { try { addPhrase(JSON.parse(d.p)); } catch {} break; }
+    case 'usechallenge': { CH.on = true; CH.target = {t: d.t}; DR.parts = '13'; buildDeck(); CH.qid = DR.deck[0]; location.hash = 'drill'; render(); window.scrollTo(0, 0); break; }
+    case 'chtoggle': CH.on = !CH.on; if (CH.on && !CH.target) CH.target = pick(challengePool()); render(); break;
+    case 'chnew': CH.target = pick(challengePool()); render(); break;
+    case 'saytext': speak(d.t, true); break;
+    case 'coach': coachAttempt(d.a); break;
+    case 'coachideas': coachIdeas(d.q); break;
+    case 'ideasfresh': coachIdeas(d.q, true); break;
+    case 'measure': measureAttempt(d.a); break;
+    case 'coachall': (async () => { const s = S.sessions.find(x => x.id === d.s) || M.sess; if (!s) return; const ids = (s.items || []).map(x => x.aid).filter(id => { const a = getAtt(id); return a && !a.ai; }); if (!ids.length) return toast('Every answer already has feedback.'); toast('Analysing ' + ids.length + ' answers… you can keep using the app.'); for (const id of ids) await coachAttempt(id); toast('All answers analysed.'); })(); break;
+    case 'mtstart': micTestStart(); break;
+    case 'mtstop': micTestStop(); break;
+    case 'adreload': adminLoad(); break;
+    case 'adadd': adminDo('admin_add', {usernames: ($('#adNames') || {}).value || ''}, r => (r.added.length ? 'Added: ' + r.added.join(', ') : 'Nothing added') + (r.bad.length ? '. Not valid: ' + r.bad.join(', ') : '')); break;
+    case 'adreset': (async () => { if (await confirmBox('Reset @' + d.u + "'s password?", 'Their password becomes their username again, and they will be asked to set a new one.', 'Reset')) adminDo('admin_reset', {username: d.u}, 'Password reset. Tell them to sign in with their username as the password.'); })(); break;
+    case 'adadmin': adminDo('admin_admin', {username: d.u, value: !!d.v}, 'Updated.'); break;
+    case 'adremove': (async () => { if (await confirmBox('Remove @' + d.u + '?', 'They lose access and all their recordings and feedback are deleted. This cannot be undone.', 'Remove')) adminDo('admin_remove', {username: d.u}, 'Removed.'); })(); break;
+    case 'adkey': { const k = (($('#adKey') || {}).value || '').trim(); if (!k) { toast('Paste the key first.'); break; } adminDo('admin_config', {gemini_key: k}, 'Key saved. Tap Test to check it.'); break; }
+    case 'adkeydel': (async () => { if (await confirmBox('Remove the Gemini key?', 'The coach stops working for everyone until you add a key again.', 'Remove')) adminDo('admin_config', {gemini_key: ''}, 'Key removed.'); })(); break;
+    case 'adtest': adminDo('admin_test', {}, r => 'Gemini works (' + r.model + ').'); break;
+    case 'adcfg': adminDo('admin_config', {daily_limit: ($('#adLimit') || {}).value, model: ($('#adModel') || {}).value}, 'Saved.'); break;
     case 'sbsync': syncNow().then(() => toast(SB.state === 'ok' ? 'Synced.' : 'Sync failed: ' + SB.err)); break;
     case 'sbout': sbSignOut(); break;
-    case 'sbsetpass': (async () => { const v = ($('#sbNewPass') || {}).value || ''; if (v.length < 6) return toast('Password needs at least 6 characters.'); const {error} = await SB.client.auth.updateUser({password: v}); if (error) toast(error.message); else { SB.recovery = false; toast('Password updated.'); render(); } })(); break;
+
     case 'export': exportAll(); break;
     case 'import': { const i = $('#impFile'); i.value = ''; i.click(); break; }
     case 'fsreconnect': fsReconnect(); break;
@@ -1501,6 +1925,7 @@ document.addEventListener('change', e => {
 let sT;
 document.addEventListener('input', e => { if (e.target.id === 'bsearch') { clearTimeout(sT); const v = e.target.value; sT = setTimeout(() => { BR.q = v; const pos = e.target.selectionStart; render(); const i = $('#bsearch'); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch {} } }, 200); } });
 document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.target.id === 'sbPass' || e.target.id === 'sbUser')) { e.preventDefault(); sbAuth(); return; }
   if (e.target.matches('input,textarea,select')) return;
   if (e.key === 'Escape' && SH.length) { closeSheet(); return; }
   if (e.code === 'Space') {

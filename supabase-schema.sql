@@ -79,3 +79,6 @@ create policy "ist update own recordings" on storage.objects for update to authe
 drop policy if exists "ist delete own recordings" on storage.objects;
 create policy "ist delete own recordings" on storage.objects for delete to authenticated
   using (bucket_id = 'recordings' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- v3: Telegram-username login, admin, coach, phrases (applied as migrations "telegram_login_coach_phrases",
+-- "gate_signup_allowlist_only" and "revoke_gate_rpc"; see Supabase dashboard > Database > Migrations)
