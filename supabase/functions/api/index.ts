@@ -276,11 +276,11 @@ const STYLES: Record<string, string> = {
   confident: "[confident, friendly, natural speaking pace] ",
   lively: "[lively, enthusiastic, expressive] ",
 };
-async function fishTTS(key: string, text: string, ref: Uint8Array, refText: string, o: { speed?: number; temperature?: number; top_p?: number }) {
+async function fishTTS(key: string, text: string, refs: { audio: Uint8Array; text: string }[], o: { speed?: number; temperature?: number; top_p?: number }) {
   const r = await fetch("https://api.fish.audio/v1/tts", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/msgpack", model: "s2.1-pro-free" },
-    body: msgpack({ text, references: [{ audio: ref, text: refText }], format: "mp3", mp3_bitrate: 128, normalize: true, latency: "normal",
+    body: msgpack({ text, references: refs, format: "mp3", mp3_bitrate: 128, normalize: true, latency: "normal",
       temperature: o.temperature ?? 0.7, top_p: o.top_p ?? 0.7, repetition_penalty: 1.2, prosody: { speed: o.speed ?? 1, volume: 0 } }),
   });
   if (!r.ok) throw Object.assign(new Error("Fish Audio: " + (await r.text()).slice(0, 300)), { code: "voice_error" });
@@ -298,17 +298,19 @@ async function myVoice(body: any, uid: string) {
         refText = String(r.data.text || "").trim();
       } catch { /* optional */ }
     }
-    const a = await store.upload(`${uid}/voice/ref.wav`, decodeBase64(body.ref_audio), { contentType: "audio/wav", upsert: true });
+    const n = body.slot === 2 ? "ref2" : "ref";
+    const a = await store.upload(`${uid}/voice/${n}.wav`, decodeBase64(body.ref_audio), { contentType: "audio/wav", upsert: true });
     if (a.error) throw a.error;
-    const b = await store.upload(`${uid}/voice/ref.json`, new TextEncoder().encode(JSON.stringify({ text: refText, at: Date.now(), dur: body.dur || 0 })), { contentType: "application/json", upsert: true });
+    const b = await store.upload(`${uid}/voice/${n}.json`, new TextEncoder().encode(JSON.stringify({ text: refText, at: Date.now(), dur: body.dur || 0 })), { contentType: "application/json", upsert: true });
     if (b.error) throw b.error;
     const { data: old } = await store.list(`${uid}/voice/out`, { limit: 1000 });
     if (old?.length) await store.remove(old.map((f) => `${uid}/voice/out/${f.name}`));
     return { ok: true, ref_text: refText };
   }
-  if (body.op === "delete") {
+  if (body.op === "delete" || body.op === "delete2") {
     const { data: out } = await store.list(`${uid}/voice/out`, { limit: 1000 });
-    await store.remove([`${uid}/voice/ref.wav`, `${uid}/voice/ref.json`, ...(out || []).map((f) => `${uid}/voice/out/${f.name}`)]);
+    const own = body.op === "delete2" ? [`${uid}/voice/ref2.wav`, `${uid}/voice/ref2.json`] : [`${uid}/voice/ref.wav`, `${uid}/voice/ref.json`, `${uid}/voice/ref2.wav`, `${uid}/voice/ref2.json`];
+    await store.remove([...own, ...(out || []).map((f) => `${uid}/voice/out/${f.name}`)]);
     return { ok: true };
   }
   if (body.op === "status") {
@@ -316,7 +318,9 @@ async function myVoice(body: any, uid: string) {
     if (!data) return { has: false };
     const meta = JSON.parse(await data.text());
     const { data: su } = await store.createSignedUrl(`${uid}/voice/ref.wav`, 3600);
-    return { has: true, ref_text: meta.text, dur: meta.dur, at: meta.at, sample: su?.signedUrl || null };
+    const { data: m2 } = await store.download(`${uid}/voice/ref2.json`);
+    const { data: su2 } = m2 ? await store.createSignedUrl(`${uid}/voice/ref2.wav`, 3600) : { data: null };
+    return { has: true, ref_text: meta.text, dur: meta.dur, at: meta.at, sample: su?.signedUrl || null, has2: !!m2, sample2: su2?.signedUrl || null };
   }
   // op: "say"
   const key = await cfg("fish_key");
@@ -337,7 +341,11 @@ async function myVoice(body: any, uid: string) {
   const { data: metaBlob } = await store.download(`${uid}/voice/ref.json`);
   if (!refBlob) throw Object.assign(new Error("Save a voice sample first (Settings → Your voice)."), { code: "no_sample" });
   const meta = metaBlob ? JSON.parse(await metaBlob.text()) : { text: "" };
-  const audio = await fishTTS(key, STYLES[style] + text, new Uint8Array(await refBlob.arrayBuffer()), meta.text || "", { speed, temperature, top_p: 0.7 });
+  const refs = [{ audio: new Uint8Array(await refBlob.arrayBuffer()), text: meta.text || "" }];
+  const { data: ref2 } = await store.download(`${uid}/voice/ref2.wav`);
+  const { data: meta2b } = await store.download(`${uid}/voice/ref2.json`);
+  if (ref2) refs.push({ audio: new Uint8Array(await ref2.arrayBuffer()), text: meta2b ? JSON.parse(await meta2b.text()).text || "" : "" });
+  const audio = await fishTTS(key, STYLES[style] + text, refs, { speed, temperature, top_p: 0.7 });
   const up = await store.upload(outPath, audio, { contentType: "audio/mpeg", upsert: true });
   if (up.error) return { audio: encodeBase64(audio), mime: "audio/mpeg" };
   const { data: su } = await store.createSignedUrl(outPath, 3600);

@@ -4114,6 +4114,7 @@ document.addEventListener('change', async e => {
 /* ================= v11: "your voice" (Fish Audio S2.1 Pro, free) ================= */
 const MV = {st: null, loading: false, rec: false, mr: null, draft: null, url: {}, busy: new Set(), audio: null};
 const READ_PAR = "I usually spend my weekends with friends, or at home with a good book. Last summer I travelled to Almaty with my family, and honestly, the mountains there were breathtaking. I think it's important to try new things, even if they feel a bit strange at first.";
+const READ_PAR2 = "To be honest, I'm not really a morning person. On weekdays I get up at seven, grab a quick breakfast and head to school. In the evenings I'd rather relax, maybe watch a series or chat with my friends, than do anything too serious.";
 const MV_STYLES = [['natural', 'Natural'], ['calm', 'Calm and clear'], ['confident', 'Confident'], ['lively', 'Lively']];
 async function mvStatus(force) {
   if (!SB.user || MV.loading || (MV.st && !force)) return;
@@ -4142,14 +4143,14 @@ async function mvRecord() {
   mr.onstop = async () => {
     MV.rec = false; stream.getTracks().forEach(t => t.stop());
     const blob = new Blob(chunks, {type: (mr.mimeType || 'audio/webm').split(';')[0]});
-    try { const d = await mvDecode(blob, 30); if (d.dur < 6) { toast('That was too short. Read the whole paragraph.'); render(); return; } MV.draft = {...d, text: READ_PAR, url: URL.createObjectURL(blob)}; } catch { toast("Couldn't read the recording."); }
+    try { const d = await mvDecode(blob, 30); if (d.dur < 6) { toast('That was too short. Read the whole paragraph.'); render(); return; } MV.draft = {...d, text: MV.slot === 2 ? READ_PAR2 : READ_PAR, slot: MV.slot === 2 ? 2 : 1, url: URL.createObjectURL(blob)}; } catch { toast("Couldn't read the recording."); }
     render();
   };
   mr.start(200); setTimeout(() => { if (MV.mr === mr && MV.rec) try { mr.stop(); } catch {} }, 30000);
 }
 async function mvSave(d) {
   MV.loading = true; render();
-  try { await api('myvoice', {op: 'save', ref_audio: d.b64, ref_text: d.text || '', dur: Math.round(d.dur)}); MV.url = {}; MV.draft = null; MV.st = null; toast('Saved. “Your voice” buttons now use it.'); }
+  try { await api('myvoice', {op: 'save', ref_audio: d.b64, ref_text: d.text || '', dur: Math.round(d.dur), slot: d.slot || 1}); MV.url = {}; MV.draft = null; MV.st = null; MV.slot = 1; toast(d.slot === 2 ? 'Second sample saved. New clips use both.' : 'Saved. “Your voice” buttons now use it.'); }
   catch (e) { toast(e.message || 'Could not save.', 6000); }
   MV.loading = false; mvStatus(true);
 }
@@ -4180,13 +4181,16 @@ function myVoiceCard() {
   const opts = `<div><div class="small" style="font-weight:600;margin-bottom:6px">Speed</div><div class="switch2" role="group" aria-label="Speed of your voice">${[[0.9, 'Slower'], [1, 'Normal'], [1.1, 'Faster']].map(([v, l]) => `<button data-act="mvspeed" data-v="${v}" aria-pressed="${(+S.set.mvSpeed || 1) === v}">${l}</button>`).join('')}</div></div>
     <div><div class="small" style="font-weight:600;margin-bottom:6px">Style</div><div class="chips sm" role="group" aria-label="Style">${MV_STYLES.map(([v, l]) => `<button data-act="mvstyle" data-v="${v}" aria-pressed="${(S.set.mvStyle || 'natural') === v}">${l}</button>`).join('')}</div></div>`;
   const recorder = `<div class="stack" style="gap:8px"><div class="small" style="font-weight:600">Read this out loud, calmly, close to the microphone (about 20 s):</div>
-    <p class="readpar">${esc(READ_PAR)}</p>
+    <p class="readpar">${esc(MV.slot === 2 ? READ_PAR2 : READ_PAR)}</p>
     <div class="row"><button class="btn ${MV.rec ? 'danger' : 'primary'}" data-act="mvrec">${MV.rec ? I.stop + ' Stop' : I.mic + (MV.draft ? ' Record again' : ' Record')}</button>${MV.rec ? '<span class="small muted">Recording… press Stop when you finish.</span>' : ''}</div>
     ${MV.draft ? `<div class="row" style="flex-wrap:nowrap"><audio controls src="${MV.draft.url}" style="flex:1;min-width:0"></audio></div><div class="row"><button class="btn primary" data-act="mvsave" ${MV.loading ? 'disabled' : ''}>Save as my voice</button><span class="small muted">Quiet room, no music: it copies the noise too.</span></div>` : ''}</div>`;
   return `<section class="card stack" style="gap:12px"><div><h2>Your voice</h2><p class="small muted" style="margin:4px 0 0">Hear “Try it like this” and Repeat after in your own voice. Your sample stays in your private folder; only you hear it.</p></div>
     ${MV.loading && !MV.st ? '<div class="small muted">Loading…</div>' : st.has ? `<div class="row" style="flex-wrap:nowrap">${st.sample ? `<audio controls src="${esc(st.sample)}" style="flex:1;min-width:0"></audio>` : ''}<span class="small muted">sample saved</span></div>
       <div class="row"><button class="btn" data-act="mvtest">${MV.busy.has('test') ? 'Making it…' : I.speak + ' Hear a test'}</button><button class="btn ghost" data-act="mvnew">Record a new sample</button><button class="btn ghost danger" data-act="mvdel">Delete</button></div>
-      ${MV.renew ? recorder : ''}${opts}` : recorder}</section>`;
+      ${MV.renew && MV.slot !== 2 ? recorder : ''}
+      <div class="stack" style="gap:8px;border-top:1px solid var(--line);padding-top:10px"><div class="row"><span class="grow"><b>Second sample</b> <span class="small muted">optional: more of your voice, a bit closer match</span></span>${st.has2 ? '<button class="btn ghost danger sm" data-act="mvdel2">Remove</button>' : `<button class="btn sm" data-act="mvadd2">${MV.slot === 2 ? 'Cancel' : 'Add'}</button>`}</div>
+        ${st.has2 && st.sample2 ? `<audio controls src="${esc(st.sample2)}" style="width:100%"></audio>` : ''}${MV.slot === 2 ? recorder : ''}</div>
+      ${opts}` : recorder}</section>`;
 }
 const voiceCard_v10 = voiceCard;
 voiceCard = function () { return voiceCard_v10() + myVoiceCard(); };
@@ -4230,7 +4234,9 @@ document.addEventListener('click', e => {
   switch (d.act) {
     case 'mvrec': mvRecord(); break;
     case 'mvsave': if (MV.draft) { MV.renew = false; mvSave(MV.draft); } break;
-    case 'mvnew': MV.renew = !MV.renew; render(); break;
+    case 'mvnew': MV.renew = !MV.renew; MV.slot = 1; MV.draft = null; render(); break;
+    case 'mvadd2': MV.slot = MV.slot === 2 ? 1 : 2; MV.renew = false; MV.draft = null; render(); break;
+    case 'mvdel2': (async () => { try { await api('myvoice', {op: 'delete2'}); MV.url = {}; MV.st = null; mvStatus(true); toast('Second sample removed.'); } catch (e) { toast(e.message || 'Failed.'); } })(); break;
     case 'mvdel': (async () => { if (!(await confirmBox('Delete your voice sample?', 'The “Your voice” buttons stop working until you record a new one.', 'Delete'))) return; try { await api('myvoice', {op: 'delete'}); MV.st = {has: false}; MV.url = {}; render(); toast('Deleted.'); } catch (e) { toast(e.message || 'Failed.'); } })(); break;
     case 'mvtest': mvPlay("Well, to be perfectly honest, I'd say I'm a morning person. I get most of my studying done before lunch.", 'test'); break;
     case 'mvspeed': S.set.mvSpeed = +d.v; saveMeta(); render(); break;
@@ -4242,7 +4248,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261116144308';
+const BUILD_ID = '20261116145130';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
