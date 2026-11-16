@@ -125,9 +125,17 @@ async function analyze(body: any, userId: string) {
   const targets: string[] = Array.isArray(body.targets) ? body.targets.filter((x: unknown) => typeof x === "string").slice(0, 4) : [];
   const target = (body.target ? `\nThe student was challenged to use this naturally in the answer: "${body.target}". Say whether they used it and whether it sounded natural.` : "") +
     (targets.length ? `\nBefore answering, the app suggested these phrases: ${targets.map((t) => `"${t}"`).join(", ")}.` : "");
+  const goal = Number(body.goal) >= 4 && Number(body.goal) <= 9 ? Number(body.goal) : null;
+  const level = Number(body.level) >= 3 && Number(body.level) <= 9 ? Number(body.level) : null;
+  const higher = goal ? Math.min(9, goal + 1) : 8;
+  const goalText = goal
+    ? `The student's goal is band ${goal}.${level ? ` Their recent checked answers average about band ${level}.` : ""} Aim everything at that goal: put first the changes that would move THIS answer toward band ${goal}, in order of how many band points they cost. Don't push words, idioms or grammar that a band ${goal} speaker wouldn't naturally use; suggest what is realistic for them now.`
+    : `The student hasn't set a goal band; assume they are aiming for band 7.`;
   const prompt = `${STYLE}
 
 ${COURSE}
+
+${goalText}
 
 You are listening to a recording of an IELTS Speaking candidate (their first language is Kazakh/Russian).
 ${questionText(q)}
@@ -140,12 +148,16 @@ Listen carefully to the audio, then return ONLY a JSON object with these keys:
 "summary": 2-3 sentences, the most important thing about this answer.
 "fluency": 2-4 sentences about pauses, hesitation, fillers and speed: say where the long pauses were (quote the words around them) and what probably caused them (searching for a word, planning the next idea, grammar).
 "pronunciation": 1-3 sentences about specific words or sounds you actually heard as unclear, wrong word stress, or flat intonation. If it was clear, say so briefly.
-"fix_first": one or two plain sentences: the single most useful thing to change in THIS answer.
+"fix_first": the ROOT problem of this answer, as an object {"problem": one sentence naming it and quoting their words, "why": one sentence on which band criterion it pulls down and roughly how much, "steps": 2-3 concrete things to do next time, at least one being a ready-made phrase or sentence frame they can actually say, "drill": one exercise they can do in the next minute in this app (for example "Answer again and don't stop: if you need time, say 'let me think' instead of going silent")}.
+How to choose the root problem: pick the single issue that costs the most band points, not the easiest one to name. Use the measured data above. If there are pauses of 1.5 s or longer, or they started talking after more than 2 s, or the answer is far below the target length, the root problem is almost always fluency or answer length, so address that unless something bigger is wrong (off-topic, very hard to understand). Never skip measured long pauses; never pick a small grammar slip when the real problem is hesitation.
+"pauses": array, one item for each measured pause of 1.2 s or longer (at most 5, longest first): {"at": its start time in seconds, copied from the measured list, "len": its length in seconds, "before": the 2-5 words said just before it, "after": the first 2-4 words after it, "cause": what most likely caused it, in a few plain words (e.g. "looking for the word 'tradition'", "didn't know what to say next", "fixing grammar mid-sentence"), "instead": a short natural phrase that would fill exactly this gap (fitting the sentence), "tip": how to avoid this pause next time, under 14 words}. Empty array if there were no such pauses.
 "grammar": array (0-5) of {"said": exact words, "better": corrected version, "why": under 12 words, "rule": the general rule in 2-6 lowercase words, worded the same way every time for the same kind of mistake (for example "like + -ing", "past simple for finished time", "articles a/an/the", "plural -s", "third person -s", "present perfect with since/for")}.
 "repeats": array (0-2) of {"word": a word or filler they overused in this answer (e.g. "very", "good", "like", "basically"), "times": how many times, "instead": 2-3 natural alternatives}. Empty array if nothing was overused.
 "used_targets": array with one item per suggested phrase, in the same order: {"phrase": the phrase, "used": true if they used it or a close natural variant}. Empty array if no phrases were suggested.
 "vocab": array (2-6) of {"said": their plain or awkward phrase, "better": [1-3 more natural or precise alternatives], "note": when you'd use it, under 15 words}.
-"natural_version": their answer rewritten the way a confident band 8 speaker would actually SAY it, keeping their own ideas, facts and personal details, similar length, spoken style.
+"natural_version": their answer rewritten the way a confident band ${goal || 7} speaker would actually SAY it, keeping their own ideas, facts and personal details, similar length, spoken style. It should be reachable for them, not showy.
+"higher_version": the same answer the way a band ${higher} speaker would say it (more precise words, more flexible grammar, still natural spoken English), same ideas.
+"target_band": ${goal || 7}.
 "phrases": array of 3-4 useful phrases for this topic: {"phrase": ..., "meaning_en": short plain-English meaning, "meaning_ru": short Russian meaning, "example": one natural spoken example}.
 "next_time": one concrete thing to do differently next time.
 "audio_quality": "ok" if the speech is clear enough to judge individual sounds; "noisy" if background noise, music or other voices make sounds hard to judge; "quiet" if the voice is too quiet or far from the microphone.

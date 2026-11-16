@@ -411,7 +411,48 @@ mark.voc{background:var(--act-soft);color:inherit;border-radius:4px;padding:0 2p
 .bandrow .l{font-size:14px}
 .bandrow svg{width:100%;max-width:220px;height:34px;overflow:visible}
 .bandrow .v{font-size:15px;text-align:right}
-.bandrow .up{color:var(--ok-ink)}.bandrow .down{color:var(--warn-ink)}
+.bandrow .up{color:var(--ok)}.bandrow .down{color:var(--warn)}
+
+/* v9 coach view */
+.err{background:var(--rec-soft);color:var(--ink);border-radius:4px;padding:0 3px;text-decoration:line-through;text-decoration-color:color-mix(in oklab,var(--rec) 70%,transparent)}
+.cor{background:var(--ok-soft);color:var(--ok);border-radius:4px;padding:0 4px;font-weight:600;margin-left:3px}
+.weak{background:var(--warn-soft);color:var(--ink);border-radius:4px;padding:0 3px}
+.tr .cor{margin-left:4px}
+.trkey{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.trkey .err,.trkey .cor,.trkey .weak,.trkey mark{font-size:12.5px;margin:0}
+.fixrow{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;font-size:15px;padding:6px 0;border-top:1px solid var(--line)}
+.fixrow:first-of-type{border-top:0}
+.fixrow .err,.fixrow .cor{margin:0}
+.fixrow .arr{color:var(--muted)}
+.fixrow .why{flex-basis:100%;margin-top:-2px}
+.fixfirst{gap:8px;border-left:4px solid var(--act)}
+.fixfirst .kick{font-size:13px;font-weight:700;color:var(--act-ink);letter-spacing:.02em}
+.ff-p{margin:0;font-size:16px;line-height:1.5;font-weight:550}
+.ff-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:15px;line-height:1.45}
+.drill{background:var(--sunken);border-radius:10px;padding:10px 12px;font-size:14.5px;line-height:1.45}
+.pzrow{display:flex;gap:12px;align-items:flex-start;padding:10px 14px}
+.pzrow .btn{flex:none;min-width:78px}
+.pz-ctx{font-size:15px}
+.pz-say{font-size:14.5px;margin-top:2px}
+.vtext{margin:0;font-size:15.5px;line-height:1.6}
+.notes{border-top:1px solid var(--line);padding-top:8px}
+.notes summary{cursor:pointer;color:var(--muted);font-size:14px;min-height:36px;display:flex;align-items:center}
+.notes p{margin:6px 0;font-size:14.5px;line-height:1.5}
+.bandbox{padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.bb-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.bb-big{font-size:34px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
+.bb-goal{font-size:22px;font-weight:600;line-height:1.2}
+.bandbox .ok{color:var(--ok)}
+.bb-row{display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 30px;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14.5px}
+.bb-row b{text-align:right}
+.bb-row.low>span:first-child{color:var(--warn);font-weight:600}
+.bb-bar{position:relative;height:6px;border-radius:3px;background:var(--line)}
+.bb-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--act)}
+.bb-bar em{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--ink);border-radius:1px}
+.bb-set{border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+.chips.sm button{min-height:36px;padding:4px 12px;font-size:14px}
+.coachin{gap:14px}
+.coachin .fixfirst,.coachin .bandbox{box-shadow:none}
 
 </style>
 </head>
@@ -3573,7 +3614,7 @@ function openRepeat(src) {
   rpStop(true);
   let q = '', text = '', back = r6() === 'practice' ? 'practice' : r6();
   if (src.startsWith('m:')) { const m = MODELS[+src.slice(2)]; q = m.q; text = m.a; }
-  else if (src.startsWith('a:')) { const a = getAtt(src.slice(2)); if (!a || !a.ai) return; q = qShort(Q.get(a.qid)); text = a.ai.natural_version; }
+  else if (src.startsWith('a:')) { const [aid, which] = src.slice(2).split(':'); const a = getAtt(aid); if (!a || !a.ai) return; q = qShort(Q.get(a.qid)); text = which === 'h' && a.ai.higher_version ? a.ai.higher_version : a.ai.natural_version; }
   else if (src.startsWith('t:')) { text = src.slice(2); }
   Object.assign(RP, {q, sents: splitSents(text), i: 0, phase: 'idle', recs: [], back});
   location.hash = 'repeat';
@@ -3801,6 +3842,165 @@ document.addEventListener('click', e => {
     case 'srplay': if (SR.url[d.k]) new Audio(SR.url[d.k]).play().catch(() => {}); break;
     case 'srok': S.set.pronOK = {...(S.set.pronOK || {}), [d.k]: Date.now()}; saveMeta(); render(); break;
     case 'mpractice': startPractice([d.q], {back: 'words'}); break;
+  }
+});
+
+/* ================= v9: goal band, deeper coach (root cause, pauses, two versions), coloured corrections ================= */
+
+/* ---------- goal band ---------- */
+const GOALS = [5.5, 6, 6.5, 7, 7.5, 8, 8.5];
+const goalBand = () => (S.set.goal ? +S.set.goal : null);
+const fmtB = b => (b == null ? '–' : (+b).toFixed(1).replace(/\.0$/, ''));
+function levelNow() {
+  const l = allAttempts().filter(a => a.ai && a.ai.bands && a.ai.bands.overall != null).sort((a, b) => b.ts - a.ts).slice(0, 10);
+  if (l.length < 2) return null;
+  return Math.round(l.reduce((s, a) => s + +a.ai.bands.overall, 0) / l.length * 2) / 2;
+}
+function goalChips(cls) {
+  const g = goalBand();
+  return `<div class="chips ${cls || ''}" role="group" aria-label="Goal band">${GOALS.map(b => `<button data-act="setgoal" data-v="${b}" aria-pressed="${g === b}">${fmtB(b)}</button>`).join('')}</div>`;
+}
+function goalCard() {
+  const lv = levelNow();
+  return `<section class="card stack" style="gap:10px"><div><h2>Your goal band</h2><p class="small muted" style="margin:4px 0 0">The coach aims its advice at this band: what to fix first, which words to learn, and how “Try it like this” sounds.${lv != null ? ` Your recent checked answers average about <b>${fmtB(lv)}</b>.` : ''}</p></div>${goalChips()}</section>`;
+}
+const voiceCard_v8 = voiceCard;
+voiceCard = function () { return goalCard() + voiceCard_v8(); };
+
+/* ---------- coach call: now sends the goal and current level ---------- */
+async function coachAttempt(id) {
+  const a = getAtt(id); if (!a) return;
+  if (!SB.user) return toast('Sign in first (Settings).');
+  if (SB.me && !SB.me.hasKey) return toast("The coach isn't set up yet: the admin needs to add a Gemini key.");
+  if (COACH.busy.has(id)) return;
+  COACH.busy.add(id); render();
+  try {
+    const m = await measureAttempt(id, true);
+    if (!m) throw new Error("Couldn't read the audio of this answer.");
+    const pcm = m.pcm.length > 16000 * 240 ? m.pcm.subarray(0, 16000 * 240) : m.pcm;
+    const res = await api('analyze', {audio: wavB64(pcm), mime: 'audio/wav', question: qPayload(a.qid), dur: a.dur, stats: m.st, targets: (getAtt(id) || a).targets || [], target: a.stats && a.stats.target, goal: goalBand(), level: levelNow()});
+    if (SB.me && res.usage) { SB.me.used = res.usage.used; SB.me.limit = res.usage.limit; }
+    const {usage, ...ai} = res; ai.at = Date.now(); ai.goal = goalBand();
+    updAtt(id, {ai});
+    OPEN.add(id);
+    if (P.mode === 'fix' && P.aid === id) fixCheck(id);
+  } catch (e) { toast(e.message || 'The coach failed.', 6000); }
+  finally { COACH.busy.delete(id); render(); }
+}
+
+/* ---------- transcript with the mistakes marked in place ---------- */
+function markTranscript(ai) {
+  let t = esc(ai.transcript || '');
+  const slots = [];
+  const put = html => { slots.push(html); return '\u0001' + (slots.length - 1) + '\u0002'; };
+  const mark = (said, html) => {
+    const s = esc(String(said || '').trim().replace(/^["“]|["”]$/g, ''));
+    if (s.length < 2) return;
+    const i = t.toLowerCase().indexOf(s.toLowerCase());
+    if (i < 0) return;
+    t = t.slice(0, i) + put(html(t.slice(i, i + s.length))) + t.slice(i + s.length);
+  };
+  for (const g of ai.grammar || []) mark(g.said, x => `<span class="err" title="${esc(g.why || '')}">${x}</span><span class="cor">${esc(g.better)}</span>`);
+  for (const v of ai.vocab || []) mark(v.said, x => `<span class="weak">${x}</span><span class="cor">${esc((v.better || [])[0] || '')}</span>`);
+  t = t.replace(/\[(pause[^\]]*)\]/gi, (m, x) => put(`<mark class="pz">${x}</mark>`)).replace(/\b(um+|uh+|erm|er)\b/gi, (m, x) => put(`<mark class="fl">${x}</mark>`));
+  return t.replace(/\u0001(\d+)\u0002/g, (m, i) => slots[+i]);
+}
+
+/* ---------- pieces of the coach view ---------- */
+function bandsBox(ai) {
+  const b = ai.bands; if (!b) return '';
+  const g = ai.goal || goalBand();
+  const rows = [['fc', 'Fluency'], ['lr', 'Vocabulary'], ['gra', 'Grammar'], ['p', 'Pronunciation']].filter(([k]) => b[k] != null);
+  const low = rows.reduce((m, [k]) => (m == null || +b[k] < +b[m] ? k : m), null);
+  const pos = v => Math.max(0, Math.min(100, (+v - 4) / 5 * 100));
+  const gap = g != null && b.overall != null ? g - +b.overall : null;
+  return `<section class="card bandbox"><div class="bb-top"><div><div class="small muted">This answer</div><div class="bb-big">${fmtB(b.overall)}</div></div>
+      ${g != null ? `<div style="text-align:right"><div class="small muted">Your goal</div><div class="bb-goal">${fmtB(g)}</div><div class="small ${gap <= 0 ? 'ok' : 'muted'}">${gap <= 0 ? 'reached' : fmtB(gap) + ' to go'}</div></div>` : ''}</div>
+    ${rows.map(([k, l]) => `<div class="bb-row ${k === low && rows.length > 1 ? 'low' : ''}"><span>${l}${k === low && rows.length > 1 ? ' <span class="small">· lowest</span>' : ''}</span><span class="bb-bar"><i style="width:${pos(b[k])}%"></i>${g != null ? `<em style="left:${pos(g)}%" title="Goal ${fmtB(g)}"></em>` : ''}</span><b>${fmtB(b[k])}</b></div>`).join('')}
+    ${g == null ? `<div class="bb-set"><div class="small muted" style="margin-bottom:6px">Set your goal so the coach aims at it:</div>${goalChips('sm')}</div>` : ''}</section>`;
+}
+function fixFirstBox(a, inPractice) {
+  const ai = a.ai, f = ai.fix_first;
+  const again = inPractice ? `<button class="btn primary sm" data-act="pagain">${I.again} Say it again, fixing this</button>` : `<button class="btn primary sm" data-act="paq" data-q="${a.qid}">${I.again} Answer it again, fixing this</button>`;
+  if (f && typeof f === 'object') return `<section class="card fixfirst stack"><div class="kick">Fix this first</div>
+    <p class="ff-p">${esc(f.problem || '')}</p>${f.why ? `<p class="small muted" style="margin:0">${esc(f.why)}</p>` : ''}
+    ${(f.steps || []).length ? `<ol class="ff-steps">${f.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>` : ''}
+    ${f.drill ? `<div class="drill"><b>1-minute drill.</b> ${esc(f.drill)}</div>` : ''}<div>${again}</div></section>`;
+  const txt = f || ai.next_time || ai.summary || '';
+  return txt ? `<section class="card fixfirst stack"><div class="kick">Fix this first</div><p class="ff-p">${esc(txt)}</p><div>${again}</div></section>` : '';
+}
+const BRIDGES = ["Let me think for a second…", "How can I put it…", "What I mean is…", "That's a good question, actually…"];
+function pausesBox(a) {
+  const ai = a.ai, st = a.stats || {}, dur = st.dur || a.dur || 1;
+  let l = (ai.pauses || []).filter(p => p && +p.len >= 1);
+  const measured = (st.pauses || []).filter(([, d]) => d >= 1.5);
+  if (!l.length && !measured.length) return '';
+  const generic = !l.length;
+  if (generic) l = measured.slice(0, 4).map(([t, d], i) => ({at: t, len: d, instead: BRIDGES[i % BRIDGES.length]}));
+  const row = p => `<div class="pzrow"><button class="btn sm" data-act="seekp" data-a="${a.id}" data-t="${(+p.at || 0).toFixed(1)}" data-d="${dur}" aria-label="Play from just before this pause">${I.play} ${(+p.len).toFixed(1)} s</button>
+    <div class="grow">${p.before || p.after ? `<div class="pz-ctx">${p.before ? `…${esc(p.before)} ` : ''}<mark class="pz">pause</mark>${p.after ? ` ${esc(p.after)}…` : ''}</div>` : `<div class="pz-ctx">at ${fmt(+p.at || 0)}</div>`}
+      ${p.cause ? `<div class="small muted">${esc(p.cause)}</div>` : ''}
+      ${p.instead ? `<div class="pz-say">Fill it with: <b>“${esc(p.instead)}”</b></div>` : ''}${p.tip ? `<div class="small muted">${esc(p.tip)}</div>` : ''}</div></div>`;
+  return `<section class="stack" style="gap:6px"><h2>Your long pauses</h2><p class="small muted" style="margin:0">${generic ? 'Measured from your recording. Press Coach again for what caused each one.' : 'Silence costs Fluency. A short natural phrase keeps you talking while you think.'} Tap a pause to hear the moment.</p><div class="list">${l.slice(0, 5).map(row).join('')}</div></section>`;
+}
+function fixesBox(ai) {
+  const g = (ai.grammar || []).map(x => `<div class="fixrow"><span class="err">${esc(x.said)}</span><span class="arr">→</span><span class="cor">${esc(x.better)}</span>${x.why ? `<span class="small muted why">${esc(x.why)}</span>` : ''}</div>`).join('');
+  const v = (ai.vocab || []).slice(0, 4).map(x => `<div class="fixrow"><span class="weak">${esc(x.said)}</span><span class="arr">→</span><span class="cor">${esc((x.better || []).join(' / '))}</span>${x.note ? `<span class="small muted why">${esc(x.note)}</span>` : ''}</div>`).join('');
+  const r = (ai.repeats || []).map(x => `<div class="fixrow"><span class="weak">“${esc(x.word)}” ×${esc(x.times)}</span><span class="arr">→</span><span class="cor">${esc((x.instead || []).join(' / '))}</span></div>`).join('');
+  return (g ? `<section class="stack" style="gap:4px"><h2>Mistakes</h2>${g}</section>` : '') + (v || r ? `<section class="stack" style="gap:4px"><h2>Better words</h2>${v}${r}</section>` : '');
+}
+const VERS = {};
+function versionsBox(a) {
+  const ai = a.ai; if (!ai.natural_version) return '';
+  const g = ai.goal || ai.target_band || null;
+  const hb = g != null ? Math.min(9, g + 1) : null;
+  const vs = [['n', g != null ? `Band ${fmtB(g)} · your goal` : 'A better version', ai.natural_version]];
+  if (ai.higher_version) vs.push(['h', `Band ${fmtB(hb)} · a step above`, ai.higher_version]);
+  const cur = vs.find(v => v[0] === VERS[a.id]) || vs[0];
+  return `<section class="stack" style="gap:8px"><h2>Try it like this</h2>
+    ${vs.length > 1 ? `<div class="switch2" role="group" aria-label="Version">${vs.map(v => `<button data-act="vers" data-a="${a.id}" data-v="${v[0]}" aria-pressed="${v === cur}">${v[1]}</button>`).join('')}</div>` : ''}
+    <p class="vtext">“${esc(cur[2])}”</p>
+    <div class="row"><button class="btn sm" data-act="saytext" data-t="${esc(cur[2])}">${I.speak} Listen</button><button class="btn sm" data-act="repeat" data-src="a:${a.id}:${cur[0]}">${I.again} Repeat after it</button></div></section>`;
+}
+function notesBox(ai) {
+  const parts = [['Fluency', ai.fluency], ['Pronunciation', ai.pronunciation], ['Next time', ai.next_time], ['Summary', ai.summary]].filter(([, x]) => x);
+  return parts.length ? `<details class="notes"><summary>The coach's full notes</summary>${parts.map(([k, x]) => `<p><b>${k}.</b> ${esc(x)}</p>`).join('')}</details>` : '';
+}
+coachDetail = function (a, q) {
+  const ai = a.ai, inP = r6() === 'practice';
+  const main = `${fixFirstBox(a, inP)}
+    ${ai.transcript ? `<section class="stack" style="gap:6px"><h2>What you said</h2><p class="tr">${markTranscript(ai)}</p><div class="trkey small muted"><span class="err">mistake</span> <span class="cor">correction</span> <span class="weak">could be better</span> <mark class="pz">pause</mark> <mark class="fl">filler</mark></div></section>` : ''}
+    ${pausesBox(a)}${fixesBox(ai)}${versionsBox(a)}${pronSection(ai)}${notesBox(ai)}`;
+  const old = coachDetail_v7(a, q).side.replace(/<section class="card" style="padding:12px 16px"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Band estimate<\/h2>[\s\S]*?<\/section>/, '');
+  return {main, side: bandsBox(ai) + old};
+};
+/* My answers: same coach view instead of the old text block */
+const coachBlock_v8 = coachBlock;
+coachBlock = function (a) {
+  if (!a.ai || COACH.busy.has(a.id)) return coachBlock_v8(a);
+  const cd = coachDetail(a, Q.get(a.qid));
+  const side = cd.side.replace(/<div class="small muted">Coach:[\s\S]*$/, '');
+  const bb = bandsBox(a.ai);
+  return `<div class="coachin stack">${bb}${cd.main}${side.replace(bb, '')}<div class="small muted">Coach: ${esc(a.ai.model || 'Gemini')} · <button class="linkbtn" data-act="coach" data-a="${a.id}">Analyse again</button></div></div>`;
+};
+
+/* ---------- iPhone: unlock the audio element on the first tap so later plays aren't blocked ---------- */
+(() => {
+  let done = false;
+  const unlock = () => {
+    if (done) return; done = true;
+    try { const p = document.getElementById('player'); if (p && !p.src) { p.muted = true; p.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='; const r = p.play(); const back = () => { p.muted = false; if (String(p.src).startsWith('data:')) { p.pause(); p.removeAttribute('src'); p.load(); } }; r && r.then ? r.then(back, back) : back(); } } catch {}
+  };
+  document.addEventListener('touchend', unlock, {once: true, capture: true});
+})();
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const d = el.dataset;
+  switch (d.act) {
+    case 'setgoal': S.set.goal = +d.v; saveMeta(); render(); toast(`Goal: band ${fmtB(+d.v)}. The next coach check aims at it.`); break;
+    case 'vers': VERS[d.a] = d.v; render(); break;
+    case 'seekp': { const dur = +d.d || 1; seekAtt(d.a, Math.max(0, +d.t - 1.5) / dur, dur); break; }
   }
 });
 
