@@ -269,6 +269,81 @@ async function voiceTest(body: any) {
   }
 }
 
+/* ---------------- "your voice": each person's saved sample, Fish S2.1 Pro (free) ---------------- */
+const STYLES: Record<string, string> = {
+  natural: "",
+  calm: "[calm, clear, relaxed conversational tone] ",
+  confident: "[confident, friendly, natural speaking pace] ",
+  lively: "[lively, enthusiastic, expressive] ",
+};
+async function fishTTS(key: string, text: string, ref: Uint8Array, refText: string, o: { speed?: number; temperature?: number; top_p?: number }) {
+  const r = await fetch("https://api.fish.audio/v1/tts", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/msgpack", model: "s2.1-pro-free" },
+    body: msgpack({ text, references: [{ audio: ref, text: refText }], format: "mp3", mp3_bitrate: 128, normalize: true, latency: "normal",
+      temperature: o.temperature ?? 0.7, top_p: o.top_p ?? 0.7, repetition_penalty: 1.2, prosody: { speed: o.speed ?? 1, volume: 0 } }),
+  });
+  if (!r.ok) throw Object.assign(new Error("Fish Audio: " + (await r.text()).slice(0, 300)), { code: "voice_error" });
+  return new Uint8Array(await r.arrayBuffer());
+}
+async function sha(s: string) { const h = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s)); return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 20); }
+async function myVoice(body: any, uid: string) {
+  const store = admin.storage.from("recordings");
+  if (body.op === "save") {
+    if (typeof body.ref_audio !== "string" || body.ref_audio.length > 4_000_000) throw Object.assign(new Error("The sample is missing or too long."), { code: "bad_request" });
+    let refText = String(body.ref_text || "").trim().slice(0, 1500);
+    if (!refText) {
+      try {
+        const r = await gemini([{ text: 'Transcribe this English speech exactly as spoken, without fillers like um or uh. Return ONLY JSON {"text": "..."}' }, { inline_data: { mime_type: "audio/wav", data: body.ref_audio } }], true, 0);
+        refText = String(r.data.text || "").trim();
+      } catch { /* optional */ }
+    }
+    const a = await store.upload(`${uid}/voice/ref.wav`, decodeBase64(body.ref_audio), { contentType: "audio/wav", upsert: true });
+    if (a.error) throw a.error;
+    const b = await store.upload(`${uid}/voice/ref.json`, new TextEncoder().encode(JSON.stringify({ text: refText, at: Date.now(), dur: body.dur || 0 })), { contentType: "application/json", upsert: true });
+    if (b.error) throw b.error;
+    const { data: old } = await store.list(`${uid}/voice/out`, { limit: 1000 });
+    if (old?.length) await store.remove(old.map((f) => `${uid}/voice/out/${f.name}`));
+    return { ok: true, ref_text: refText };
+  }
+  if (body.op === "delete") {
+    const { data: out } = await store.list(`${uid}/voice/out`, { limit: 1000 });
+    await store.remove([`${uid}/voice/ref.wav`, `${uid}/voice/ref.json`, ...(out || []).map((f) => `${uid}/voice/out/${f.name}`)]);
+    return { ok: true };
+  }
+  if (body.op === "status") {
+    const { data } = await store.download(`${uid}/voice/ref.json`);
+    if (!data) return { has: false };
+    const meta = JSON.parse(await data.text());
+    const { data: su } = await store.createSignedUrl(`${uid}/voice/ref.wav`, 3600);
+    return { has: true, ref_text: meta.text, dur: meta.dur, at: meta.at, sample: su?.signedUrl || null };
+  }
+  // op: "say"
+  const key = await cfg("fish_key");
+  if (!key) throw Object.assign(new Error("The admin hasn't added a Fish Audio key yet."), { code: "no_key" });
+  const text = String(body.text || "").trim().slice(0, 1500);
+  if (!text) throw Object.assign(new Error("Nothing to say."), { code: "bad_request" });
+  const speed = Math.max(0.7, Math.min(1.3, Number(body.speed) || 1));
+  const style = STYLES[body.style] !== undefined ? body.style : "natural";
+  const temperature = Math.max(0.3, Math.min(1, Number(body.temperature) || 0.7));
+  const id = await sha([text, speed, style, temperature].join("|"));
+  const outPath = `${uid}/voice/out/${id}.mp3`;
+  const hit = await store.createSignedUrl(outPath, 3600);
+  if (hit.data?.signedUrl && !body.fresh) {
+    const head = await fetch(hit.data.signedUrl, { method: "HEAD" });
+    if (head.ok) return { url: hit.data.signedUrl, cached: true };
+  }
+  const { data: refBlob } = await store.download(`${uid}/voice/ref.wav`);
+  const { data: metaBlob } = await store.download(`${uid}/voice/ref.json`);
+  if (!refBlob) throw Object.assign(new Error("Save a voice sample first (Settings → Your voice)."), { code: "no_sample" });
+  const meta = metaBlob ? JSON.parse(await metaBlob.text()) : { text: "" };
+  const audio = await fishTTS(key, STYLES[style] + text, new Uint8Array(await refBlob.arrayBuffer()), meta.text || "", { speed, temperature, top_p: 0.7 });
+  const up = await store.upload(outPath, audio, { contentType: "audio/mpeg", upsert: true });
+  if (up.error) return { audio: encodeBase64(audio), mime: "audio/mpeg" };
+  const { data: su } = await store.createSignedUrl(outPath, 3600);
+  return { url: su?.signedUrl };
+}
+
 /* ---------------- handler ---------------- */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -301,6 +376,7 @@ Deno.serve(async (req) => {
     if (action === "analyze") return j(await analyze(body, user.id));
     if (action === "ideas") return j(await ideas(body, user.id));
     if (action === "followup") return j(await followup(body, user.id));
+    if (action === "myvoice") return j(await myVoice(body, user.id));
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);
       const { data } = await admin.from("ai_usage").select("count").eq("user_id", user.id).eq("day", day).maybeSingle();
@@ -345,6 +421,10 @@ Deno.serve(async (req) => {
       if (au) {
         const { data: files } = await admin.storage.from("recordings").list(au.id, { limit: 1000 });
         if (files?.length) await admin.storage.from("recordings").remove(files.map((f) => `${au.id}/${f.name}`));
+        for (const sub of ["voice/out", "voice"]) {
+          const { data: vf } = await admin.storage.from("recordings").list(`${au.id}/${sub}`, { limit: 1000 });
+          if (vf?.length) await admin.storage.from("recordings").remove(vf.map((f) => `${au.id}/${sub}/${f.name}`));
+        }
         const { error } = await admin.auth.admin.deleteUser(au.id);
         if (error) throw error;
       }
