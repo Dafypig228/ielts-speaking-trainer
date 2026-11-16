@@ -362,6 +362,16 @@ body.in-session #toast{bottom:calc(112px + env(safe-area-inset-bottom))}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .switch2 button[aria-pressed="true"]{background:var(--act-soft);color:var(--act-ink);box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--act) 55%,transparent)}}
 :root[data-theme=dark] .switch2 button[aria-pressed="true"]{background:var(--act-soft);color:var(--act-ink);box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--act) 55%,transparent)}
 
+/* phrases to try: under the question, quiet, readable while talking */
+.tryq{border-left:2px solid var(--line-strong);padding:2px 0 2px 14px;max-width:62ch}
+.tryq-h{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.tryq-h span{font-weight:400}
+.tryq ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.tryq li{display:flex;flex-direction:column;gap:1px}
+.tryq .en{font-size:16px;font-weight:550;color:var(--ink);line-height:1.35}
+.tryq .ex{font-size:13.5px;color:var(--muted);line-height:1.4}
+.tryq .why{opacity:.85}
+
 </style>
 </head>
 <body>
@@ -662,6 +672,13 @@ async function downloadAttempt(id) {
 let voiceCache = null;
 function pickVoice() { try { const vs = speechSynthesis.getVoices(); if (!vs.length) return null; voiceCache = voiceCache || vs.find(v => /en-GB/i.test(v.lang) && /female|google uk|serena|kate|libby|sonia/i.test(v.name)) || vs.find(v => /en-GB/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)); return voiceCache; } catch { return null; } }
 let speakSeq = 0;
+// Chrome on Windows rounds the rate for built-in Microsoft voices to whole steps of 10·log10(rate),
+// so 1.1 or 1.25 change nothing there. Measured on Zira: 0.78 → 15% slower, 1.6 → 24% faster; 0.8–1.25 → no change.
+function rateFor(v) {
+  const r = +S.set.rate || 1;
+  if (v && v.localService && /^Microsoft /.test(v.name) && !/Online|Natural/.test(v.name)) return r > 1 ? 1.6 : r < 1 ? 0.78 : 1;
+  return r;
+}
 async function speak(text, force) {
   if ((!S.set.voice && !force) || !text) return;
   const my = ++speakSeq;
@@ -669,7 +686,7 @@ async function speak(text, force) {
   if (!('speechSynthesis' in window)) return;
   return new Promise(res => {
     let done = false; const fin = () => { if (!done) { done = true; res(); } };
-    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-GB'; u.rate = S.set.rate; const v = pickVoice(); if (v) u.voice = v; u.onend = fin; u.onerror = fin; speechSynthesis.speak(u); setTimeout(fin, 1800 + text.length * 95 / S.set.rate); } catch { fin(); }
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-GB'; const v = pickVoice(); if (v) u.voice = v; u.rate = rateFor(v); u.onend = fin; u.onerror = fin; speechSynthesis.speak(u); setTimeout(fin, 1800 + text.length * 95 / S.set.rate); } catch { fin(); }
     void my;
   });
 }
@@ -700,7 +717,7 @@ function startRec(qid, opts = {}) {
   if (kind === 'dict') { if (!R.dictOn) return toast('Speech-to-text is not available here.'); beginTimer(); return; }
   (async () => {
     try {
-      if (!R.stream || !R.stream.getAudioTracks().some(t => t.readyState === 'live')) R.stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}});
+      if (!R.stream || !R.stream.getAudioTracks().some(t => t.readyState === 'live')) R.stream = await getMic({echoCancellation: true, noiseSuppression: true, autoGainControl: true});
     } catch (e) {
       S.liveOK = false; if (R.dictOn) { try { dict.stop(); } catch {} R.dictOn = false; }
       toast(recKind() === 'file' ? "The microphone is blocked inside Claude. Tap Record again: it will open your phone's voice recorder." : 'The microphone is blocked here. Tap Record again to use speech-to-text, or attach an audio file.');
@@ -1958,12 +1975,38 @@ function ideasCoachBlock(qid) {
   </div>`;
 }
 
+/* ---------- microphone choice (per device) ---------- */
+const MIC_KEY = 'ist-mic';
+const micChoice = () => { try { return localStorage.getItem(MIC_KEY) || ''; } catch { return ''; } };
+async function getMic(base) {
+  const id = micChoice();
+  if (id) { try { return await navigator.mediaDevices.getUserMedia({audio: {...base, deviceId: {exact: id}}}); } catch (e) { if (!/Overconstrained|NotFound/.test((e && e.name) || '')) throw e; try { localStorage.removeItem(MIC_KEY); } catch {} toast('The chosen microphone is not connected, so the default one is used.'); } }
+  return navigator.mediaDevices.getUserMedia({audio: base});
+}
+const MICS = {list: null, busy: false};
+async function loadMics() {
+  if (MICS.busy || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  MICS.busy = true;
+  try { MICS.list = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput' && d.deviceId !== 'communications'); } catch { MICS.list = []; }
+  MICS.busy = false; if (r6() === 'prefs' && !document.activeElement?.matches?.('select,input,textarea')) render();
+}
+try { navigator.mediaDevices && navigator.mediaDevices.addEventListener('devicechange', () => { MICS.list = null; if (r6() === 'prefs') loadMics(); }); } catch {}
+function micPicker() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return '';
+  if (!MICS.list) { loadMics(); return ''; }
+  const l = MICS.list.filter(d => d.deviceId && d.deviceId !== 'default'), cur = micChoice();
+  if (!l.length) return '';
+  const named = l.some(d => d.label);
+  return `<select id="micSel" data-act="micsel" aria-label="Which microphone" style="width:100%"><option value="">Default (the one your computer uses)</option>${l.map((d, i) => `<option value="${esc(d.deviceId)}" ${d.deviceId === cur ? 'selected' : ''}>${esc(d.label || 'Microphone ' + (i + 1))}</option>`).join('')}</select>
+    ${named ? '' : '<div class="small muted">Names show up after you record once. Press Record 5 seconds below.</div>'}`;
+}
+
 /* ---------- mic test (5 s) ---------- */
 const MT = {on: false, t0: 0, mr: null, stream: null, chunks: [], url: null, timer: 0, err: ''};
 async function micTestStart() {
   if (MT.on) return;
   MT.err = '';
-  try { MT.stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true}}); }
+  try { MT.stream = await getMic({echoCancellation: true, noiseSuppression: true}); MICS.list = null; }
   catch (e) { MT.err = 'The microphone is blocked (' + ((e && e.name) || 'error') + '). ' + (STANDALONE ? 'Allow it in the browser address bar and try again.' : "Claude doesn't allow the microphone here; use the website."); S.liveOK = STANDALONE ? S.liveOK : false; render(); return; }
   S.liveOK = true;
   MT.chunks = []; MT.on = true; MT.t0 = Date.now();
@@ -1983,8 +2026,9 @@ async function micTestStart() {
 }
 function micTestStop() { if (!MT.on) return; MT.on = false; clearInterval(MT.timer); try { MT.mr.stop(); } catch {} }
 function micTestCard() {
-  return `<div class="card stack" style="gap:10px"><div class="row"><strong class="grow">Microphone test</strong>${MT.on ? '<span class="chip" style="color:var(--rec);border-color:var(--rec)">● Recording</span>' : ''}</div>
-    <div class="small muted">Records up to 5 seconds, then plays it back so you can hear how you sound.</div>
+  return `<div class="card stack" style="gap:10px"><div class="row"><h2 class="grow">Microphone</h2>${MT.on ? '<span class="chip" style="color:var(--rec);border-color:var(--rec)">● Recording</span>' : ''}</div>
+    ${micPicker()}
+    <div class="small muted">Test: records up to 5 seconds, then plays it back so you can hear how you sound.</div>
     ${MT.on ? `<div class="row"><span class="rtime" id="mtLeft" style="font-size:22px">5.0 s</span><div class="grow"><div class="lvl" style="height:8px;background:var(--line)"><i id="mtLvl"></i></div></div><button class="btn danger" data-act="mtstop">${I.stop} Stop</button></div>`
       : `<div class="row"><button class="btn primary" data-act="mtstart">${I.mic} ${MT.url ? 'Record again' : 'Record 5 seconds'}</button></div>`}
     ${MT.url && !MT.on ? `<audio id="mtAudio" controls src="${MT.url}" style="width:100%"></audio>` : ''}
@@ -2615,9 +2659,8 @@ function tryUseHTML(qid, compact) {
   const l = tryList(qid);
   if (!l.length) return '';
   const lang = WORDS_LANG();
-  return `<section class="card tryuse" style="padding:14px">
-    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px"><h2>Try to use</h2><span class="small muted">from your books</span></div>
-    ${l.map((x, i) => `<div class="it"><span class="n">${i + 1}</span><span class="grow"><span class="en">${esc(x.t)}</span>${compact ? '' : `<span class="ex">${esc(lang === 'ru' ? (x.ru || x.en) : (x.en || x.ru))}</span>`}</span><span class="tagc">${esc(x.why)}</span></div>`).join('')}</section>`;
+  return `<section class="tryq" aria-label="Phrases to try"><div class="tryq-h">Try to use<span> · from your books</span></div><ul>
+    ${l.map(x => { const ex = lang === 'ru' ? (x.ru || x.en) : (x.en || x.ru); return `<li><span class="en">${esc(x.t)}</span>${compact ? '' : `<span class="ex">${esc(ex)}${x.why ? ` <span class="why">· ${esc(x.why)}</span>` : ''}</span>`}</li>`; }).join('')}</ul></section>`;
 }
 function partListHTML() {
   if (P.deck.length < 2) return '';
@@ -2644,13 +2687,14 @@ function viewPractice() {
         ${questionHead(q)}
         <label for="cnote" style="font-weight:600;font-size:15px;margin-bottom:-8px">Your notes</label>
         <textarea id="cnote" data-cnote="${q.pid}" rows="5" placeholder="Keywords for each point">${esc(notes)}</textarea>
-        <p class="aim">Your notes stay on screen while you talk, like the paper in the exam room. ${AIM[2]}</p>`;
-    } else f1 = `${questionHead(q)}<p class="aim">${AIM[q.part]}</p>`;
+        <p class="aim">Your notes stay on screen while you talk, like the paper in the exam room. ${AIM[2]}</p>${tryUseHTML(q.id)}`;
+    } else f1 = `${questionHead(q)}<p class="aim">${AIM[q.part]}</p>${tryUseHTML(q.id)}`;
     dock = `<div class="dock"><div class="dock-in"><button class="btn sm" data-act="pnext">Skip</button>
       <button class="recbig" data-act="prec" aria-label="${q.part === 2 ? 'Start talking now' : 'Start recording your answer'}">${I.mic}</button>
       <span class="lbl">${q.part === 2 ? 'Start talking now' : 'Tap to answer'}</span></div></div>`;
   } else {
     f1 = `${q.part === 2 ? questionHead(q, true) + (notes ? `<div class="note plain" style="white-space:pre-wrap"><b>Notes:</b> ${esc(notes)}</div>` : '') : questionHead(q) + `<p class="aim">${AIM[q.part]}</p>`}
+      ${tryUseHTML(q.id, !wide())}
       <section class="card timer"><div style="display:flex;align-items:baseline;gap:10px"><span class="timer-big" data-rtime>0:00</span><span class="zstate short" data-zstate>still short</span></div>
         ${zoneHTML(q.part)}
         ${R.kind === 'live' ? '<div class="level"><i data-rlevel></i></div>' : ''}
@@ -2660,7 +2704,7 @@ function viewPractice() {
       <button class="recbig" data-act="pstop" aria-label="Stop recording"><span class="sq"></span></button>
       <span class="lbl">Recording<span class="kbd-hint"> · Space</span></span></div></div>`;
   }
-  const side = tryUseHTML(q.id, stage === 'rec' && !wide()) + (wide() ? partListHTML() : '');
+  const side = wide() ? partListHTML() : '';
   const alts = stage === 'ready' && recKind() !== 'live' ? `<div class="alts">${recKind() === 'file' ? '' : `<button class="linkbtn" data-act="upload" data-q="${q.id}">Attach an audio file</button>`}${dict && recKind() === 'file' ? `<button class="linkbtn" data-act="dictate" data-q="${q.id}">Speech-to-text instead</button>` : ''}</div>` : '';
   return `<div class="flow"><div class="f1">${f1}${alts}</div><div class="f2">${side}</div></div>${dock}`;
 }
@@ -3074,17 +3118,19 @@ const ACCENT = {GB: 'British', US: 'American', AU: 'Australian', IE: 'Irish', CA
 const ACCENT_ORDER = ['British', 'American', 'Australian', 'Irish', 'Canadian', 'New Zealand', 'Indian', 'South African', 'Singaporean', 'Other English'];
 const voiceLabel = v => v.name.replace(/^(Microsoft|Google|Apple)\s+/, '').replace(/\s*Online\s*\(Natural\)/i, '').replace(/\s*-\s*English.*$/, '').replace(/\s*\(.*\)\s*$/, '').trim() || v.name;
 function voiceCard() {
-  const rate = `<div class="switch2" role="group" aria-label="Examiner speed">${[[0.85, 'Slower'], [1, 'Normal'], [1.1, 'Faster']].map(([v, l]) => `<button data-act="setrate" data-v="${v}" aria-pressed="${(+S.set.rate || 1) === v}">${l}</button>`).join('')}</div>`;
+  const rate = `<div class="switch2" role="group" aria-label="Examiner speed">${[[0.85, 'Slower'], [1, 'Normal'], [1.2, 'Faster']].map(([v, l]) => { const r = +S.set.rate || 1; return `<button data-act="setrate" data-v="${v}" aria-pressed="${v < 1 ? r < 1 : v > 1 ? r > 1 : r === 1}">${l}</button>`; }).join('')}</div>`;
   let pick;
   if (tts) pick = `<select data-act="setv" data-k="tvoice" aria-label="Examiner voice">${['buttery', 'airy', 'glassy', 'rounded'].map(v => `<option ${S.set.tvoice === v ? 'selected' : ''}>${v}</option>`).join('')}</select>`;
   else {
     const vs = ('speechSynthesis' in window) ? speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang)) : [];
+    if (!vs.length && (voiceCard.tries = (voiceCard.tries || 0) + 1) < 12) setTimeout(() => { if (r6() === 'prefs' && speechSynthesis.getVoices().length && !document.activeElement?.matches?.('select,input')) render(); }, 500);
     if (!vs.length) pick = `<p class="small muted" style="margin:0">This browser hasn't listed any English voices yet. On Windows, add them in Settings → Time &amp; language → Speech. On Android, install “Speech Services by Google”.</p>`;
     else {
       const groups = new Map();
       for (const v of vs) { const k = ACCENT[(v.lang.split(/[-_]/)[1] || '').toUpperCase()] || 'Other English'; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(v); }
       const cur = voiceChoice();
-      pick = `<label for="voiceSel" class="small" style="font-weight:600;margin-bottom:-4px">Voice</label><select id="voiceSel" data-act="voicesel" style="width:100%"><option value="">Automatic (British if this device has one)</option>${ACCENT_ORDER.filter(k => groups.has(k)).map(k => `<optgroup label="${k}">${groups.get(k).map(v => `<option value="${esc(v.name)}" ${v.name === cur ? 'selected' : ''}>${esc(voiceLabel(v))}${v.localService ? '' : ' · online'}</option>`).join('')}</optgroup>`).join('')}</select>`;
+      const noUK = !groups.has('British') && /Windows/.test(navigator.userAgent);
+      pick = `<label for="voiceSel" class="small" style="font-weight:600;margin-bottom:-4px">Voice</label><select id="voiceSel" data-act="voicesel" style="width:100%"><option value="">Automatic (British if this device has one)</option>${ACCENT_ORDER.filter(k => groups.has(k)).map(k => `<optgroup label="${k}">${groups.get(k).map(v => `<option value="${esc(v.name)}" ${v.name === cur ? 'selected' : ''}>${esc(voiceLabel(v))}${v.localService ? '' : ' · online'}</option>`).join('')}</optgroup>`).join('')}</select>${noUK ? `<p class="small muted" style="margin:0">No British voices on this browser. Microsoft Edge lists many more, including natural British ones (Sonia, Ryan, Libby): open this site in Edge to use them.</p>` : ''}`;
     }
   }
   return `<section class="card stack" style="gap:10px"><div><h2>Examiner voice</h2><p class="small muted" style="margin:4px 0 0">The voices come from this device, so your phone and computer each keep their own choice.</p></div>
@@ -3128,7 +3174,7 @@ document.addEventListener('click', e => {
     case 'setk': S.set[d.k] = d.v; if (d.k === 'theme') applyTheme(); saveMeta(); render(); break;
   }
 });
-document.addEventListener('change', e => { const t = e.target; if (t.dataset.act === 'voicesel') { try { localStorage.setItem(VOICE_KEY, t.value); } catch {} speak('Good morning. Can you tell me your full name, please?', true); return; } if (t.dataset.act === 'setinv') { S.set[t.dataset.k] = !t.checked; saveMeta(); render(); } });
+document.addEventListener('change', e => { const t = e.target; if (t.dataset.act === 'micsel') { try { t.value ? localStorage.setItem(MIC_KEY, t.value) : localStorage.removeItem(MIC_KEY); } catch {} try { if (R.stream && !R.on) { R.stream.getTracks().forEach(x => x.stop()); R.stream = null; } } catch {} toast('Microphone changed. Record 5 seconds to check it.'); return; } if (t.dataset.act === 'voicesel') { try { localStorage.setItem(VOICE_KEY, t.value); } catch {} speak('Good morning. Can you tell me your full name, please?', true); return; } if (t.dataset.act === 'setinv') { S.set[t.dataset.k] = !t.checked; saveMeta(); render(); } });
 document.addEventListener('input', e => { if (e.target.id === 'wsearch') { clearTimeout(sT); const v = e.target.value; sT = setTimeout(() => { W.q = v; const pos = e.target.selectionStart; render(); const i = $('#wsearch'); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch {} } }, 200); } });
 document.addEventListener('keydown', e => {
   if (e.target.matches('input,textarea,select') || r6() !== 'practice' || SH.length || !P.deck.length) return;
@@ -3136,6 +3182,169 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'n' || e.key === 'N') { e.stopImmediatePropagation(); nextQuestion(); }
 }, true);
 window.addEventListener('resize', () => { clearTimeout(window.__rz); window.__rz = setTimeout(() => { if (!R.on) render(); }, 200); });
+
+/* ---------- v7: phrases picked per topic, then per question ---------- */
+// What each book phrase is for: the words in a question that call for it, and when to use it.
+const PHRASE_USE = {
+  'once in a blue moon': [/\b(how often|often|frequent|rarely|regularly|every day|every week)\b/i, 'say how often'],
+  'a piece of cake': [/\b(easy|difficult|hard|learn to|skill)\b/i, 'something easy'],
+  'break the ice': [/\b(meet|new people|stranger|party|make friends|first time|joke|polite)\b/i, 'starting a conversation'],
+  'hit the nail on the head': [/\b(exactly|right|agree|correct)\b/i, 'saying someone is exactly right'],
+  'burn the midnight oil': [/\b(exam|late|night|deadline|study|tired|sleep)\b/i, 'working late'],
+  'cost an arm and a leg': [/\b(expensive|cost|price|money|buy|shop|afford|cheap|valuable|brand)\b/i, 'if it is expensive'],
+  'under the weather': [/\b(ill|sick|tired|unwell)\b/i, 'feeling unwell'],
+  'a rule of thumb': [/\b(usually|always|rule|habit|routine|tips?|advice)\b/i, 'a habit you follow'],
+  'be on cloud nine': [/\b(happy|happiest|dream|success|win|excit)\b/i, 'very happy'],
+  'over the moon': [/\b(happy|gift|present|found|find|success|celebrat|achiev|excit|proud|receive)\b/i, 'a happy moment'],
+  'have a heart of gold': [/\b(kind|help|neighbo|person who|someone who|grandparent|relative|teacher|friend|polite)\b/i, 'describing a kind person'],
+  'in hot water': [/\b(trouble|rule|punish|late|lose|lost|forget|polite)\b/i, 'getting into trouble'],
+  'cry over spilt milk': [/\b(mistake|regret|lose|lost|broke|forget)\b/i, 'not regretting something'],
+  'snowed under (with work)': [/\b(busy|homework|work|emails?|tired|deadline)\b/i, 'very busy'],
+  'fed up with': [/\b(bor(ed|ing)|annoy|tired of|dislike|hate|messy|traffic)\b/i, 'something annoying'],
+  'hit the roof': [/\b(angry|anger|parents|break)\b/i, 'someone got angry'],
+  'at a crossroads': [/\b(decision|decide|choose|future|career|dream|change|opportunit)\b/i, 'a big decision'],
+  'the ball is in your court': [/\b(decision|responsib|choice|your turn)\b/i, 'it is your decision'],
+  'make ends meet': [/\b(salary|poor|money|rent|cost of living|afford)\b/i, 'money is tight'],
+  'play it safe': [/\b(risk|safe|danger|lost|careful|map)\b/i, 'being careful'],
+  'go the extra mile': [/\b(service|effort|work hard|teacher|help|team)\b/i, 'doing more than needed'],
+  'kill two birds with one stone': [/\b(transport|travel|walk|at the same time|save time)\b/i, 'doing two things at once'],
+  'bite the bullet': [/\b(difficult|hard decision|unpleasant|force)\b/i, 'doing something hard'],
+  'hit the books': [/\b(stud|exam|school|homework|learn|subject)\b/i, 'studying hard'],
+  'learn the ropes': [/\b(new job|learn|skill|first day|start|beginner|teach)\b/i, 'learning something new'],
+  "broaden one's horizons": [/\b(travel|abroad|culture|read|books?|learn|art|museum|history|new|opportunit)\b/i, 'learning about the world'],
+  'the school of hard knocks': [/\b(experience|mistake|lesson|life|hard way|grow up|stage)\b/i, 'learning from life'],
+  'Education paves the way for success.': [/\b(education|success|universit|career|school)\b/i, 'why education matters'],
+  'cutting-edge technology': [/\b(technolog|new|invent|science|modern|gadget|device|smart)\b/i, 'the newest technology'],
+  'tech-savvy': [/\b(computer|phone|internet|app|online|tablet|email|typ|technolog|young people|older people)\b/i, 'good with technology'],
+  'a double-edged sword': [/\b(social media|technolog|internet|advantage|disadvantage|good and bad|advert)\b/i, 'good and bad sides'],
+  'break new ground': [/\b(invent|discover|science|new idea|first|architect)\b/i, 'doing something new'],
+  'The downside of modern technology is...': [/\b(technolog|phone|screen|computer|tablet|typ|disadvantage|handwrit)\b/i, 'a problem with technology'],
+  'climb the career ladder': [/\b(jobs?|careers?|promotion|future|ambition|opportunit)\b/i, 'getting promoted'],
+  'work against the clock': [/\b(deadline|on time|in time|no time|hurry|late|punctual|morning|watch|fast)\b/i, 'little time'],
+  'a dead-end job': [/\b(jobs?|boring work|careers?)\b/i, 'a job with no future'],
+  'Work-life balance is becoming more and more important.': [/\b(work|stress|free time|relax|day off|days off|holiday|weekend|routine)\b/i, 'work and free time'],
+  'carbon footprint': [/\b(car|plane|fly|travel|transport|pollut|walk|environment)\b/i, 'your effect on the climate'],
+  'sustainable development': [/\b(city|build|environment|future|plan|old buildings?|park)\b/i, 'growing without harm'],
+  'throwaway society': [/\b(rubbish|plastic|buy|shop|waste|throw|recycl|old things|keep|paper)\b/i, 'people throw things away'],
+  'Environmental issues are more pressing than ever.': [/\b(environment|pollut|climate|recycl|rubbish|nature)\b/i, 'environment matters now'],
+  'fit as a fiddle': [/\b(sport|exercis|healthy|fit|walk|gym|run|fruit|vegetable)\b/i, 'very healthy'],
+  'kick the habit': [/\b(habit|quit|smok|stop|addict|phone)\b/i, 'stopping a bad habit'],
+  'Prevention is better than cure.': [/\b(health|doctor|ill|fruit|vegetable|diet)\b/i, 'staying healthy'],
+  'People nowadays are more health-conscious.': [/\b(food|healthy|diet|fruit|vegetable|sport|eat)\b/i, 'people eat better now'],
+  'the rat race': [/\b(city|busy|stress|work|routine|relax|park|day off|days off|escape)\b/i, 'busy, stressful life'],
+  'generation gap': [/\b(old|older|young|grandparent|parents|children|generation|relative|names?|elderly|childhood)\b/i, 'old and young people'],
+  'silver lining': [/\b(bad|difficult|problem|positive|lost|mistake)\b/i, 'something good in a bad thing'],
+  'The gap between rich and poor is widening.': [/\b(rich|poor|money|society|inequal)\b/i, 'rich and poor'],
+};
+// Which book phrases genuinely fit each Part 1 topic. An empty list is honest: the books have nothing for it.
+const TOPIC_BOOK = {
+  't-work': ['hit the books', 'learn the ropes', 'snowed under (with work)', 'climb the career ladder'],
+  't-home': ['cost an arm and a leg', 'make ends meet'],
+  't-hometown': ['the rat race', 'sustainable development', 'generation gap'],
+  't-country': ['generation gap', 'sustainable development'],
+  't-collecting': ['cost an arm and a leg', 'over the moon', 'once in a blue moon', 'throwaway society'],
+  't-recycling': ['throwaway society', 'carbon footprint', 'Environmental issues are more pressing than ever.'],
+  't-bored': ['fed up with', 'once in a blue moon', 'kill two birds with one stone'],
+  't-market': ['cost an arm and a leg', 'make ends meet'],
+  't-computers': ['tech-savvy', 'a double-edged sword', 'cutting-edge technology', 'The downside of modern technology is...'],
+  't-politeness': ['break the ice', 'have a heart of gold', 'generation gap'],
+  't-travelling': ["broaden one's horizons", 'kill two birds with one stone', 'carbon footprint', 'cost an arm and a leg'],
+  't-shoes': ['cost an arm and a leg', 'a rule of thumb'],
+  't-names': ['generation gap', 'break the ice'],
+  't-headphones': ['tech-savvy', 'cost an arm and a leg', 'cutting-edge technology'],
+  't-teachers': ['go the extra mile', 'have a heart of gold', 'learn the ropes', 'hit the books'],
+  't-tired': ['burn the midnight oil', 'snowed under (with work)', 'under the weather', 'Work-life balance is becoming more and more important.'],
+  't-ads': ['a double-edged sword', 'throwaway society', 'cost an arm and a leg'],
+  't-shopping': ['cost an arm and a leg', 'throwaway society', 'make ends meet'],
+  't-reading': ["broaden one's horizons", 'once in a blue moon', 'hit the books'],
+  't-paper': ['tech-savvy', 'The downside of modern technology is...', 'throwaway society'],
+  't-secondary': ['hit the books', 'burn the midnight oil', 'the school of hard knocks', 'go the extra mile'],
+  't-fruit': ['fit as a fiddle', 'People nowadays are more health-conscious.', 'Prevention is better than cure.'],
+  't-punctual': ['work against the clock', 'a rule of thumb', 'in hot water'],
+  't-older': ['generation gap', 'have a heart of gold', 'tech-savvy'],
+  't-relatives': ['generation gap', 'have a heart of gold', 'once in a blue moon'],
+  't-opportunities': ["broaden one's horizons", 'at a crossroads', 'climb the career ladder', 'Education paves the way for success.'],
+  't-emails': ['tech-savvy', 'snowed under (with work)', 'a double-edged sword'],
+  't-lost': ['in hot water', 'cry over spilt milk', 'over the moon', 'silver lining'],
+  't-gettinglost': ['play it safe', 'a piece of cake', 'cutting-edge technology'],
+  't-views': ['once in a blue moon', 'be on cloud nine'],
+  't-morning': ['work against the clock', 'burn the midnight oil', 'a rule of thumb'],
+  't-friends': ['break the ice', 'have a heart of gold', 'once in a blue moon'],
+  't-science': ['cutting-edge technology', 'break new ground', "broaden one's horizons"],
+  't-jokes': ['break the ice'],
+  't-childhood': ['generation gap', 'tech-savvy', 'once in a blue moon'],
+  't-watches': ['tech-savvy', 'cost an arm and a leg', 'work against the clock'],
+  't-tidiness': ['a rule of thumb', 'fed up with', 'throwaway society'],
+  't-history': ["broaden one's horizons", 'generation gap'],
+  't-sportsprog': ['fit as a fiddle', 'once in a blue moon', 'over the moon'],
+  't-oldbuildings': ['sustainable development', 'cost an arm and a leg', 'generation gap'],
+  't-lifestages': ['at a crossroads', 'generation gap', 'the school of hard knocks'],
+  't-parks': ['the rat race', 'fit as a fiddle', 'sustainable development'],
+  't-art': ["broaden one's horizons", 'cost an arm and a leg'],
+  't-animals': ['have a heart of gold', 'a piece of cake'],
+  't-daysoff': ['Work-life balance is becoming more and more important.', 'the rat race', 'snowed under (with work)'],
+  't-food': ['People nowadays are more health-conscious.', 'fit as a fiddle', 'cost an arm and a leg'],
+  't-keys': ['in hot water', 'cry over spilt milk', 'play it safe'],
+  't-dreams': ['at a crossroads', 'be on cloud nine', 'climb the career ladder'],
+  't-gifts': ['over the moon', 'cost an arm and a leg', 'be on cloud nine'],
+  't-hobby': ['once in a blue moon', "broaden one's horizons", 'kill two birds with one stone'],
+  't-sportsteams': ['fit as a fiddle', 'go the extra mile', 'break the ice'],
+  't-typing': ['tech-savvy', 'a piece of cake', 'work against the clock'],
+  't-walking': ['fit as a fiddle', 'carbon footprint', 'kill two birds with one stone'],
+  't-buildings': ['sustainable development', 'break new ground', 'cutting-edge technology'],
+  't-routine': ['work against the clock', 'a rule of thumb', 'Work-life balance is becoming more and more important.'],
+};
+// Score book phrases for a piece of text. topicList phrases start ahead; a direct match in the question counts most.
+function scorePhrases(qText, ctxText, topicList) {
+  const sc = new Map();
+  (topicList || []).forEach((p, i) => sc.set(p, 2 - i * 0.1));
+  for (const [p, [re]] of Object.entries(PHRASE_USE)) {
+    if (re.test(qText)) sc.set(p, (sc.get(p) || 0) + 3);
+    else if (ctxText && re.test(ctxText) && !topicList) sc.set(p, (sc.get(p) || 0) + 1);
+  }
+  return [...sc].filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1]).map(([p]) => p);
+}
+function fitPhrases(qid) {
+  const q = Q.get(qid); if (!q) return [];
+  const out = [], add = (t, why) => { const f = studyFind(t); if (f && !out.some(o => o.t === t)) out.push({...f, why}); };
+  const addBook = (list, n) => { for (const p of list) { if (out.length >= n) break; add(p, (PHRASE_USE[p] || [, 'fits this topic'])[1]); } };
+  if (q.part === 2) {
+    const c = CM.get(q.pid), text = c.cue + ' ' + c.bullets.join(' '), low = text.toLowerCase();
+    add("I'd like to talk about..., which...", 'open your talk');
+    add(/\bwhy\b/.test(low) ? 'The reason why it is so special to me is that...' : 'Looking back, I realise that...', /\bwhy\b/.test(low) ? 'the "why" point' : 'finish the story');
+    addBook(scorePhrases(text, '', null), 3);
+    if (out.length < 3) add('First of all, let me give you a bit of background...', 'set the scene');
+    return out.slice(0, 3);
+  }
+  const low = q.t.toLowerCase();
+  const prefer = /\b(prefer|rather|which)\b/.test(low) || /\bor (do|are|is|would|did)\b/.test(low);
+  const change = /\b(change|changed|nowadays|years ago|compared|than before|in the past)\b/.test(low);
+  const why = /\bwhy\b/.test(low);
+  const memory = !change && !why && /\b(did you|when you were|as a child|childhood|used to|have you (ever|seen|been|had)|last time|first time|kept from)\b/.test(low);
+  const future = /\b(in the future|would you like to|will you|plan to|hope to)\b/.test(low);
+  const compare = /\b(difference|different|advantages?|disadvantages?|better|worse|pros|cons|benefits?)\b/.test(low);
+  const yesno = /^(do|does|did|are|is|have|has|can|could|would|will|was|were)\s+(you|your)\b/.test(low);
+  const opinion = /\b(do you think|what do you think|in your opinion|should|important|good idea|necessary|popular)\b/.test(low);
+  const describe = /\b(describe|what is .* like|what are .* like|what kind|what type)\b/.test(low);
+  if (prefer) add("If I had to choose, I'd probably go for...", 'a choice question');
+  else if (change) add('Compared to the past, nowadays people tend to...', 'about change');
+  else if (compare) add(q.part === 3 ? 'On the one hand..., on the other hand...' : 'What makes it different is...', 'two sides');
+  else if (why) add('This is largely because...', 'a "why" question');
+  else if (memory) add('For instance, I vividly remember when...', 'a memory');
+  else if (future) add("If I had to choose, I'd probably go for...", 'pick one plan');
+  else if (opinion) add('From my perspective, it seems that...', 'your opinion');
+  else if (describe) add('What strikes me the most is...', 'describe the main thing');
+  else if (yesno) add("To be perfectly honest, I'd say that...", 'say yes or no first');
+  if (q.part === 3 && /\b(will|would|in the future)\b/.test(low)) add(/\bwould\b/.test(low) ? 'Mixed conditional: past → present' : 'Complex passive: It is ... that', 'Part 3 grammar');
+  // topic phrases: Part 1 from the topic's own list, Part 3 from the question plus its card
+  const book = q.part === 1 ? scorePhrases(q.t, '', TOPIC_BOOK[q.pid] || []) : scorePhrases(q.t, CM.get(q.pid).cue, null);
+  addBook(book, 3);
+  if (out.length < 3) {
+    if (!why && !out.some(o => /reason|because/i.test(o.t))) add('The main reason why I think so is...', 'give a reason');
+    else add('A good example that comes to mind is...', 'add an example');
+  }
+  return out.slice(0, 3);
+}
 
 init();
 </script>
