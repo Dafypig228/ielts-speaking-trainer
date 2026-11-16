@@ -849,8 +849,31 @@ async function playAtt(id, fromQueue) {
   playIcons();
 }
 function nextInQueue() { const n = playQueue.shift(); if (n) playAtt(n, true); else { playing = null; playIcons(); } }
-player.addEventListener('timeupdate', () => { if (!playing) return; const p = player.duration && isFinite(player.duration) ? player.currentTime / player.duration * 100 : 0; $$(`[data-prog="${playing}"]`).forEach(e => e.style.width = p + '%'); });
-player.addEventListener('ended', () => { $$(`[data-prog="${playing}"]`).forEach(e => e.style.width = '100%'); if (playQueue.length) nextInQueue(); else { playing = null; playIcons(); } });
+// Playhead: moves every frame while playing, stays where it stopped when paused.
+let headRAF = 0;
+function drawHead() {
+  const t = player.currentTime || 0, d = player.duration && isFinite(player.duration) ? player.duration : 0;
+  $$('[data-head]').forEach(l => {
+    if (l.dataset.head !== playing) { l.setAttribute('opacity', '0'); return; }
+    const x = Math.max(0, Math.min(1, t / (+l.dataset.dur || d || 1))) * 320;
+    l.setAttribute('x1', x.toFixed(1)); l.setAttribute('x2', x.toFixed(1)); l.setAttribute('opacity', '1');
+  });
+  if (playing) $$(`[data-prog="${playing}"]`).forEach(e => e.style.width = (d ? t / d * 100 : 0) + '%');
+  $$('[data-ptime]').forEach(e => { e.textContent = e.dataset.ptime === playing && (t > 0 || !player.paused) ? fmt(t) + ' / ' + e.dataset.total : e.dataset.total; });
+}
+function headLoop() { drawHead(); if (playing && !player.paused) headRAF = requestAnimationFrame(headLoop); else headRAF = 0; }
+player.addEventListener('play', () => { if (!headRAF) headRAF = requestAnimationFrame(headLoop); });
+player.addEventListener('timeupdate', () => { if (!headRAF) drawHead(); });
+player.addEventListener('seeked', drawHead);
+async function seekAtt(id, frac, dur) {
+  const t = Math.max(0, frac * dur);
+  if (playing !== id || !player.src) { await playAtt(id); if (playing !== id) return; }
+  const go = () => { try { player.currentTime = Math.min(t, (player.duration && isFinite(player.duration) ? player.duration : t + 1) - 0.05); } catch {} drawHead(); };
+  if (player.readyState >= 1) go(); else player.addEventListener('loadedmetadata', go, {once: true});
+  if (player.paused) player.play().catch(() => {});
+}
+document.addEventListener('click', e => { const sv = e.target.closest('svg[data-act="seek"]'); if (!sv) return; const r = sv.getBoundingClientRect(); seekAtt(sv.dataset.a, (e.clientX - r.left) / r.width, +sv.dataset.dur); });
+player.addEventListener('ended', () => { $$(`[data-prog="${playing}"]`).forEach(e => e.style.width = '100%'); $$('[data-head]').forEach(l => l.setAttribute('opacity', '0')); if (playQueue.length) nextInQueue(); else { playing = null; playIcons(); } });
 player.addEventListener('pause', playIcons); player.addEventListener('play', playIcons);
 function playIcons() { $$('[data-act="play"]').forEach(b => { const on = b.dataset.a === playing && !player.paused; b.innerHTML = on ? I.pause : I.play; b.setAttribute('aria-label', on ? 'Pause' : 'Play'); }); $$('[data-act="playall"]').forEach(b => b.innerHTML = (playQueue.length || (playing && !player.paused)) && b.dataset.s === M.playingSess ? I.pause + ' Stop' : I.play + ' Play whole test'); }
 
@@ -980,7 +1003,7 @@ function attemptRow(a, n, o = {}) {
     <div class="side">${a.ai && a.ai.bands && a.ai.bands.overall != null ? bandChip(a.ai.bands.overall, 'aria-label="Coach band estimate"') : a.score ? bandChip(a.score, 'aria-label="Your own score"') : STANDALONE && hasAudio && !a.pending && SB.user ? `<button class="btn" style="min-height:40px;padding:6px 12px" data-act="coach" data-a="${a.id}" title="Get coach feedback" ${COACH.busy.has(a.id) ? 'disabled' : ''}>${I.spark} ${COACH.busy.has(a.id) ? 'Listening…' : 'Coach'}</button>` : ''}</div>
     ${a.pending ? '' : `<details ${(o.open || OPEN.has(a.id)) && !o.closed ? 'open' : ''} data-det="${a.id}"><summary>${a.ai ? 'Coach feedback, ' : COACH.busy.has(a.id) ? 'Coach is listening… ' : ''}${STANDALONE && hasAudio ? 'pauses, ' : ''}notes${a.tr ? ', transcript' : ''}${hasAudio && dlc ? ', download' : ''}</summary>
       <div class="stack" style="margin-top:8px;gap:8px">
-        ${STANDALONE && hasAudio ? (hasStats(a.stats) ? waveSVG(a.stats) : `<div><button class="btn" data-act="measure" data-a="${a.id}">Measure pauses</button></div>`) : ''}
+        ${STANDALONE && hasAudio ? (hasStats(a.stats) ? waveSVG(a.stats, a.id) : `<div><button class="btn" data-act="measure" data-a="${a.id}">Measure pauses</button></div>`) : ''}
         ${STANDALONE ? coachBlock(a) : ''}
         ${STANDALONE && hasAudio && !a.ai && !COACH.busy.has(a.id) ? (SB.user ? `<div><button class="btn primary" data-act="coach" data-a="${a.id}">${I.spark} Get coach feedback</button> <span class="small muted">${SB.me && !SB.me.hasKey ? 'Waiting for the admin to add a Gemini key' : 'Transcript, pauses, pronunciation, better phrasing'}</span></div>` : '<div class="small muted">Sign in (Settings) to get coach feedback on this take.</div>') : ''}
         ${a.tr ? `<div><div class="small muted">${trStats(a)}</div><div style="margin-top:4px">${esc(a.tr)}</div></div>` : ''}
@@ -1936,13 +1959,14 @@ function statsLine(st) {
   if (!hasStats(st)) return '';
   return `${Math.round(st.speechRatio * 100)}% talking · ${st.nPause} pause${st.nPause === 1 ? '' : 's'}${st.nLong ? ` (${st.nLong} long)` : ''}${st.nPause ? ' · longest ' + st.longest.toFixed(1) + 's' : ''} · started at ${st.startDelay.toFixed(1)}s`;
 }
-function waveSVG(st) {
+function waveSVG(st, aid) {
   if (!st || !st.env || !st.env.length) return '';
   const W = 320, H = 48, n = st.env.length, bw = W / n, sx = W / Math.max(st.dur, 0.1);
   const pauses = st.pauses.map(([t, d]) => `<rect x="${(t * sx).toFixed(1)}" y="0" width="${Math.max(1.5, d * sx).toFixed(1)}" height="${H}" fill="${d >= 1.5 ? 'var(--rec)' : 'var(--warn)'}" opacity=".3"/>`).join('');
   const bars = st.env.map((v, i) => { const h = Math.max(1, v / 99 * (H - 4)); return `<rect x="${(i * bw).toFixed(1)}" y="${((H - h) / 2).toFixed(1)}" width="${Math.max(0.8, bw - 0.6).toFixed(1)}" height="${h.toFixed(1)}" rx=".5" fill="var(--accent)"/>`; }).join('');
   const ticks = []; for (let t = 10; t < st.dur; t += 10) ticks.push(`<text x="${(t * sx).toFixed(1)}" y="${H + 11}" font-size="9" text-anchor="middle" fill="var(--muted)" font-family="var(--mono)">${t}s</text>`);
-  return `<svg viewBox="0 0 ${W} ${H + 13}" width="100%" style="display:block;max-width:520px" role="img" aria-label="Waveform with pauses shaded">${pauses}${bars}${ticks.join('')}</svg>
+  const head = aid ? `<line class="head" data-head="${aid}" data-dur="${st.dur}" x1="0" x2="0" y1="-2" y2="${H + 2}" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" opacity="0"/>` : '';
+  return `<svg viewBox="0 0 ${W} ${H + 13}" width="100%" style="display:block;max-width:520px;overflow:visible;${aid ? 'cursor:pointer' : ''}" role="img" aria-label="Waveform with pauses shaded${aid ? '. Click to jump to that moment' : ''}" ${aid ? `data-act="seek" data-a="${aid}" data-dur="${st.dur}"` : ''}>${pauses}${bars}${ticks.join('')}${head}</svg>
     <div class="small muted" style="margin-top:2px"><span style="display:inline-block;width:9px;height:9px;background:var(--warn);opacity:.45;border-radius:2px"></span> pause 0.6–1.5s <span style="display:inline-block;width:9px;height:9px;background:var(--rec);opacity:.45;border-radius:2px;margin-left:8px"></span> 1.5s+</div>`;
 }
 
@@ -2806,7 +2830,7 @@ function viewAfter(q, stage) {
   const last = P.i >= P.deck.length - 1;
   const nextLbl = last ? (P.step ? `Finish Part ${P.step}` : 'Finish') : 'Next question';
   const hasAudio = a.asset || a.local || a.blob || a.rpath;
-  const playRow = (aa, label) => `<div class="playrow"><button class="play ${hasAudio ? '' : 'textonly'}" data-act="play" data-a="${aa.id}" aria-label="${label || 'Play your answer'}">${I.play}</button><div class="grow">${hasStats(aa.stats) ? waveSVG(aa.stats) : `<div class="prog"><i data-prog="${aa.id}"></i></div>`}</div><span class="small" style="font-weight:600">${fmt(aa.dur)}</span></div>`;
+  const playRow = (aa, label) => `<div class="playrow"><button class="play ${hasAudio ? '' : 'textonly'}" data-act="play" data-a="${aa.id}" aria-label="${label || 'Play your answer'}">${I.play}</button><div class="grow">${hasStats(aa.stats) ? waveSVG(aa.stats, aa.id) : `<div class="prog"><i data-prog="${aa.id}"></i></div>`}</div><span class="small" style="font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap" data-ptime="${aa.id}" data-total="${fmt(aa.dur)}">${fmt(aa.dur)}</span></div>`;
   let f1 = `<p class="qtext small">${esc(qShort(q))}</p>`, f2 = '';
   if (stage === 'again') {
     const f = getAtt(P.first);
@@ -3739,7 +3763,7 @@ mistakesCard = function (full) { return bandsCard() + mistakesCard_v7(full); };
 const viewToday_v7 = viewToday;
 viewToday = function () { return r6() === 'repeat' ? viewRepeat() : viewToday_v7(); };
 const render_v7 = render;
-render = function () { ensureFU(); return render_v7.apply(this, arguments); };
+render = function () { ensureFU(); const r = render_v7.apply(this, arguments); try { drawHead(); } catch {} return r; };
 window.addEventListener('hashchange', () => { if (r6() !== 'repeat' && (RP.stream || RP.mr || RP.phase === 'model' || RP.phase === 'you')) { rpStop(true); RP.phase = RP.phase === 'done' ? 'done' : 'idle'; } });
 WGROUPS.push(['models', 'Model answers'], ['pron', 'Say it right']);
 const wEntries_v7 = wEntries;
