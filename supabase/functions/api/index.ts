@@ -422,7 +422,7 @@ async function reported() {
   if (cache && Date.now() - cache.ts < 6 * 3600e3) return cache.items;
   const items: any[] = []; let before = "";
   try {
-    for (let page = 0; page < 4; page++) {
+    for (let page = 0; page < 14; page++) {
       const r = await fetch("https://t.me/s/cdireport" + (before ? "?before=" + before : ""), { headers: { "User-Agent": "Mozilla/5.0" } });
       if (!r.ok) break;
       const html = await r.text();
@@ -433,7 +433,7 @@ async function reported() {
     }
   } catch { /* keep what we have */ }
   if (!items.length) return cache ? cache.items : [];
-  const seen = new Set<string>(); const uniq = items.filter((x) => (seen.has(x.t2) ? false : (seen.add(x.t2), true))).sort((a, b) => (b.at || "").localeCompare(a.at || "")).slice(0, 60);
+  const seen = new Set<string>(); const uniq = items.filter((x) => (seen.has(x.t2) ? false : (seen.add(x.t2), true))).sort((a, b) => (b.at || "").localeCompare(a.at || "")).slice(0, 220);
   await setCfg("cdi_cache", JSON.stringify({ ts: Date.now(), items: uniq }));
   return uniq;
 }
@@ -479,6 +479,124 @@ Return ONLY JSON: {"results": [{"i": number, "fixed": true|false, "still": array
   let r;
   try { r = await gemini([{ text: prompt }], true, 0.2); } catch (e) { await refund(userId, usage.used); throw e; }
   return { ...r.data, model: r.model, usage };
+}
+
+
+/* ---------------- Writing Task 1: generated visuals, checking, find-the-mistake hunts ---------------- */
+const W1_DESCRIPTORS = `IELTS Academic Writing Task 1 band descriptors (public version, May 2023), condensed. Each criterion gets a WHOLE band by best fit.
+TASK ACHIEVEMENT
+8: covers all requirements appropriately, relevantly and sufficiently; key features skilfully selected, clearly presented, highlighted and illustrated; occasional omissions or lapses.
+7: covers the requirements; content relevant and accurate with a few omissions or lapses; key features covered and clearly highlighted but could be more fully illustrated; presents a CLEAR OVERVIEW, data appropriately categorised, main trends or differences identified.
+6: focuses on the requirements, appropriate format; key features adequately highlighted; a relevant overview is ATTEMPTED; information appropriately selected and supported with figures; some details may be irrelevant, inaccurate, missing or excessive.
+5: generally addresses the task; key features not adequately covered; recounting of detail is mainly mechanical; there may be no data to support the description; may focus on details without the bigger picture.
+COHERENCE AND COHESION
+8: message followed with ease; logically sequenced; cohesion well managed; paragraphing sufficient and appropriate.
+7: logically organised with clear progression; range of cohesive devices including reference and substitution used flexibly with some inaccuracies or over/under use.
+6: coherent with clear overall progression; cohesive devices used to some good effect but cohesion may be faulty or mechanical; reference and substitution may lack flexibility or clarity.
+5: organisation evident but not wholly logical; limited/overused cohesive devices; repetitive.
+LEXICAL RESOURCE
+8: wide resource used fluently and flexibly for precise meaning; skilful use of uncommon items; occasional errors in word choice, collocation, spelling.
+7: sufficient for flexibility and precision; some less common items; awareness of style and collocation with some inappropriacies; few spelling/word formation errors.
+6: generally adequate; meaning clear despite restricted range or lack of precision; some spelling/word formation errors that do not impede communication.
+5: limited but minimally adequate; frequent lapses in word choice; noticeable spelling errors.
+GRAMMATICAL RANGE AND ACCURACY
+8: wide range used flexibly and accurately; majority of sentences error-free; occasional non-systematic errors.
+7: variety of complex structures with some flexibility and accuracy; grammar and punctuation generally well controlled; error-free sentences frequent.
+6: mix of simple and complex forms with limited flexibility; errors occur but rarely impede communication.
+5: limited, repetitive range; complex sentences tend to be faulty; frequent errors.
+Rules: under 150 words lowers Task Achievement. No overview caps Task Achievement at 5. Figures that contradict the data count as inaccuracy. Opinions or causes not shown in the visual are irrelevant content. Be fair, not stingy.`;
+
+function t1Brief(it: any) {
+  try {
+    const k = String(it.kind || "");
+    if (k === "line" || k === "bar") return `${k} chart. x: ${JSON.stringify(it.x)}. unit: ${it.unit || ""}. series: ${(it.series || []).map((s: any) => `${s.name}: ${JSON.stringify(s.values)}`).join("; ")}`;
+    if (k === "pie") return `pie chart(s), unit %: ${(it.charts || []).map((c: any) => `${c.label}: ${(c.parts || []).map((p: any) => `${p.name} ${p.value}`).join(", ")}`).join(" | ")}`;
+    if (k === "table") return `table. columns: ${JSON.stringify(it.cols)}. unit: ${it.unit || ""}. rows: ${(it.rows || []).map((r: any) => `${r.name}: ${JSON.stringify(r.values)}`).join("; ")}`;
+    if (k === "process") return `process diagram, ${it.cycle ? "a cycle" : "linear"}. stages: ${(it.steps || []).map((s: any, i: number) => `${i + 1}. ${s.label}${s.note ? " (" + s.note + ")" : ""}`).join(" ")}`;
+    if (k === "map") return `two maps. ${(it.maps || []).map((m: any) => `${m.label}: ${(m.items || []).map((x: any) => `${x.name} at column ${x.x}, row ${x.y} (grid 12x8, row 0 is north)`).join("; ")}`).join(" || ")}`;
+  } catch { /* fallthrough */ }
+  return JSON.stringify(it).slice(0, 3000);
+}
+
+async function t1gen(body: any) {
+  const kind = ["line", "bar", "pie", "table", "process", "map"].includes(String(body.kind)) ? String(body.kind) : "";
+  const desc = String(body.desc || "").slice(0, 600);
+  const prompt = `Create ONE practice visual for IELTS Academic Writing Task 1${desc ? ` that matches this description reported by a test taker: "${desc}". Keep its topic, years and categories when they are given; invent plausible numbers.` : ` of kind "${kind || "line"}" on an everyday academic topic (energy, transport, education, spending, population, tourism, health, environment).`}
+Return ONLY JSON with these keys:
+"kind": one of "line", "bar", "pie", "table", "process", "map";
+"title": one sentence starting "The line graph shows" / "The bar chart compares" / "The pie charts show" / "The table shows" / "The diagram shows" / "The maps show", as on the exam paper;
+and the data for that kind:
+- line or bar: "x": 4-7 labels (years or categories), "unit": short unit text, "series": 2-4 objects {"name", "values": numbers, one per x}. Numbers realistic, with clear trends and at least one crossing or contrast.
+- pie: "charts": 1-2 objects {"label": year or group, "parts": 4-6 objects {"name", "value"}}; values in each chart add up to 100.
+- table: "cols": 3-4 column labels, "unit": text, "rows": 4-6 objects {"name", "values": numbers, one per column}.
+- process: "steps": 6-10 objects {"label": short stage, 2-7 words, "note": optional detail, 0-6 words}, "cycle": true if the last stage leads back to the first.
+- map: "maps": exactly 2 objects {"label": year or "Now"/"Planned", "items": 6-10 objects {"name": 1-3 words, "x": 0-11, "y": 0-7, "w": 1-6, "h": 1-4, "kind": one of "building", "green", "water", "road", "sport", "parking"}} on a 12 by 8 grid, row 0 is north. Items in one map must not overlap. Keep some features the same, remove some, add some, change some.`;
+  const r = await gemini([{ text: prompt }], true, 0.8);
+  return { item: r.data, model: r.model };
+}
+
+async function essay1(body: any, userId: string) {
+  const text = String(body.text || "").trim().slice(0, 4000);
+  const it = body.item && typeof body.item === "object" ? body.item : null;
+  if (text.length < 80 || !it) throw Object.assign(new Error("Need the task and your report."), { code: "bad_request" });
+  const usage = await bumpUsage(userId);
+  const goal = Number(body.goal) >= 4 && Number(body.goal) <= 9 ? Number(body.goal) : 7;
+  const prompt = `${STYLE}
+
+${W1_DESCRIPTORS}
+
+You are checking an IELTS Academic Writing Task 1 report by a student whose first languages are Kazakh and Russian (no articles in either). Goal band ${goal}.
+Task: ${String(it.title || "").slice(0, 300)} Summarise the information by selecting and reporting the main features, and make comparisons where relevant. Write at least 150 words.
+The visual, as data: ${t1Brief(it)}
+Written in ${Number(body.minutes) || "?"} minutes (aim 20), ${Number(body.words) || "?"} words (minimum 150).
+
+Report:
+"""
+${text}
+"""
+
+Return ONLY a JSON object:
+"bands": {"tr": n (Task Achievement), "cc": n, "lr": n, "gra": n} whole bands, best fit, fair.
+"band_reasons": {"tr","cc","lr","gra"} one sentence each: which descriptor fits and what the next band needs, quoting the report.
+"summary": 2 sentences: what costs the most band points here and what to do next time. Concrete.
+"overview": {"present": true/false, "quote": the overview sentence if there is one, "fix": one sentence: what a clear overview of THIS visual would say}.
+"data_errors": array of figures or trends that contradict the data: {"said": exact words, "fact": what the data shows}.
+"errors": array of EVERY language error, in order, at most 25: {"said": exact wrong words (2-12), "better", "why": under 12 words, "rule": one of exactly "articles a/an/the", "verb tense", "subject-verb agreement", "plural / countable", "prepositions", "word form", "word choice", or another short lowercase name}.
+"spelling": array of {"wrong","right","in_task": false}.
+"ideas": array of at most 3 points about selection, grouping, comparisons or paragraphing that really cost marks: {"point","where","fix"}.
+"keep": 1-2 specific things that work, with short quotes.
+"corrected": the student's report with every error fixed, same structure and level.
+"higher_version": the same report at band ${Math.min(9, goal)}: intro, overview, two body paragraphs grouping the data, 170-190 words, accurate figures, natural comparison language.
+"target_band": ${Math.min(9, goal)}.`;
+  let r;
+  try { r = await gemini([{ text: prompt }], true, 0.3); } catch (e) { await refund(userId, usage.used); throw e; }
+  const b = r.data?.bands;
+  if (b && ["tr", "cc", "lr", "gra"].every((k) => !isNaN(Number(b[k])))) {
+    for (const k of ["tr", "cc", "lr", "gra"]) b[k] = Math.round(Number(b[k]));
+    b.overall = ieltsRound((b.tr + b.cc + b.lr + b.gra) / 4);
+  }
+  return { ...r.data, model: r.model, usage };
+}
+
+const HUNT: Record<string, string> = {
+  articles: "article mistakes only: a missing a/an/the, a wrong one (a instead of the, the before a general plural or uncountable noun, the before most country names), or a instead of an",
+  prepositions: "preposition mistakes only: wrong or missing prepositions (in/on/at, for/since, depend of, interested about, discuss about)",
+  tense: "verb tense mistakes only: present instead of past, past simple instead of present perfect, wrong future forms",
+  agreement: "subject-verb agreement mistakes only: people is, the number of cars are, everyone have, it don't",
+  plural: "plural and countable mistakes only: informations, a advice, many money, one of the reason, two year",
+  mixed: "a mix of the kinds of mistakes listed in focus",
+};
+async function hunt(body: any) {
+  const kind = HUNT[String(body.kind)] ? String(body.kind) : "articles";
+  const src = String(body.text || "").trim().slice(0, 1500);
+  const focus = Array.isArray(body.focus) ? body.focus.filter((x: unknown) => typeof x === "string").slice(0, 4).join(", ") : "";
+  const n = Math.max(3, Math.min(7, Number(body.n) || 5));
+  const prompt = `Make a find-the-mistake exercise for an IELTS student (first languages Kazakh and Russian).
+${src ? `Start from this correct text written by the student (keep it, change only what is needed to put the mistakes in):\n"""${src}"""` : `Write a correct academic paragraph of 90-120 words on: ${String(body.topic || "a common IELTS Task 2 topic").slice(0, 200)}.`}
+Then put in exactly ${n} ${HUNT[kind]}${kind === "mixed" && focus ? ` (focus: ${focus})` : ""}. Each mistake must be clearly wrong in standard English, not a style choice, and fixable from the sentence alone. Do not put two mistakes in the same three words.
+Return ONLY JSON: {"text": the paragraph WITH the mistakes, "errors": [{"wrong": the exact words in "text" that are wrong, 1-4 words, including the word right after a missing article, "right": the corrected words, "why": under 10 words}] in text order}.`;
+  const r = await gemini([{ text: prompt }], true, 0.5);
+  return { ...r.data, model: r.model };
 }
 
 /* ---------------- voice cloning test (admin only) ---------------- */
@@ -656,6 +774,9 @@ Deno.serve(async (req) => {
     if (action === "essay") return j(await essay(body, user.id));
     if (action === "wtopics") { let t: unknown = []; try { t = JSON.parse(await cfg("w_topics", "[]")); } catch { /* empty */ } return j({ topics: Array.isArray(t) ? t.slice(0, 200) : [], reported: await reported() }); }
     if (action === "wcheck") return j(await wcheck(body, user.id));
+    if (action === "essay1") return j(await essay1(body, user.id));
+    if (action === "t1gen") return j(await t1gen(body));
+    if (action === "hunt") return j(await hunt(body));
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);
       const { data } = await admin.from("ai_usage").select("count").eq("user_id", user.id).eq("day", day).maybeSingle();
