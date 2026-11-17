@@ -165,6 +165,13 @@ async function analyze(body: any, userId: string) {
   const goalText = goal
     ? `The student's goal is band ${goal}.${level ? ` Their recent checked answers average about band ${level}.` : ""} Aim everything at that goal: put first the changes that would move THIS answer toward band ${goal}, in order of how many band points they cost. Don't push words, idioms or grammar that a band ${goal} speaker wouldn't naturally use; suggest what is realistic for them now.`
     : `The student hasn't set a goal band; assume they are aiming for band 7.`;
+  const h = body.history && typeof body.history === "object" ? body.history : null;
+  const names = (x: unknown) => (Array.isArray(x) ? x.map((r: any) => (typeof r === "string" ? r : `${r.rule} (in ${r.in_answers} earlier answers)`)).slice(0, 8).join("; ") : "");
+  const histText = h && Number(h.checked) >= 2 ? `What this student's earlier checked answers show (${Number(h.checked)} so far).
+Mistakes that keep repeating: ${names(h.repeating) || "none yet"}.
+Mistakes that have disappeared: ${names(h.gone) || "none yet"}.
+Corrected in their previous answer: ${names(h.last_corrected) || "nothing"}.
+How to use this: a repeating mistake that shows up again matters more than a one-off slip, so give it more space and count it honestly; but don't force it to be the root problem if something else costs more in this answer. Don't praise or mention the disappeared ones unless they come back. This student applies corrections fast and tends to over-apply them (for example adding "the" before country names after being told about missing articles), so check for the opposite of what was corrected last time. For "rule" in grammar items use one of these exact names when it fits: "articles a/an/the", "verb tense", "subject-verb agreement", "plural / countable", "prepositions", "word form", "word choice".` : "";
   const prompt = `${STYLE}
 
 ${DESCRIPTORS}
@@ -172,6 +179,8 @@ ${DESCRIPTORS}
 ${COURSE}
 
 ${goalText}
+
+${histText}
 
 You are listening to a recording of an IELTS Speaking candidate (their first language is Kazakh/Russian).
 ${questionText(q)}
@@ -313,6 +322,75 @@ Return ONLY JSON:
   if (body.audio) parts.push({ inline_data: { mime_type: body.mime || "audio/wav", data: body.audio } });
   let r;
   try { r = await gemini(parts, true, 0.3); } catch (e) { await refund(userId, usage.used); throw e; }
+  return { ...r.data, model: r.model, usage };
+}
+
+const W_DESCRIPTORS = `IELTS Writing Task 2 band descriptors (public version), condensed. Each criterion gets a WHOLE band (5, 6, 7...), by best fit.
+TASK RESPONSE
+8: sufficiently addresses all parts; well-developed response with relevant, extended and supported ideas.
+7: addresses all parts; clear position throughout; main ideas extended and supported, though there may be over-generalisation or supporting ideas may lack focus.
+6: addresses all parts although some more fully than others; relevant position, though conclusions may be unclear or repetitive; relevant main ideas but some inadequately developed or unclear.
+5: addresses the task only partially; expresses a position but development is not always clear; limited or insufficiently developed ideas, may be irrelevant detail.
+COHERENCE AND COHESION
+8: sequences information and ideas logically; manages all aspects of cohesion well; paragraphing sufficient and appropriate.
+7: logically organises information; clear progression throughout; range of cohesive devices used appropriately, with some under- or over-use; clear central topic in each paragraph.
+6: arranges information coherently with clear overall progression; cohesive devices effective but cohesion within or between sentences may be faulty or mechanical; referencing not always clear; paragraphing not always logical.
+5: some organisation but may lack overall progression; inadequate, inaccurate or over-used cohesive devices; may be repetitive; paragraphing may be inadequate.
+LEXICAL RESOURCE
+8: wide range used fluently and flexibly for precise meaning; skilful use of uncommon items with occasional inaccuracies in word choice and collocation; rare errors in spelling or word formation.
+7: sufficient range for some flexibility and precision; less common items with some awareness of style and collocation; occasional errors in word choice, spelling or word formation.
+6: adequate range for the task; attempts less common vocabulary with some inaccuracy; some errors in spelling or word formation, but they do not impede communication.
+5: limited range, minimally adequate; noticeable errors in spelling or word formation that may cause some difficulty for the reader.
+GRAMMATICAL RANGE AND ACCURACY
+8: wide range of structures; the majority of sentences are error-free; only very occasional errors.
+7: variety of complex structures; frequent error-free sentences; good control of grammar and punctuation with a few errors.
+6: mix of simple and complex forms; some errors in grammar and punctuation but they rarely reduce communication.
+5: limited range; attempts complex sentences but these tend to be less accurate than simple ones; frequent errors that can cause some difficulty for the reader.
+Scoring rules: real examiners are fair, not stingy. Essays with wide, accurate language and a position that is clear enough score 8 even with small gaps in reasoning, a conditional opinion or a close paraphrase of the topic; do not mark those down a band. Small logic points are polish, not band-losers. Under 250 words lowers Task Response. Spelling mistakes that leave the meaning clear fit band 6 vocabulary, not 5.`;
+
+async function essay(body: any, userId: string) {
+  const text = String(body.text || "").trim().slice(0, 6000);
+  const promptQ = String(body.prompt || "").trim().slice(0, 800);
+  if (text.length < 150 || !promptQ) throw Object.assign(new Error("Need the question and your essay."), { code: "bad_request" });
+  const usage = await bumpUsage(userId);
+  const goal = Number(body.goal) >= 4 && Number(body.goal) <= 9 ? Number(body.goal) : 7;
+  const h = body.history && typeof body.history === "object" ? body.history : null;
+  const names = (x: unknown) => (Array.isArray(x) ? x.map((r: any) => (typeof r === "string" ? r : r.rule)).slice(0, 8).join("; ") : "");
+  const pw = Array.isArray(body.problem_words) ? body.problem_words.filter((x: unknown) => typeof x === "string").slice(0, 40).join(", ") : "";
+  const prompt = `${STYLE}
+
+${W_DESCRIPTORS}
+
+You are checking an IELTS Academic Writing Task 2 essay by a student whose first languages are Kazakh and Russian (no articles in either). Their goal is band ${goal}.
+Question: ${promptQ}
+Written in ${Number(body.minutes) || "?"} minutes (limit 40), ${Number(body.words) || "?"} words (minimum 250).
+${h ? `From their earlier checked work: mistakes that keep repeating: ${names(h.repeating) || "none yet"}. Corrected last time: ${names(h.last_corrected) || "nothing"}. This student applies corrections fast and tends to over-apply them, so look for the opposite of what was corrected last time.` : ""}
+${pw ? `Words they have misspelled before: ${pw}.` : ""}
+
+Essay:
+"""
+${text}
+"""
+
+Return ONLY a JSON object:
+"bands": {"tr": n, "cc": n, "lr": n, "gra": n} whole bands, best fit, fair.
+"band_reasons": {"tr": ..., "cc": ..., "lr": ..., "gra": ...} one sentence each: which descriptor fits and what the next band needs, quoting the essay.
+"summary": 2 sentences: the one thing that costs the most band points in this essay, and the one thing to do differently next time. Concrete, no praise.
+"errors": array of EVERY language error you find, in essay order, at most 25, grammar and word choice, not spelling: {"said": the exact wrong words copied from the essay (2 to 12 words, enough to find it), "better": the corrected words, "why": under 12 words, "rule": one of exactly "articles a/an/the", "verb tense", "subject-verb agreement", "plural / countable", "prepositions", "word form", "word choice", or another short lowercase name if none fits}. Count repeated errors each time; don't skip an error because it is the same kind as an earlier one.
+"spelling": array of {"wrong": as written, "right": correct spelling, "in_task": true if the correct word is printed in the question}.
+"overcorrection": one sentence if the essay shows the opposite of a recently corrected mistake (for example "the" before a country name or a plural used in general), quoting it; otherwise "".
+"ideas": array of at most 3 Task Response or Coherence points that really cost marks: {"point": what is wrong in plain words, "where": a short quote, "fix": what to write there, as a concrete suggestion}. Empty array if the ideas and structure are fine for the goal band. Do not invent problems.
+"keep": array of 1-2 specific things that already work, each with a short quote.
+"corrected": the student's own essay with every error fixed, keeping their ideas, structure, sentences and level of vocabulary. Do not upgrade the style.
+"higher_version": the same essay as a band ${Math.min(9, goal)} writer would produce it: same argument and paragraph plan, ideas extended where they were thin, 260-290 words, natural linking, plain accurate vocabulary rather than showy words.
+"target_band": ${Math.min(9, goal)}.`;
+  let r;
+  try { r = await gemini([{ text: prompt }], true, 0.3); } catch (e) { await refund(userId, usage.used); throw e; }
+  const b = r.data?.bands;
+  if (b && ["tr", "cc", "lr", "gra"].every((k) => !isNaN(Number(b[k])))) {
+    for (const k of ["tr", "cc", "lr", "gra"]) b[k] = Math.round(Number(b[k]));
+    b.overall = ieltsRound((b.tr + b.cc + b.lr + b.gra) / 4);
+  }
   return { ...r.data, model: r.model, usage };
 }
 
@@ -488,6 +566,8 @@ Deno.serve(async (req) => {
     if (action === "myvoice") return j(await myVoice(body, user.id));
     if (action === "mockreport") return j(await mockReport(body, user.id));
     if (action === "paraphrase") return j(await paraphrase(body, user.id));
+    if (action === "essay") return j(await essay(body, user.id));
+    if (action === "wtopics") { let t: unknown = []; try { t = JSON.parse(await cfg("w_topics", "[]")); } catch { /* empty */ } return j({ topics: Array.isArray(t) ? t.slice(0, 200) : [] }); }
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);
       const { data } = await admin.from("ai_usage").select("count").eq("user_id", user.id).eq("day", day).maybeSingle();
@@ -564,6 +644,7 @@ Deno.serve(async (req) => {
       for (const k of ["fish_key", "fal_key"]) {
         if (typeof body[k] === "string") { const v = body[k].trim(); if (v) await setCfg(k, v); else await admin.from("app_config").delete().eq("key", k); }
       }
+      if (typeof body.w_topics === "string" && body.w_topics.length < 60000) await setCfg("w_topics", body.w_topics);
       if (body.daily_limit) await setCfg("daily_limit", String(Math.max(1, Math.min(1000, parseInt(body.daily_limit) || 60))));
       if (body.model) await setCfg("model", String(body.model).trim());
       return j({ ok: true });
