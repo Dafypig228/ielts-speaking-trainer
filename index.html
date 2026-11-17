@@ -541,8 +541,7 @@ mark.fxgap::before{content:"missing";position:absolute;top:-1.35em;left:-2px;fon
 </style>
 </head>
 <body>
-<header class="bar" id="hdr"><div class="in"><span class="brand"><svg width="24" height="24" aria-hidden="true" style="vertical-align:-6px;margin-right:8px;border-radius:6px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#162c55"/><g stroke="#7fa82b" stroke-width="14" stroke-linecap="round" fill="none"><path d="M256 236C250 196 228 168 196 150"/><path d="M256 236C262 190 292 160 330 146"/></g><path d="M196 98c-34-18-82 4-78 44 4 36 46 52 78 30 32 22 74 6 78-30 4-40-44-62-78-44z" fill="#8fbf3a" transform="rotate(-18 196 140)"/><path d="M330 92c-34-18-82 4-78 44 4 36 46 52 78 30 32 22 74 6 78-30 4-40-44-62-78-44z" fill="#a3c93a" transform="rotate(16 330 134)"/><path d="M212 236c0-8 20-14 44-14s44 6 44 14l-8 150c-2 36-18 58-36 58s-34-22-36-58z" fill="#b7d65a"/><g stroke="#86ab33" stroke-width="7" stroke-linecap="round"><path d="M220 276h24M262 300h28M218 330h22M264 356h22M232 392h18"/></g></svg>
-wasabi</span><span id="chip" class="chip">Connecting…</span></div></header>
+<header class="bar" id="hdr"><div class="in"><span class="brand"><svg width="24" height="24" aria-hidden="true" style="vertical-align:-6px;margin-right:8px;border-radius:6px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#162c55"/><ellipse cx="256" cy="300" rx="200" ry="128" transform="rotate(-12 256 300)" fill="#9cc43a"/><g transform="rotate(14 256 290)" fill="none" stroke="#fdfeff" stroke-linecap="round" stroke-linejoin="round"><path d="M256 334C252 382 236 420 206 454" stroke-width="18"/><path d="M256 334C232 356 156 356 144 292C132 214 200 128 256 96C312 128 380 214 368 292C358 350 292 358 274 340" stroke-width="26"/><path d="M256 318C254 268 256 206 256 158" stroke-width="12"/></g><circle cx="372" cy="380" r="15" fill="#fcbb39"/></svg>wasabi</span><span id="chip" class="chip">Connecting…</span></div></header>
 <nav class="tabs" aria-label="Sections"><div class="in" id="tabs"></div></nav>
 <main class="wrap" id="view"></main>
 <div id="sheet" aria-modal="true" role="dialog"><div class="scrim" data-act="closesheet"></div><div class="panel"><div class="phead" id="phead"></div><div class="pbody" id="pbody"></div></div></div>
@@ -2665,8 +2664,7 @@ function renderHeader() {
     h.innerHTML = `<div class="in"><button class="xbtn" data-act="pexit" aria-label="Leave">${I.x}</button><div class="ttl">${ttl}</div><span class="pos">${P.deck.length > 1 ? (P.i + 1) + ' of ' + P.deck.length : ''}</span><span id="chip" class="chip" hidden></span></div>${P.deck.length > 1 && P.deck.length <= 14 ? `<div class="segbar" style="grid-template-columns:repeat(${P.deck.length},minmax(0,1fr))" aria-hidden="true">${P.deck.map((x, i) => `<span class="${i < P.i ? 'done' : i === P.i ? 'now' : ''}"></span>`).join('')}</div>` : ''}`;
   } else {
     h.className = 'bar';
-    h.innerHTML = `<div class="in"><a class="brand" href="#today"><svg width="24" height="24" aria-hidden="true" style="vertical-align:-6px;margin-right:8px;border-radius:6px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#162c55"/><g stroke="#7fa82b" stroke-width="14" stroke-linecap="round" fill="none"><path d="M256 236C250 196 228 168 196 150"/><path d="M256 236C262 190 292 160 330 146"/></g><path d="M196 98c-34-18-82 4-78 44 4 36 46 52 78 30 32 22 74 6 78-30 4-40-44-62-78-44z" fill="#8fbf3a" transform="rotate(-18 196 140)"/><path d="M330 92c-34-18-82 4-78 44 4 36 46 52 78 30 32 22 74 6 78-30 4-40-44-62-78-44z" fill="#a3c93a" transform="rotate(16 330 134)"/><path d="M212 236c0-8 20-14 44-14s44 6 44 14l-8 150c-2 36-18 58-36 58s-34-22-36-58z" fill="#b7d65a"/><g stroke="#86ab33" stroke-width="7" stroke-linecap="round"><path d="M220 276h24M262 300h28M218 330h22M264 356h22M232 392h18"/></g></svg>
-wasabi</a><span style="flex:1"></span>${examChipHTML()}<span id="chip" class="chip"></span><a class="gear" href="#prefs" aria-label="Settings" ${['prefs', 'admin'].includes(r6()) ? 'aria-current="page"' : ''}>${I.gear}</a></div>`;
+    h.innerHTML = `<div class="in"><a class="brand" href="#today"><svg width="24" height="24" aria-hidden="true" style="vertical-align:-6px;margin-right:8px;border-radius:6px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#162c55"/><ellipse cx="256" cy="300" rx="200" ry="128" transform="rotate(-12 256 300)" fill="#9cc43a"/><g transform="rotate(14 256 290)" fill="none" stroke="#fdfeff" stroke-linecap="round" stroke-linejoin="round"><path d="M256 334C252 382 236 420 206 454" stroke-width="18"/><path d="M256 334C232 356 156 356 144 292C132 214 200 128 256 96C312 128 380 214 368 292C358 350 292 358 274 340" stroke-width="26"/><path d="M256 318C254 268 256 206 256 158" stroke-width="12"/></g><circle cx="372" cy="380" r="15" fill="#fcbb39"/></svg>wasabi</a><span style="flex:1"></span>${examChipHTML()}<span id="chip" class="chip"></span><a class="gear" href="#prefs" aria-label="Settings" ${['prefs', 'admin'].includes(r6()) ? 'aria-current="page"' : ''}>${I.gear}</a></div>`;
   }
   chip();
 }
@@ -4331,7 +4329,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261117061633';
+const BUILD_ID = '20261117061650';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
