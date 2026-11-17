@@ -651,7 +651,7 @@ async function hunt(body: any) {
 ${src ? `Start from this correct text written by the student (keep it, change only what is needed to put the mistakes in):\n"""${src}"""` : `Write a correct academic paragraph of 90-120 words on: ${String(body.topic || "a common IELTS Task 2 topic").slice(0, 200)}.`}
 Then put in exactly ${n} ${HUNT[kind]}${kind === "mixed" && focus ? ` (focus: ${focus})` : ""}. Each mistake must be clearly wrong in standard English, not a style choice, and fixable from the sentence alone. Do not put two mistakes in the same three words.
 Return ONLY JSON: {"text": the paragraph WITH the mistakes, "errors": [{"wrong": the exact words in "text" that are wrong, 1-4 words, including the word right after a missing article, "right": the corrected words, "why": under 10 words}] in text order}.`;
-  const r = await gemini([{ text: prompt }], true, 0.5);
+  const r = await gemini([{ text: prompt }], true, 0.5, true);
   return { ...r.data, model: r.model };
 }
 

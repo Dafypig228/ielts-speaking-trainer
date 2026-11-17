@@ -4560,7 +4560,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611171826';
+const BUILD_ID = '202611171842';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -6176,6 +6176,7 @@ function huSource() {
 async function huStart(kind) {
   if (!SB.user) return toast('Sign in first (Settings).');
   Object.assign(HU, {kind, words: [], spans: [], tap: new Set(), t0: 0, done: false, busy: true, from: ''});
+  HU.w0 = Date.now(); clearInterval(HU.wt); HU.wt = setInterval(() => { const el = $('#huwait'); if (!HU.busy) return clearInterval(HU.wt); if (el) el.textContent = fmt((Date.now() - HU.w0) / 1000); }, 500);
   W2.phase = 'hunt'; if (r6() !== 'write') { W2.keep = true; location.hash = 'write'; } else render();
   const own = huSource(), src = own && Math.random() < 0.7 ? own : null, ps = allPrompts(); HU.src = !!src; render();
   try {
@@ -6194,11 +6195,11 @@ function huFinish() {
 }
 function viewHunt() {
   const k = HU_KINDS.find(x => x[0] === HU.kind) || HU_KINDS[0];
-  if (HU.busy) return `<div class="stack wpage">${wBack()}<h1>Find the mistakes: ${esc(k[1].toLowerCase())}</h1><div class="cwait"><div class="row"><span class="cw-dots" aria-hidden="true"><i></i><i></i><i></i></span><b class="grow">Putting mistakes into a paragraph</b></div><p class="small muted" style="margin:6px 0 0">${HU.src ? 'It uses a corrected paragraph of your own.' : 'It writes a sample paragraph on an exam topic.'} About 10 seconds.</p></div></div>`;
+  if (HU.busy) return `<div class="stack wpage">${wBack()}<h1>Proofreading: ${esc(k[1].toLowerCase())}</h1><div class="cwait"><div class="row"><span class="cw-dots" aria-hidden="true"><i></i><i></i><i></i></span><b class="grow">Putting mistakes into a paragraph</b><span class="mono muted" id="huwait">0:00</span></div><p class="small muted" style="margin:6px 0 0">${HU.src ? 'It uses a corrected paragraph of your own.' : 'It writes a sample paragraph on an exam topic.'} A few seconds.</p></div></div>`;
   const inSpan = i => HU.spans.find(s => i >= s.from && i <= s.to), hit = s => [...HU.tap].some(i => i >= s.from && i <= s.to);
   const found = HU.spans.filter(hit).length, wrong = [...HU.tap].filter(i => !inSpan(i)).length;
   const words = HU.words.map((w, i) => { const t = HU.tap.has(i), sp = inSpan(i); const cls = HU.done ? (sp ? (hit(sp) ? 'hit' : 'missed') : t ? 'false' : '') : t ? 'tap' : ''; return `<button class="cpw ${cls}" data-act="hutap" data-i="${i}" ${HU.done ? 'disabled' : ''}>${esc(w)}</button>`; }).join(' ');
-  return `<div class="stack wpage">${wBack()}<div class="row" style="align-items:flex-end"><div class="grow"><h1>Find the mistakes: ${esc(k[1].toLowerCase())}</h1><p class="lead" style="margin-top:4px">${HU.from ? `A corrected paragraph from ${esc(HU.from)}, with ` : 'A sample paragraph with '}<b>${HU.spans.length} ${HU.kind === 'mixed' ? '' : esc(k[1].split(':')[0].toLowerCase()) + ' '}mistakes</b> put in. Tap each wrong word. For a missing article, tap the word that needs it.</p></div><span class="w2time mono" id="hutime">${fmt(HU.t0 ? (Date.now() - HU.t0) / 1000 : 0)}</span></div>
+  return `<div class="stack wpage">${wBack()}<div class="row" style="align-items:flex-end"><div class="grow"><h1>Proofreading: ${esc(k[1].toLowerCase())}</h1><p class="lead" style="margin-top:4px">${HU.from ? `A corrected paragraph from ${esc(HU.from)}, with ` : 'A sample paragraph with '}<b>${HU.spans.length} ${HU.kind === 'mixed' ? '' : esc(k[1].split(':')[0].toLowerCase()) + ' '}mistakes</b> put in. Tap each wrong word. For a missing article, tap the word that needs it.</p></div><span class="w2time mono" id="hutime">${fmt(HU.t0 ? (Date.now() - HU.t0) / 1000 : 0)}</span></div>
     <div class="wg2 wide"><div class="stack"><section class="card cptext">${words}</section>
       ${HU.done ? `<section class="card stack" style="gap:8px"><div class="qfscore"><b>${found}</b> of ${HU.spans.length} found${wrong ? ` · ${wrong} tapped by mistake` : ''}</div>${HU.spans.map(s => `<div class="w2err"><span class="err">${esc(s.g.said)}</span> → <span class="cor">${esc(s.g.better)}</span>${s.g.why ? ` <span class="small muted">${esc(s.g.why)}</span>` : ''}</div>`).join('')}<div class="row"><button class="btn primary" data-act="hunt" data-k="${HU.kind}">Another one</button><button class="btn" data-act="w2back">Back to Writing</button></div></section>` : `<div class="row"><span class="small">Tapped: <b>${HU.tap.size}</b></span><span class="grow"></span><button class="btn primary" data-act="hudone">I'm done</button></div>`}</div>
     <section class="card stack" style="gap:8px"><h2>How to look</h2><ol class="w2plan">${HU.kind === 'articles' || HU.kind === 'mixed' ? '<li>Every singular countable noun needs a / an / the (or my, this…).</li><li>“The” for something specific or already mentioned; nothing for general plurals and uncountables.</li>' : ''}${HU.kind === 'prepositions' ? '<li>Time: in July, on Monday, at 5 pm.</li><li>Verb + preposition pairs: depend on, interested in, discuss (no preposition).</li>' : ''}${HU.kind === 'agreement' || HU.kind === 'mixed' ? '<li>Find each verb, then its subject: does the verb match it?</li>' : ''}${HU.kind === 'tense' ? '<li>Look for time words: last year, since, by 2030, nowadays.</li>' : ''}${HU.kind === 'plural' ? '<li>Uncountable: information, advice, research, equipment.</li><li>After “one of the”, a plural noun.</li>' : ''}<li>Read once slowly, word by word. Then once for meaning.</li></ol></section></div></div>`;
@@ -6215,8 +6216,8 @@ function wRepList() {
   const rows = wRepRows(), f = W2.rf;
   if (!W2.rep) return `<div class="emptyrow"><span class="s">${SB.user ? 'Loading the latest reports…' : 'Sign in to see questions reported from real tests.'}</span></div>`;
   if (!rows.length) return `<div class="emptyrow"><span class="s">No reported question matches. Try another type or fewer words.</span></div>`;
-  return rows.map(({r, i}) => f === 't1' ? `<div class="li wrep"><span class="grow"><span class="s"><b>${esc(r.date || '')}</b>${r.centre ? ' · ' + esc(r.centre) : ''} · ${T1_NAME[t1Guess(r.t1)]}</span><span class="wq">${esc(r.t1.replace(/[^\x20-\x7E’‘“”–—]/g, '').trim())}</span></span><button class="btn sm" data-act="t1rep" data-i="${i}">Draw it</button></div>`
-    : `<div class="li wrep"><span class="grow"><span class="s"><b>${esc(r.date || '')}</b>${r.centre ? ' · ' + esc(r.centre) : ''} · ${WT_NAMES[wtType(r.t2)]}</span><span class="wq">${esc(r.t2)}</span></span><button class="btn sm" data-act="w2rep" data-i="${i}">Write</button></div>`).join('');
+  return rows.map(({r, i}) => f === 't1' ? `<div class="li wrep"><span class="grow"><span class="s"><b>${T1_NAME[t1Guess(r.t1)]}</b>${r.centre ? ' · ' + esc(r.centre) : ''} · ${esc(r.date || '')}</span><span class="wq">${esc(r.t1.replace(/[^\x20-\x7E’‘“”–—]/g, '').trim())}</span></span><button class="btn sm" data-act="t1rep" data-i="${i}">Draw it</button></div>`
+    : `<div class="li wrep"><span class="grow"><span class="s"><b>${WT_NAMES[wtType(r.t2)]}</b>${r.centre ? ' · ' + esc(r.centre) : ''} · ${esc(r.date || '')}</span><span class="wq">${esc(r.t2)}</span></span><button class="btn sm" data-act="w2rep" data-i="${i}">Write</button></div>`).join('');
 }
 function wRepCount() { const n = wRepRows().length; return W2.rep ? `${n} question${n === 1 ? '' : 's'}` : ''; }
 wHome = function () {
@@ -6229,7 +6230,7 @@ wHome = function () {
     ${d && d.text && d.text.trim() ? `<section class="card row"><span class="grow"><b>Unfinished ${d.mode === 't1' ? 'Task 1' : 'essay'}</b><span class="small muted" style="display:block">${esc(String(d.prompt || '').slice(0, 90))}…</span></span><button class="btn primary sm" data-act="w2resume">Continue</button></section>` : ''}
     <div class="wg2"><div class="stack">
       <section class="card stack" style="gap:2px"><h2>Short trainings</h2><p class="small muted" style="margin:0 0 6px">One skill at a time, checked on that skill only.</p><div class="list flat">${tr}</div></section>
-      <section class="card stack" style="gap:2px"><h2>Find the mistakes</h2><p class="small muted" style="margin:0 0 6px">A paragraph with mistakes of one kind put in. Your own corrected writing is used when there is some.</p><div class="list flat">${hu}</div></section>
+      <section class="card stack" style="gap:2px"><h2>Proofreading</h2><p class="small muted" style="margin:0 0 6px">A paragraph with mistakes of one kind put in. Your own corrected writing is used when there is some.</p><div class="list flat">${hu}</div></section>
       <section class="card stack" style="gap:2px"><h2>Your writing</h2>${list.length ? `<div class="list flat">${list.slice(0, 6).map(e => `<button class="li" data-act="w2open" data-e="${e.id}"><span class="band">${fmtB(e.fb && e.fb.bands && e.fb.bands.overall)}</span><span class="grow"><span class="t">${e.task === 1 ? '<span class="tag">Task 1</span> ' : ''}${esc(e.prompt.slice(0, 70))}${e.prompt.length > 70 ? '…' : ''}</span><span class="s">${new Date(e.ts).toLocaleDateString([], {day: 'numeric', month: 'short'})} · ${e.words} words · ${e.minutes} min</span></span><span class="chev">${I.chev}</span></button>`).join('')}</div>` : '<p class="small muted" style="margin:0">Nothing yet. Each Task 1 and essay shows up here with its band, and in History.</p>'}</section>
       <section class="card stack" style="gap:8px"><h2>Your own question</h2><textarea id="w2own" rows="3" placeholder="Paste a Task 2 question here.">${esc(W2.own)}</textarea><div class="row"><button class="btn" data-act="w2own">Use this question</button></div></section></div>
     <section class="card stack wrepcard" style="gap:6px"><div class="row"><h2 class="grow">Reported from real tests</h2><span class="small muted">@cdireport</span></div>
@@ -6398,7 +6399,7 @@ viewAnswers = function () {
     <section class="card stack" style="gap:2px"><h2>Task 2 essays</h2>${t2.length ? `<div class="list flat">${t2.map(row).join('')}</div>` : '<p class="small muted" style="margin:0">None yet.</p>'}</section>
     <section class="card stack" style="gap:2px"><h2>Task 1</h2>${t1.length ? `<div class="list flat">${t1.map(row).join('')}</div>` : '<p class="small muted" style="margin:0">None yet.</p>'}</section></div>
     <div class="stack"><section class="card stack" style="gap:2px"><h2>Intros and paragraphs</h2>${mini.length ? `<div class="list flat">${mini.slice(0, 20).map(m => `<div class="li"><span class="grow"><span class="t">${esc((W_MODES[m.mode] || {}).name || m.mode)} · ${esc(String(m.prompt || '').slice(0, 60))}…</span><span class="s">${new Date(m.ts).toLocaleDateString([], {day: 'numeric', month: 'short'})} · ${((m.fb && m.fb.errors) || []).length} mistakes</span></span></div>`).join('')}</div>` : '<p class="small muted" style="margin:0">None yet.</p>'}</section>
-    <section class="card stack" style="gap:2px"><h2>Find the mistakes</h2>${hunts.length ? `<div class="list flat">${hunts.slice(0, 20).map(x => `<div class="li"><span class="grow"><span class="t">${esc((HU_KINDS.find(k => k[0] === x.kind) || [0, x.kind])[1])}</span><span class="s">${new Date(x.ts).toLocaleDateString([], {day: 'numeric', month: 'short'})} · ${fmt(x.secs || 0)}</span></span><b>${x.found}/${x.total}</b></div>`).join('')}</div>` : '<p class="small muted" style="margin:0">None yet.</p>'}</section>
+    <section class="card stack" style="gap:2px"><h2>Proofreading</h2>${hunts.length ? `<div class="list flat">${hunts.slice(0, 20).map(x => `<div class="li"><span class="grow"><span class="t">${esc((HU_KINDS.find(k => k[0] === x.kind) || [0, x.kind])[1])}</span><span class="s">${new Date(x.ts).toLocaleDateString([], {day: 'numeric', month: 'short'})} · ${fmt(x.secs || 0)}</span></span><b>${x.found}/${x.total}</b></div>`).join('')}</div>` : '<p class="small muted" style="margin:0">None yet.</p>'}</section>
     <section class="card row"><span class="grow"><b>Frames learned</b><span class="small muted" style="display:block">Recalled on 3 different days</span></span><b style="font-size:20px">${fl}<span class="small muted"> / ${FRAMES.length}</span></b></section></div></div></div>`;
 };
 window.addEventListener('click', e => {
@@ -6429,13 +6430,13 @@ const G = {
 const tico = (g, cls = '') => `<span class="tico ${cls}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${G[g]}</svg></span>`;
 const b1 = v => (v != null && isFinite(Number(v)) ? Number(v).toFixed(1) : '–');
 const dShort = ts => new Date(ts).toLocaleDateString([], {day: 'numeric', month: 'short'});
-const W_TYPE_IC = {'Task 2': ['pen', 'act'], 'Task 1': ['bar', 'p1'], Intro: ['intro', ''], Paragraph: ['para', ''], 'Find mistakes': ['find', '']};
+const W_TYPE_IC = {'Task 2': ['pen', 'act'], 'Task 1': ['bar', 'p1'], Intro: ['intro', ''], Paragraph: ['para', ''], 'Proofreading': ['find', '']};
 /* every piece of writing, newest first */
 function writingItems() {
   const out = [];
   for (const e of essays()) out.push({ts: e.ts, type: e.task === 1 ? 'Task 1' : 'Task 2', title: e.prompt, meta: `${dShort(e.ts)} · ${e.words} words · ${e.minutes} min`, score: b1(e.fb && e.fb.bands && e.fb.bands.overall), open: e.id});
   for (const m of Array.isArray(S.set.wmini) ? S.set.wmini : []) { const n = ((m.fb && m.fb.errors) || []).length; out.push({ts: m.ts, type: m.mode === 'para' ? 'Paragraph' : 'Intro', title: m.prompt || '', meta: `${dShort(m.ts)} · ${n} mistake${n === 1 ? '' : 's'}`, score: ''}); }
-  for (const h of Array.isArray(S.set.hunts) ? S.set.hunts : []) out.push({ts: h.ts, type: 'Find mistakes', title: (HU_KINDS.find(k => k[0] === h.kind) || [0, h.kind])[1], meta: `${dShort(h.ts)} · ${fmt(h.secs || 0)}`, score: `${h.found}/${h.total}`});
+  for (const h of Array.isArray(S.set.hunts) ? S.set.hunts : []) out.push({ts: h.ts, type: 'Proofreading', title: (HU_KINDS.find(k => k[0] === h.kind) || [0, h.kind])[1], meta: `${dShort(h.ts)} · ${fmt(h.secs || 0)}`, score: `${h.found}/${h.total}`});
   return out.sort((a, b) => b.ts - a.ts);
 }
 function wRow(x) {
@@ -6463,7 +6464,7 @@ viewMistakes = function () {
       <p class="small muted" style="margin:6px 0 0;font-size:15px">${n ? 'Your own sentences that the coach corrected, shown with no marks. Say each one right out loud, then check. This fixes the mistakes you actually make.' : items.length ? 'Cards you got right come back in a few days. Meanwhile, train finding mistakes below.' : 'Mistakes are collected from every answer or essay the coach checks.'}</p></div>
       ${n ? `<button class="btn primary big" data-act="fxstart">${tico('play').replace('tico', 'tico bare')}Start · ${n} sentence${n > 1 ? 's' : ''}</button>` : ''}</div>
       <div class="stats"><div><b>${c.due}</b><span>due today</span></div><div><b>${c.week}</b><span>back this week</span></div><div><b>${c.learned}</b><span>learned</span></div></div></section>
-      <section class="card"><div class="row"><h2 class="grow">Find the mistakes</h2><span class="small muted">2 min each</span></div><p class="small muted" style="margin:4px 0 12px">Train your eye to catch mistakes, so fewer slip into your own writing. Five mistakes of one kind are hidden in a paragraph, mostly from your own essays and sometimes from sample ones. Tap them against the clock.</p>${huTiles()}</section>`;
+      <section class="card"><div class="row"><h2 class="grow">Proofreading</h2><span class="small muted">2 min each</span></div><p class="small muted" style="margin:4px 0 12px">Train your eye to catch mistakes, so fewer slip into your own writing. Five mistakes of one kind are hidden in a paragraph, mostly from your own essays and sometimes from sample ones. Tap them against the clock.</p>${huTiles()}</section>`;
   }
   const side = `<section class="card"><h2>Your patterns</h2>${live.length ? `<div class="list flat">${live.map(s => `<div class="li"><span class="grow"><span class="t">${s.label}</span><span class="s">in ${s.inTexts} of your last ${s.n} checked texts${s.now ? ` · ${s.now} in the last one` : ''}</span></span><span class="small ${tags[s.status][1]}" style="font-weight:700">${tags[s.status][0]}</span></div>`).join('')}</div>` : '<p class="small muted" style="margin:6px 0 0">Patterns appear after the coach checks a few answers or essays.</p>'}
       ${gone.length ? `<div class="note ok" style="margin-top:10px"><b>Gone:</b> ${gone.map(s => s.label.toLowerCase()).join(', ')}. Not in your last ${Math.min(...gone.map(s => s.absent))} texts.</div>` : ''}</section>
@@ -6482,7 +6483,7 @@ function bandRow(list, label) {
 }
 function writingHistory(chips) {
   const all = writingItems();
-  if (!all.length) return `<div class="stack page18"><h1>History</h1>${chips}<section class="card stack" style="max-width:640px;gap:12px;padding:26px 28px"><h2 style="font-size:22px">No writing yet</h2><p class="muted" style="margin:0">Every Task 1, essay, intro, paragraph and find-the-mistakes round lands here with its band or score.</p>
+  if (!all.length) return `<div class="stack page18"><h1>History</h1>${chips}<section class="card stack" style="max-width:640px;gap:12px;padding:26px 28px"><h2 style="font-size:22px">No writing yet</h2><p class="muted" style="margin:0">Every Task 1, essay, intro, paragraph and proofreading round lands here with its band or score.</p>
     <div class="row" style="flex-wrap:wrap;gap:10px;margin-top:4px"><button class="btn primary" data-act="w2any">${I.pen} Task 2 essay</button><button class="btn" data-act="t1pick">Task 1</button><button class="btn" data-act="wintro">Intro only · 3 min</button></div></section></div>`;
   const es = essays(), t2 = es.filter(e => e.task !== 1), t1 = es.filter(e => e.task === 1);
   const hs = (Array.isArray(S.set.hunts) ? S.set.hunts : []).slice(-2), hf = hs.reduce((a, h) => a + h.found, 0), ht = hs.reduce((a, h) => a + h.total, 0);
@@ -6511,7 +6512,7 @@ wHome = function () {
     ${d && d.text && d.text.trim() ? `<section class="card row"><span class="grow"><b>Unfinished ${d.mode === 't1' ? 'Task 1' : 'essay'}</b><span class="small muted" style="display:block">${esc(String(d.prompt || '').slice(0, 90))}…</span></span><button class="btn primary sm" data-act="w2resume">Continue</button></section>` : ''}
     <div class="cols even"><div class="main">
       <section class="card"><div class="row"><h2 class="grow">Short trainings</h2><span class="small muted">one skill each</span></div><div class="list flat">${tr}</div></section>
-      <section class="card"><div class="row"><h2 class="grow">Find the mistakes</h2><span class="small muted">2 min each</span></div><p class="small muted" style="margin:4px 0 12px">Train your eye to catch mistakes, so fewer slip into your own writing. Five mistakes of one kind are hidden in a paragraph, mostly from your own essays and sometimes from sample ones. Tap them against the clock.</p>${huTiles().replace('class="tiles"', 'class="tiles two"')}</section></div>
+      <section class="card"><div class="row"><h2 class="grow">Proofreading</h2><span class="small muted">2 min each</span></div><p class="small muted" style="margin:4px 0 12px">Train your eye to catch mistakes, so fewer slip into your own writing. Five mistakes of one kind are hidden in a paragraph, mostly from your own essays and sometimes from sample ones. Tap them against the clock.</p>${huTiles().replace('class="tiles"', 'class="tiles two"')}</section></div>
     <div class="side">
       <section class="card wrepcard"><div class="row"><h2 class="grow">Reported from real tests</h2><span class="small muted">@cdireport</span></div>
         <div class="chips" role="group" aria-label="Question type" style="margin:10px 0">${chips}</div>
@@ -6527,7 +6528,7 @@ viewT1Pick = function () {
   const rep = (W2.rep || []).map((r, i) => ({r, i})).filter(({r}) => r.t1 && r.t1.replace(/\s+/g, ' ').trim().length > 25).slice(0, 60);
   const tiles = T1_KINDS.map(([k, n]) => { const all = T1_BANK.filter(x => x.kind === k), left = all.filter(x => !done.has(x.id)).length;
     return `<div class="t1t"><div class="row" style="gap:10px">${tico(k, 'act big')}<span class="grow"><b>${n}</b><span class="small muted" style="display:block">${(() => { const n = essays().filter(e => e.task === 1 && e.t1 && e.t1.kind === k).length; return n ? `${n} written` : 'none written yet'; })()}</span></span></div><div class="row" style="gap:8px"><button class="btn primary sm grow" data-act="t1kind" data-k="${k}" ${T1S.busy ? 'disabled' : ''}>Start</button><button class="btn sm" data-act="t1new" data-k="${k}" ${T1S.busy ? 'disabled' : ''}>New one</button></div></div>`; }).join('');
-  const repH = rep.length ? rep.map(({r, i}) => { const kk = t1Guess(r.t1); return `<div class="li" style="align-items:flex-start">${tico(kk, 'act')}<span class="grow"><span class="s"><b class="ink">${T1_NAME[kk]}</b> · ${esc(r.date || '')}${r.centre ? ' · ' + esc(r.centre) : ''}</span><span class="t" style="white-space:normal;font-weight:500">${esc(r.t1.replace(/[^\x20-\x7E’‘“”–—]/g, '').trim())}</span></span><button class="btn sm" data-act="t1rep" data-i="${i}" ${T1S.busy ? 'disabled' : ''}>Draw it</button></div>`; }).join('') : `<p class="small muted" style="margin:6px 0 0">${SB.user ? 'Loading reports…' : 'Sign in to see Task 1 reports from real tests.'}</p>`;
+  const repH = rep.length ? rep.map(({r, i}) => { const kk = t1Guess(r.t1); return `<div class="li" style="align-items:flex-start">${tico(kk, 'act')}<span class="grow"><span class="s"><b class="ink">${T1_NAME[kk]}</b>${r.centre ? ' · ' + esc(r.centre) : ''} · ${esc(r.date || '')}</span><span class="t" style="white-space:normal;font-weight:500">${esc(r.t1.replace(/[^\x20-\x7E’‘“”–—]/g, '').trim())}</span></span><button class="btn sm" data-act="t1rep" data-i="${i}" ${T1S.busy ? 'disabled' : ''}>Draw it</button></div>`; }).join('') : `<p class="small muted" style="margin:6px 0 0">${SB.user ? 'Loading reports…' : 'Sign in to see Task 1 reports from real tests.'}</p>`;
   return `<div class="stack page18">${wBack()}<div><h1>Task 1</h1><p class="lead" style="margin-top:4px">20 minutes · at least 150 words · intro, overview, two body paragraphs</p></div>
     ${T1S.busy ? '<div class="cwait"><div class="row"><span class="cw-dots" aria-hidden="true"><i></i><i></i><i></i></span><b class="grow">Drawing a new visual</b></div><p class="small muted" style="margin:6px 0 0">About 10 seconds.</p></div>' : ''}
     <div class="cols even"><div class="main"><section class="card"><h2>Pick a type</h2><p class="small muted" style="margin:4px 0 12px">“Start” gives you one you haven’t written yet. “New one” always draws a fresh one. No limit.</p><div class="t1grid">${tiles}</div></section></div>
@@ -6697,7 +6698,7 @@ const TIPS = [
   ['[data-act="wframes"]', 'Ready sentence frames for intros, opinions, overviews and linking. Learn a few by heart so the first sentence never stops you.'],
   ['[data-act="t1new"]', 'Gives a chart of this type you haven’t seen, with invented numbers. Ready ones open at once.'],
   ['[data-act="t1rep"]', 'Draws a chart like the one someone got in their real test, from their description. Numbers are invented.'],
-  [() => [...$$('#view [data-act="hunt"]')].slice(0, 1).map(t => t.closest('section') && t.closest('section').querySelector('h2')).filter(Boolean), 'Not the same as fixing your own mistakes. Here you train your eye: mistakes of one kind are hidden in a paragraph and you hunt them. The quicker you spot them, the fewer slip into your writing.'],
+  [() => [...$$('#view [data-act="hunt"]')].slice(0, 1).map(t => t.closest('section') && t.closest('section').querySelector('h2')).filter(Boolean), 'Like checking your essay in the last 3 minutes, as a race. Mistakes of one kind are hidden in a paragraph and you tap them. The quicker you spot them, the fewer slip into your writing. Fixing your own corrected sentences is under Mistakes.'],
 ];
 function tipsApply() {
   $$('#view .qtip').forEach(x => x.remove());
@@ -6744,6 +6745,16 @@ window.addEventListener('click', e => {
   if (ENCH.some(x => x[0] === a) && !HS().did['e:' + a]) { HS().did['e:' + a] = Date.now(); b.classList.remove('ench'); saveMeta(); }
   if (a === 'adsup') { e.stopImmediatePropagation(); const link = (($('#adSupLink') || {}).value || '').trim(); if (link && !/^https:\/\/\S+$/.test(link)) return toast('The link must start with https://'); adminDo('admin_config', {support_text: ($('#adSupText') || {}).value || '', support_link: link}, 'Saved.'); }
 }, true);
+/* ---------- your voice: made automatically for fresh answers ---------- */
+const mvPlayer_v20 = mvPlayer, MV_AUTO = new Set();
+mvPlayer = function (a, v, text) {
+  const k = mvKey(a.id, v), c = MV.clip[k];
+  if (MV.st && MV.st.has && c && c.st === 'none' && !MV_AUTO.has(k) && Date.now() - a.ts < 3 * 864e5 && text) {
+    MV_AUTO.add(k); setTimeout(() => mvMake(k, text, false), 0);
+    return `<div class="mvp mvp-off small muted"><span class="cw-dots" aria-hidden="true"><i></i><i></i><i></i></span> Making it in your voice…</div>`;
+  }
+  return mvPlayer_v20(a, v, text);
+};
 
 init();
 </script>
