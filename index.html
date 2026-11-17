@@ -602,6 +602,25 @@ mark.fxgap::before{content:"missing";position:absolute;top:-1.35em;left:-2px;fon
 #view[data-route=words] .went .langbtn{min-height:34px}
 @media (min-width:900px){#view[data-route=prefs]>.stack,#view[data-route=admin]>.stack{margin-left:auto;margin-right:auto}}
 
+/* v16 hover and press feedback everywhere */
+@media (hover:hover){
+  a.li:hover,button.li:hover,.list.flat a.li:hover,.list.flat button.li:hover,.arow:hover,.steps4 .st:hover{background:var(--act-soft)}
+  .list.flat>a.li,.list.flat>button.li{margin:0 -12px;padding-left:12px!important;padding-right:12px!important;border-radius:10px;width:calc(100% + 24px)}
+  .btn:not(.primary):not(:disabled):hover{background:var(--act-soft);border-color:color-mix(in oklab,var(--act) 45%,var(--line-strong))}
+  .btn.primary:not(:disabled):hover{background:color-mix(in oklab,var(--act) 86%,var(--ink))}
+  .chip:hover,.linkbtn:hover{filter:brightness(.97)}
+  a.li:hover .chev,button.li:hover .chev,.st:hover .chev{transform:translateX(3px);color:var(--ink)}
+}
+.btn,.li,.arow,.st,.chev{transition:background-color .15s ease,border-color .15s ease,transform .15s ease,color .15s ease}
+.btn:active:not(:disabled),.li:active,.arow:active,.st:active{transform:scale(.985)}
+:focus-visible{outline:2px solid var(--act);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.btn,.li,.arow,.st,.chev{transition:none}.btn:active,.li:active,.arow:active,.st:active{transform:none}}
+/* v16 desktop: shorter column follows the scroll, so no empty half-screens */
+@media (min-width:900px){
+  .stick{position:sticky;top:calc(var(--head-h) + 16px);max-height:calc(100vh - var(--head-h) - 32px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:4px}
+  .home2>.c2{position:sticky;top:calc(var(--head-h) + 16px);max-height:calc(100vh - var(--head-h) - 32px);overflow:auto;scrollbar-width:thin}
+}
+
 </style>
 </head>
 <body>
@@ -3232,9 +3251,9 @@ function viewAnswers() {
     const dname = k => k === todayK() ? 'Today' : k === dayKey(Date.now() - 864e5) ? 'Yesterday' : new Date(k + 'T12:00').toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'});
     list = days.size ? [...days].map(([k, m]) => `<h2 class="dayh">${dname(k)}</h2><div class="list">${[...m].map(([qid, xs]) => ansRow(qid, xs, wide() && A.sel === qid)).join('')}</div>`).join('') : (all.length ? '<div class="card empty">No answers for this part yet.</div>' : `<div class="list">${emptyRow('No answers yet', 'Your answers appear here, grouped by day, with both tries and the coach’s notes.')}</div><div style="margin-top:12px"><a class="btn primary" href="#today">Start practising ${I.next}</a></div>`);
   }
-  const left = `<div style="flex:1 1 380px;min-width:0;max-width:${wide() ? '460px' : 'none'};display:flex;flex-direction:column;gap:12px">${mistakesCard(true)}${chips}<div>${list}</div></div>`;
+  const left = `<div class="stick" style="flex:1 1 380px;min-width:0;max-width:${wide() ? '460px' : 'none'};display:flex;flex-direction:column;gap:12px">${mistakesCard(true)}${chips}<div>${list}</div></div>`;
   if (wide() && A.f !== 'mock' && !(A.sel && Q.has(A.sel))) { const lastA = allAttempts().slice().sort((x, y) => y.ts - x.ts)[0]; if (lastA) A.sel = lastA.qid; }
-  const right = wide() && A.f !== 'mock' ? `<div style="flex:999 1 400px;min-width:0">${A.sel && Q.has(A.sel) ? `<section class="card">${ansDetail(A.sel)}</section>` : '<div class="card empty">Pick an answer to see both tries and the coach\'s notes.</div>'}</div>` : '';
+  const right = wide() && A.f !== 'mock' ? `<div class="stick" style="flex:999 1 400px;min-width:0">${A.sel && Q.has(A.sel) ? `<section class="card">${ansDetail(A.sel)}</section>` : '<div class="card empty">Pick an answer to see both tries and the coach\'s notes.</div>'}</div>` : '';
   return `<h1 style="margin-bottom:16px">My answers</h1><div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">${left}${right}</div>`;
 }
 function ansDetail(qid) {
@@ -4394,7 +4413,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261117072113';
+const BUILD_ID = '20261117073728';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -5511,6 +5530,23 @@ document.addEventListener('click', e => {
 let w15prev = r6();
 window.addEventListener('hashchange', () => { const r = r6(); if (r === 'write' && w15prev !== 'write' && !['write', 'plan'].includes(W2.phase) && !W2.keep) W2.phase = 'pick'; W2.keep = false; w15prev = r; });
 document.addEventListener('click', e => { const a = e.target.closest('#tabs a[href="#write"]'); if (a && r6() === 'write' && !['write', 'plan'].includes(W2.phase)) { W2.phase = 'pick'; W2.open = null; render(); } });
+
+/* ================= v16: columns follow the scroll, so neither side leaves an empty hole ================= */
+/* A column shorter than the screen sticks to the top; a taller one sticks by its bottom edge once you reach its end. */
+function stickCols() {
+  if (!matchMedia('(min-width:900px)').matches) { $$('.stick').forEach(el => { el.style.position = ''; el.style.top = ''; }); return; }
+  const head = (($('#hdr') || {}).offsetHeight || 56) + 16, vh = window.innerHeight;
+  $$('#view .home2>.c1,#view .home2>.c2,#view .wg2>*,#view .coachgrid>*,#view .stick').forEach(el => {
+    el.style.position = 'sticky'; el.style.alignSelf = 'flex-start';
+    const h = el.offsetHeight;
+    el.style.top = (h + head + 16 <= vh ? head : Math.min(head, vh - h - 16)) + 'px';
+  });
+}
+const render_v15 = render;
+render = function () { const r = render_v15.apply(this, arguments); requestAnimationFrame(stickCols); return r; };
+window.addEventListener('resize', () => requestAnimationFrame(stickCols));
+document.addEventListener('toggle', () => requestAnimationFrame(stickCols), true);
+document.addEventListener('click', () => setTimeout(stickCols, 60));
 
 init();
 </script>
