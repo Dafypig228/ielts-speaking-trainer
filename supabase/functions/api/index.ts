@@ -793,6 +793,27 @@ async function myVoice(body: any, uid: string) {
   return { url: su?.signedUrl };
 }
 
+/* ---------------- topic vocabulary for a writing question, cached for everyone ---------------- */
+async function wvocab(body: any) {
+  const prompt = String(body.prompt || "").trim().slice(0, 700);
+  if (prompt.length < 20) throw Object.assign(new Error("No question."), { code: "bad_request" });
+  const key = (await sha(prompt.toLowerCase().replace(/\s+/g, " "))).slice(0, 16);
+  let pool: any = {}; try { pool = JSON.parse(await cfg("wvocab_pool", "{}")) || {}; } catch { pool = {}; }
+  if (pool[key]) return { ...pool[key], cached: true };
+  const text = `You help a Kazakh student (Russian speaker, aiming for IELTS band 7) write this IELTS Writing Task 2 essay:
+"${prompt}"
+Give 10 topic-specific collocations or short phrases they could really use in THIS essay. Natural academic English that examiners reward as "less common lexis" at band 7-8: collocations (verb+noun, adjective+noun), not idioms, not single basic words, not linking words.
+For each: "w" the phrase, "ru" a short Russian translation, "ex" one sentence (max 20 words) using it about this exact question.
+Return JSON: {"topic": "2-4 word topic name", "words": [{"w": "", "ru": "", "ex": ""}]}`;
+  const r = await gemini([{ text }], true, 0.4, true);
+  const words = (Array.isArray(r.data?.words) ? r.data.words : []).filter((x: any) => x && x.w).slice(0, 12).map((x: any) => ({ w: String(x.w).slice(0, 80), ru: String(x.ru || "").slice(0, 80), ex: String(x.ex || "").slice(0, 220) }));
+  if (!words.length) throw Object.assign(new Error("Could not get words."), { code: "ai_failed" });
+  const out = { topic: String(r.data?.topic || "").slice(0, 40), words, at: Date.now() };
+  const keys = Object.keys(pool); if (keys.length > 400) for (const k of keys.sort((a, b) => (pool[a].at || 0) - (pool[b].at || 0)).slice(0, keys.length - 400)) delete pool[k];
+  pool[key] = out; await setCfg("wvocab_pool", JSON.stringify(pool));
+  return { ...out, cached: false };
+}
+
 /* ---------------- guest: one free coach check for people without an account ---------------- */
 async function guestAnalyze(body: any, req: Request) {
   if ((await cfg("guest_on", "1")) !== "1") throw Object.assign(new Error("Free tries are switched off right now."), { code: "guest_off" });
@@ -856,6 +877,7 @@ Deno.serve(async (req) => {
     if (action === "essay1") return j(await essay1(body, user.id));
     if (action === "t1gen") return j(await t1gen(body));
     if (action === "t1warm") return j(await t1warm());
+    if (action === "wvocab") return j(await wvocab(body));
     if (action === "hunt") return j(await hunt(body));
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);

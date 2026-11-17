@@ -777,6 +777,11 @@ body.fitview #view .stick{overscroll-behavior:contain}
 #gpop a{color:inherit;font-weight:700}
 .dgrid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
 .li.glock::before{top:50%;right:40px;transform:translateY(-50%)}
+/* v23: phone header fits */
+@media (max-width:560px){.ec-l{display:none}header .in{gap:8px}.examchip{padding-inline:10px}}
+@media (max-width:350px){.brand>span{display:none}}
+.vrow{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line)}
+.vrow:first-child{border-top:0}
 
 </style>
 </head>
@@ -2046,7 +2051,8 @@ async function sbPush(uidv) {
 }
 async function sbPull(uidv) {
   const sb = SB.client;
-  let since = (await kvGet('sb-pull:' + uidv)) || '1970-01-01T00:00:00Z';
+  const fresh = S.att.size === 0; /* nothing on this device (new device or after sign-out): pull everything */
+  let since = (fresh ? null : await kvGet('sb-pull:' + uidv)) || '1970-01-01T00:00:00Z';
   let changed = false;
   for (let page = 0; page < 20; page++) {
     const {data, error} = await sb.from('attempts').select('*').gt('updated_at', since).order('updated_at', {ascending: true}).limit(500);
@@ -2070,7 +2076,7 @@ async function sbPull(uidv) {
   }
   for (const [table, cfgD] of Object.entries(DOCS)) {
     const pk = 'sb-pull-' + table + ':' + uidv;
-    const s0 = (await kvGet(pk)) || '1970-01-01T00:00:00Z';
+    const s0 = (fresh ? null : await kvGet(pk)) || '1970-01-01T00:00:00Z';
     const res = await sb.from(table).select('*').gt('updated_at', s0).order('updated_at', {ascending: true}).limit(1000);
     if (res.error) throw res.error;
     if (!res.data.length) continue;
@@ -2178,7 +2184,9 @@ async function sbSavePw() {
 async function sbSignOut() {
   const pending = [...S.att.values()].filter(a => a.dirty || !a.pushed).length;
   if (!await confirmBox('Sign out on this device?', (pending ? pending + ' take(s) have not synced yet and will be lost. ' : '') + 'Recordings are removed from this device but stay in your account.', 'Sign out')) return;
+  const uOut = SB.user && SB.user.id;
   try { await SB.client.auth.signOut(); } catch {}
+  try { if (uOut) { await IDB.del('kv', 'sb-pull:' + uOut); for (const t of Object.keys(DOCS)) await IDB.del('kv', 'sb-pull-' + t + ':' + uOut); } } catch {}
   try { for (const a of [...S.att.keys()]) { await IDB.del('att', a); await IDB.del('blob', a).catch(() => {}); } for (const s of S.sessions) await IDB.del('kv', 'sess:' + s.id).catch(() => {}); for (const p of S.phrases.keys()) await IDB.del('kv', 'ph:' + p).catch(() => {}); } catch {}
   S.att = new Map(); S.pending.clear(); S.sessions = []; S.phrases = new Map(); S.starred = new Set(); S.notes = {}; urlCache.clear(); metaLocal(); reindex();
   SB.user = null; SB.me = null; SB.state = 'out'; render(); chip();
@@ -2889,10 +2897,10 @@ function inSession() { return (r6() === 'practice' && P.deck.length > 0) || (r6(
 function renderTabs() { const r = r6(); $('#tabs').innerHTML = TABS6.map(([k, l, i, m]) => `<a href="#${k}" ${m.includes(r) ? 'aria-current="page"' : ''}>${i}<span>${l}</span></a>`).join(''); }
 function examChipHTML() {
   const e = examDay(), n = daysLeft();
-  if (!e) return `<button class="examchip unset" data-act="examdate">${I.cal}Set test date</button>`;
+  if (!e) return `<button class="examchip unset" data-act="examdate">${I.cal}<span class="ec-l">Set test </span>date</button>`;
   const day = e.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'});
   const left = n > 1 ? n + ' days' : n === 1 ? 'tomorrow' : n === 0 ? 'today' : 'passed';
-  return `<button class="examchip" data-act="examdate" aria-label="Test ${esc(day)}, ${left}. Change date">${I.cal}Test ${esc(day)} · ${left}</button>`;
+  return `<button class="examchip" data-act="examdate" aria-label="Test ${esc(day)}, ${left}. Change date">${I.cal}<span class="ec-l">Test ${esc(day)} · </span>${left}</button>`;
 }
 function renderExam() {}
 function renderHeader() {
@@ -3501,11 +3509,12 @@ function accountCard(home) {
       ${mustChange() ? pwCard(true) : `<details class="card"><summary style="cursor:pointer;font-weight:600;min-height:28px">Change password</summary><div style="margin-top:10px">${pwCard(false).replace('<section class="card stack" style="gap:10px;">', '<div class="stack" style="gap:10px">').replace(/<\/section>$/, '</div>')}</div></details>`}`;
   }
   return `<section class="card stack" style="gap:10px">
-    <div><h2>${home ? 'Sign in to keep your answers on phone and PC' : 'Sign in'}</h2><div class="small muted" style="margin-top:4px">Use your Telegram username. The first time, your password is your username too; you'll set your own right after.</div></div>
+    <div><h2>${home ? 'Sign in to keep your answers on phone and PC' : 'Sign in'}</h2><div class="small muted" style="margin-top:4px">Use your Telegram username.</div></div>
+    <div class="note ok" style="margin:0"><b>First time here?</b> Your password is your username, the same word in both boxes. For example <b>aidana_k</b> and <b>aidana_k</b>. You'll set your own password right after.</div>
     <label for="sbUser" style="font-weight:600;font-size:14px;margin-bottom:-6px">Telegram username</label>
     <input type="text" id="sbUser" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="without @" value="${esc(SB.lastUser || '')}">
     <label for="sbPass" style="font-weight:600;font-size:14px;margin-bottom:-6px">Password</label>
-    <input type="password" id="sbPass" autocomplete="current-password">
+    <input type="password" id="sbPass" autocomplete="current-password" placeholder="first time: your username again">
     ${SB.msg ? `<div class="small" id="sbMsg" style="color:var(--rec-ink)">${esc(SB.msg)}</div>` : ''}
     <div class="row"><button class="btn primary" data-act="sbin">Sign in</button><span class="grow"></span><span class="small muted">Forgot it? Ask the admin to reset it.</span></div></section>`;
 }
@@ -3626,7 +3635,11 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Space') { e.preventDefault(); e.stopImmediatePropagation(); if (R.on) stopRec(); else if (P.stage === 'ready' || P.stage === 'rec') { doRec(false); render(); } else { doRec(true); render(); } }
   else if (e.key === 'n' || e.key === 'N') { e.stopImmediatePropagation(); nextQuestion(); }
 }, true);
-window.addEventListener('resize', () => { clearTimeout(window.__rz); window.__rz = setTimeout(() => { if (!R.on) render(); }, 200); });
+/* re-render only when the width really changes; a phone keyboard opening only changes the height, and re-rendering then would kill the input you are typing in */
+let __rzW = window.innerWidth;
+window.addEventListener('resize', () => { clearTimeout(window.__rz); window.__rz = setTimeout(() => {
+  const w = window.innerWidth, ae = document.activeElement, typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+  if (Math.abs(w - __rzW) < 2 || typing || R.on) return; __rzW = w; render(); }, 200); });
 
 /* ---------- v7: phrases picked per topic, then per question ---------- */
 // What each book phrase is for: the words in a question that call for it, and when to use it.
@@ -4570,7 +4583,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611171916';
+const BUILD_ID = '202611172159';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -6076,7 +6089,7 @@ W_TRAIN.forEach(t => { if (t[0] === 'wintro') t[2] = 'Two sentences: the questio
 const W2X = {ck: new Set()};
 const w2Begin_v17 = w2Begin;
 w2Begin = function (prompt, mode) { const t1 = mode === 't1' ? W2.t1 : null; W2X.ck.clear(); W2.warned = false; w2Begin_v17(prompt, mode); W2.t1 = t1; try { if (t1) localStorage.setItem('ist-w1', JSON.stringify(t1)); else localStorage.removeItem('ist-w1'); } catch {} };
-const w2Elapsed = () => W2.t0 ? Math.max(0, (Date.now() - W2.t0) / 1000) : 0;
+const w2Elapsed = () => W2.t0 ? Math.max(0, ((W2.pausedAt || Date.now()) - W2.t0) / 1000) : 0;
 w2Timer = function () {
   clearInterval(W2.tick);
   W2.tick = setInterval(() => {
@@ -6095,7 +6108,8 @@ function notesPanel() {
   return `<section class="card stack notes" style="gap:10px"><div class="row"><h2 class="grow">Notes</h2><span class="small muted">open while you write</span></div>
     ${t1 ? '' : `<div class="nsec"><div class="nhd">Your plan</div><div class="stack" style="gap:6px">${planBox(true)}</div></div>`}
     <div class="nsec"><div class="nhd">${W2.mode === 'intro' ? 'The introduction' : W2.mode === 'para' ? 'The paragraph' : 'Structure'}</div><ol class="w2plan">${(W2.mode === 'intro' ? plan.slice(0, 1) : W2.mode === 'para' ? ['Topic sentence → why → one specific example → link back to your position'] : plan).map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>
-    <details class="nsec" open><summary class="nhd">Frames</summary><div class="stack" style="gap:8px;margin-top:6px">${frs.map(frId).filter(Boolean).map(f => `<div><div class="small muted">${esc(f[1])}</div><div class="frame">${frSlots(f[2])}</div></div>`).join('')}</div></details>
+    <details class="nsec" id="frdet" ${W2X.frOpen ? 'open' : ''}><summary class="nhd">Frames <span class="small muted" style="font-weight:400">· tap to show</span></summary><div class="stack" style="gap:8px;margin-top:6px">${frs.map(frId).filter(Boolean).map(f => `<div><div class="small muted">${esc(f[1])}</div><div class="frame">${frSlots(f[2])}</div></div>`).join('')}</div></details>
+    ${wVocabSec(t1)}
     ${W2.mode === 'full' || t1 ? `<details class="nsec" id="ckdet" ${W2.warned ? 'open' : ''}><summary class="nhd">Before you finish: ${t1 ? 'Task 1' : 'Band 9'} checklist</summary>
       ${live.length ? `<div class="small" style="margin:6px 0 2px"><b>Your usual mistakes first:</b> ${live.map(s => esc(s.label.toLowerCase())).join(', ')}.</div>` : ''}
       ${ck.map(([h, items], gi) => `<div class="ckg"><div class="ckh">${esc(h)}</div>${items.map((t, i) => `<label class="ck"><input type="checkbox" data-ck="${gi}.${i}" ${W2X.ck.has(gi + '.' + i) ? 'checked' : ''}><span>${esc(t)}</span></label>`).join('')}</div>`).join('')}</details>` : ''}</section>`;
@@ -6108,7 +6122,7 @@ function viewWriteRun() {
       <div class="small muted">Target: ${md.min} minutes · at least ${md.words} words${W2.mode === 'full' ? ' · the last 3 minutes for checking' : ''}</div>
       <div class="row"><button class="btn primary big" data-act="w2go">Start the stopwatch</button></div></section></div></div>`;
   const n = wWords(W2.text), s = w2Elapsed();
-  return `<div class="stack wpage"><div class="row" style="flex-wrap:nowrap;gap:8px"><span class="grow small muted">${md.name}${ty ? ' · ' + WT_NAMES[ty] : ''}</span><span class="w2time mono ${s > md.min * 60 ? 'late' : ''}" id="w2time">${fmt(s)}</span><span class="small muted mono">/ ${md.min}:00</span></div>
+  return `<div class="stack wpage"><div class="row" style="flex-wrap:nowrap;gap:8px"><span class="grow small muted">${md.name}${ty ? ' · ' + WT_NAMES[ty] : ''}</span><span class="w2time mono ${s > md.min * 60 ? 'late' : ''}" id="w2time">${fmt(s)}</span><span class="small muted mono">/ ${md.min}:00</span><button class="btn sm ghost" data-act="w2pause" aria-pressed="${!!W2.pausedAt}">${W2.pausedAt ? I.play + ' Resume' : 'Pause'}</button></div>
     <div class="wg2 wide"><div class="stack">${t1 ? q : `<section class="card" style="font-weight:600">${esc(W2.prompt)}</section>`}
       <textarea id="w2text" class="w2text ${W2.mode === 'intro' || W2.mode === 'para' ? 'short' : ''}" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="sentences" placeholder="${W2.mode === 'intro' ? 'Two sentences: the question in your words, then your position.' : W2.mode === 'para' ? 'One body paragraph: topic sentence, why, example, link back.' : t1 ? 'Intro, overview, two body paragraphs. Spell-check is off, like in the exam.' : 'Write your essay here. Spell-check is off, like in the exam.'}">${esc(W2.text)}</textarea>
       <div class="row"><span class="small" id="w2count">${w2CountHTML(n)}</span><span class="grow"></span><button class="btn primary" data-act="w2done">Finish and check</button></div></div>
@@ -6253,7 +6267,7 @@ document.addEventListener('input', e => { if (e.target && e.target.id === 'wrq')
 /* draft keeps the mode and the Task 1 visual */
 const w2Draft_v17 = w2Draft;
 w2Draft = function (save) {
-  if (save) { try { localStorage.setItem('ist-w2', JSON.stringify({prompt: W2.prompt, text: W2.text, t0: W2.t0, mode: W2.mode, plan: W2.plan})); } catch {} return; }
+  if (save) { try { localStorage.setItem('ist-w2', JSON.stringify({prompt: W2.prompt, text: W2.text, t0: W2.t0, pausedAt: W2.pausedAt || null, mode: W2.mode, plan: W2.plan})); } catch {} return; }
   return w2Draft_v17();
 };
 window.addEventListener('click', e => {
@@ -6261,7 +6275,7 @@ window.addEventListener('click', e => {
   const d = b.dataset, stop = () => { e.stopImmediatePropagation(); e.preventDefault(); };
   switch (d.act) {
     case 'w2done': if (W2.mode === 't1') { stop(); t1Submit(); } break;
-    case 'w2resume': { const dr = w2Draft(); if (dr && dr.mode) { W2.mode = dr.mode; W2.plan = dr.plan || W2.plan; if (dr.mode === 't1') { try { W2.t1 = JSON.parse(localStorage.getItem('ist-w1') || 'null'); } catch {} if (!W2.t1) W2.mode = 'full'; } } break; }
+    case 'w2resume': { const dr = w2Draft(); if (dr) W2.pausedAt = dr.pausedAt || null; if (dr && dr.mode) { W2.mode = dr.mode; W2.plan = dr.plan || W2.plan; if (dr.mode === 't1') { try { W2.t1 = JSON.parse(localStorage.getItem('ist-w1') || 'null'); } catch {} if (!W2.t1) W2.mode = 'full'; } } break; }
     case 't1pick': stop(); W2.phase = 't1pick'; if (r6() !== 'write') { W2.keep = true; location.hash = 'write'; } else render(); window.scrollTo(0, 0); if (!W2.remote) setTimeout(wtLoad, 0); break;
     case 't1kind': stop(); t1Kind(d.k); break;
     case 't1new': stop(); t1Gen({kind: d.k}, T1_BANK.filter(x => x.kind === d.k)); break;
@@ -6771,7 +6785,7 @@ mvPlayer = function (a, v, text) {
 const GUEST = {used: (() => { try { return localStorage.getItem('ist-guest-used') === '1'; } catch { return false; } })(), contact: 'fforthosv'};
 const isGuest = () => sbOn() && !!SB.client && !SB.user && SB.state === 'out';
 gated = () => false;
-const G_FREE = new Set(['afilter', 'asel', 'btab', 'closesheet', 'dnext', 'dprev', 'dparts', 'dnew', 'drilltopic', 'hseg', 'hpart', 'frgroup', 'gshow', 'hintreset', 'hintx', 'mclose', 'opencard', 'openq', 'opensess', 'opentopic', 'play', 'playall', 'seek', 'seekp', 'say', 'saytext', 'speed', 'setrate', 'setv', 'voicesel', 'sttab', 'wrf', 'wtab', 'whist', 'wgroup', 'w2back', 'w2open', 'w2openh', 'sbin', 'sbout', 'sbsync', 'pwsave', 'pwlater', 'examdate', 'examsave', 'setgoal', 'micsel', 'measure', 'srcsel', 'reveal', 'preveal', 'vers', 'dl', 'star', 'sgroup', 'sfshow', 'sfgot', 'sfmiss', 'sfnext']);
+const G_FREE = new Set(['setk', 'setb', 'setinv', 'testvoice', 'mtstart', 'afilter', 'asel', 'btab', 'closesheet', 'dnext', 'dprev', 'dparts', 'dnew', 'drilltopic', 'hseg', 'hpart', 'frgroup', 'gshow', 'hintreset', 'hintx', 'mclose', 'opencard', 'openq', 'opensess', 'opentopic', 'play', 'playall', 'seek', 'seekp', 'say', 'saytext', 'speed', 'setrate', 'setv', 'voicesel', 'sttab', 'wrf', 'wtab', 'whist', 'wgroup', 'w2back', 'w2open', 'w2openh', 'sbin', 'sbout', 'sbsync', 'pwsave', 'pwlater', 'examdate', 'examsave', 'setgoal', 'micsel', 'measure', 'srcsel', 'reveal', 'preveal', 'vers', 'dl', 'star', 'sgroup', 'sfshow', 'sfgot', 'sfmiss', 'sfnext']);
 const G_TRY = new Set(['step', 'pp', 'prec', 'prestart', 'pstop', 'rec', 'recstop', 'redo', 'retry', 'pnext', 'pexit', 'pagain', 'prep', 'prepskip', 'p2go', 'pcoach', 'coach', 'newsession', 'quickdrill', 'paq']);
 const gAllowed = a => G_FREE.has(a) || (!GUEST.used && G_TRY.has(a));
 function gBanner() {
@@ -6929,6 +6943,52 @@ render = function () {
   gPopClose(); gLocks();
 };
 enchApply = (o => function () { if (!isGuest()) o(); })(enchApply);
+
+/* ================= v22: stopwatch pause, writing frames on tap, topic words while writing ================= */
+W2X.frOpen = false; W2X.vocab = {};
+document.addEventListener('toggle', e => { if (e.target && e.target.id === 'frdet') W2X.frOpen = e.target.open; }, true);
+const GUIDE_VOCAB = [
+  [/crime|prison|punish|offend|police|sentenc/i, 'Crime and punishment', ['to commit a crime', 'deterrent', 'rehabilitation', 'incarceration', 'repeat offender', 'reoffend', 'capital punishment', 'community service']],
+  [/social|society|city|cities|urban|housing|poverty|government/i, 'Society', ['social inequality', 'urbanisation', 'affordable housing', 'government subsidies', 'community engagement', 'welfare system']],
+  [/advert|media|marketing|consum|brand/i, 'Media and advertising', ['consumerism', 'targeted advertising', 'persuasive language', 'manipulate emotions', 'brand loyalty', 'impulse buying', 'misleading']],
+  [/global|culture|tradition|tourism|language/i, 'Culture and globalisation', ['cultural identity', 'homogenisation', 'cultural heritage', 'multicultural society', 'Westernisation', 'indigenous culture', 'language extinction']],
+  [/parent|family|child|upbring/i, 'Family and parenting', ['upbringing', 'role model', 'moral values', 'peer pressure', 'parenting style', 'discipline', 'social norms']],
+];
+async function wVocabLoad(p) {
+  const st = W2X.vocab[p]; if (st && (st.busy || st.words || st.err)) return;
+  W2X.vocab[p] = {busy: true};
+  try { const r = await api('wvocab', {prompt: p}); W2X.vocab[p] = {words: r.words || [], topic: r.topic || ''}; }
+  catch (e) { W2X.vocab[p] = {err: e.message || 'Could not get words.'}; }
+  const box = $('#wvocab'); if (box) box.outerHTML = wVocabSec(false);
+}
+function wVocabSec(t1) {
+  if (t1 || !W2.prompt) return '';
+  const p = W2.prompt, st = W2X.vocab[p];
+  if (!st && SB.user) setTimeout(() => wVocabLoad(p), 0);
+  const g = GUIDE_VOCAB.find(([re]) => re.test(p));
+  const saved = new Set([...S.phrases.values()].map(x => x.phrase.toLowerCase()));
+  const row = (w, ru, ex) => `<div class="vrow"><div class="grow"><b>${esc(w)}</b>${ru ? ` <span class="small muted">· ${esc(ru)}</span>` : ''}${ex ? `<div class="small muted">${esc(ex)}</div>` : ''}</div>${saved.has(w.toLowerCase()) ? '<span class="small muted">saved</span>' : `<button class="btn sm ghost" data-act="wvsave" data-w="${esc(w)}" data-ru="${esc(ru || '')}" data-ex="${esc(ex || '')}">Save</button>`}</div>`;
+  const body = !SB.user ? '<p class="small muted" style="margin:0">Sign in to get words for this question.</p>'
+    : !st || st.busy ? `<div class="row small muted"><span class="cw-dots" aria-hidden="true"><i></i><i></i><i></i></span>Getting words for this question…</div>`
+    : st.err ? `<p class="small muted" style="margin:0">${esc(st.err)} <button class="btn sm ghost" data-act="wvretry">Try again</button></p>`
+    : st.words.map(x => row(x.w, x.ru, x.ex)).join('');
+  return `<details class="nsec" id="wvocab" open><summary class="nhd">Topic words${st && st.topic ? ` · ${esc(st.topic)}` : ''}</summary><div class="stack" style="gap:6px;margin-top:6px">${body}
+    ${g ? `<div class="small" style="margin-top:4px"><b>From your guide · ${g[1]}:</b> ${g[2].map(esc).join(', ')}</div>` : ''}
+    <p class="small muted" style="margin:2px 0 0">“Save” sends a phrase to Words, where it comes back for review until you know it.</p></div></details>`;
+}
+const w2Begin_v22 = w2Begin;
+w2Begin = function () { W2.pausedAt = null; W2X.frOpen = false; return w2Begin_v22.apply(this, arguments); };
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act="w2pause"],[data-act="wvsave"],[data-act="wvretry"]'); if (!b) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  if (b.dataset.act === 'w2pause') {
+    if (W2.pausedAt) { W2.t0 += Date.now() - W2.pausedAt; W2.pausedAt = null; } else W2.pausedAt = Date.now();
+    w2Draft(true); render(); return;
+  }
+  if (b.dataset.act === 'wvretry') { delete W2X.vocab[W2.prompt]; wVocabLoad(W2.prompt); return; }
+  addPhrase({phrase: b.dataset.w, meaning: b.dataset.ru, example: b.dataset.ex});
+}, true);
+G_FREE.add('w2pause');
 
 init();
 </script>
