@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IELTS Speaking Trainer</title>
+<title>Wasabi · IELTS practice</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -532,11 +532,16 @@ mark.avoid{background:var(--warn-soft);color:inherit;border-radius:4px;padding:0
 .warnt{color:var(--warn);font-weight:600}
 .small.ok,span.ok{color:var(--ok)}
 .qfdots i.ok{background:var(--ok)}.qfdots i.on{background:var(--ink)}
+.fxtask{font-size:15px;line-height:1.5}
+mark.fxbad{background:var(--rec-soft);color:inherit;border-bottom:2px solid var(--rec);padding:0 2px;border-radius:3px}
+mark.fxgap{background:none;color:inherit;position:relative;border-left:2px solid var(--rec);padding-left:4px;margin-left:2px}
+mark.fxgap::before{content:"missing";position:absolute;top:-1.35em;left:-2px;font-size:11px;font-weight:600;color:var(--rec-ink);white-space:nowrap}
+.fxsaid{padding-top:10px}
 
 </style>
 </head>
 <body>
-<header class="bar" id="hdr"><div class="in"><span class="brand">IELTS Speaking</span><span id="chip" class="chip">Connecting…</span></div></header>
+<header class="bar" id="hdr"><div class="in"><span class="brand">wasabi</span><span id="chip" class="chip">Connecting…</span></div></header>
 <nav class="tabs" aria-label="Sections"><div class="in" id="tabs"></div></nav>
 <main class="wrap" id="view"></main>
 <div id="sheet" aria-modal="true" role="dialog"><div class="scrim" data-act="closesheet"></div><div class="panel"><div class="phead" id="phead"></div><div class="pbody" id="pbody"></div></div></div>
@@ -1054,7 +1059,7 @@ function render() {
   renderSheet();
   document.body.classList.toggle('has-dock', !!$('#view .dock'));
   document.body.classList.toggle('is-rec', R.on);
-  document.title = (R.on ? '● Recording · ' : '') + 'IELTS Speaking Trainer';
+  document.title = (R.on ? '● Recording · ' : '') + 'Wasabi';
   window.scrollTo(0, y); $('#pbody').scrollTop = sb;
   playIcons();
   if (R.on) tickRec();
@@ -2659,7 +2664,7 @@ function renderHeader() {
     h.innerHTML = `<div class="in"><button class="xbtn" data-act="pexit" aria-label="Leave">${I.x}</button><div class="ttl">${ttl}</div><span class="pos">${P.deck.length > 1 ? (P.i + 1) + ' of ' + P.deck.length : ''}</span><span id="chip" class="chip" hidden></span></div>${P.deck.length > 1 && P.deck.length <= 14 ? `<div class="segbar" style="grid-template-columns:repeat(${P.deck.length},minmax(0,1fr))" aria-hidden="true">${P.deck.map((x, i) => `<span class="${i < P.i ? 'done' : i === P.i ? 'now' : ''}"></span>`).join('')}</div>` : ''}`;
   } else {
     h.className = 'bar';
-    h.innerHTML = `<div class="in"><a class="brand" href="#today">IELTS Speaking</a><span style="flex:1"></span>${examChipHTML()}<span id="chip" class="chip"></span><a class="gear" href="#prefs" aria-label="Settings" ${['prefs', 'admin'].includes(r6()) ? 'aria-current="page"' : ''}>${I.gear}</a></div>`;
+    h.innerHTML = `<div class="in"><a class="brand" href="#today">wasabi</a><span style="flex:1"></span>${examChipHTML()}<span id="chip" class="chip"></span><a class="gear" href="#prefs" aria-label="Settings" ${['prefs', 'admin'].includes(r6()) ? 'aria-current="page"' : ''}>${I.gear}</a></div>`;
   }
   chip();
 }
@@ -2673,7 +2678,7 @@ function render() {
   v.innerHTML = r === 'practice' ? viewPractice() : r === 'mock' ? viewMock() : r === 'questions' ? viewQuestions() : r === 'answers' ? viewAnswers() : r === 'words' ? viewWords() : r === 'prefs' ? viewSettings() : r === 'admin' ? viewAdmin() : r === 'fix' ? viewFix() : viewToday();
   renderSheet();
   document.body.classList.toggle('is-rec', R.on);
-  document.title = (R.on ? '● Recording · ' : '') + 'IELTS Speaking Trainer';
+  document.title = (R.on ? '● Recording · ' : '') + 'Wasabi';
   window.scrollTo(0, y); $('#pbody').scrollTop = sb;
   playIcons();
   if (R.on) tickRec();
@@ -4324,7 +4329,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261117054526';
+const BUILD_ID = '20261117060359';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -4846,15 +4851,28 @@ function fxDeck() {
   due.sort((x, y) => (live.has(y.b) - live.has(x.b)) || ((st[x.k] ? 1 : 0) - (st[y.k] ? 1 : 0)) || y.ts - x.ts);
   return due.slice(0, 8);
 }
-function fxStart() { Object.assign(FX, {deck: fxDeck(), i: 0, show: false, clue: false, res: []}); location.hash = 'fix'; render(); }
+function fxStart() { Object.assign(FX, {deck: fxDeck(), i: 0, show: false, clue: false, res: []}); location.hash = 'mistakes'; render(); }
 function fxMark(ok) {
   const c = FX.deck[FX.i]; if (!c) return;
   const st = fxState(), s = st[c.k] || {n: 0};
   s.n = ok ? s.n + 1 : 0; s.due = Date.now() + (ok ? [1, 3, 7, 21][Math.min(3, s.n - 1)] * 864e5 : 0); st[c.k] = s; saveMeta();
   FX.res.push({c, ok}); FX.i++; FX.show = false; FX.clue = false; render();
 }
-function viewFix() {
-  const head = `<a class="back" href="#today">${I.back} Back</a><div><h1>Your mistakes</h1><p class="lead" style="margin-top:4px">Your own sentences, as you said or wrote them. Say each one correctly out loud, then check.</p></div>`;
+function fxMarked(said, better) {
+  const a = String(said).split(/\s+/).filter(Boolean), b = String(better).split(/\s+/).filter(Boolean), n = x => x.toLowerCase().replace(/[^a-z0-9']/g, '');
+  const L = Array.from({length: a.length + 1}, () => new Array(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--) for (let j = b.length - 1; j >= 0; j--) L[i][j] = n(a[i]) === n(b[j]) ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const out = []; let i = 0, j = 0, gap = false;
+  while (i < a.length) {
+    if (j < b.length && n(a[i]) === n(b[j])) { out.push(gap ? `<mark class="fxgap">${esc(a[i])}</mark>` : esc(a[i])); gap = false; i++; j++; }
+    else if (j < b.length && L[i][j + 1] >= L[i + 1][j]) { gap = true; j++; }
+    else { out.push(`<mark class="fxbad">${esc(a[i])}</mark>`); gap = false; i++; }
+  }
+  if (j < b.length) out.push('<mark class="fxgap fxend">…</mark>');
+  return out.join(' ').replace(/<\/mark> <mark class="fxbad">/g, ' ');
+}
+function viewMk() {
+  const head = `<a class="back" href="#today">${I.back} Back</a><div><h1>Your mistakes</h1><p class="lead" style="margin-top:4px">Your own sentences from checked answers and essays. The mistake is marked. Say the whole sentence correctly out loud, then check yourself.</p></div>`;
   if (!FX.deck.length) {
     const all = mkItems().length;
     return `<div class="stack" style="max-width:640px">${head}<div class="card empty">${all ? 'Nothing is due right now. Cards you got right come back in a few days.' : 'No mistakes collected yet. They are taken from every answer or essay the coach checks.'}</div></div>`;
@@ -4868,8 +4886,8 @@ function viewFix() {
   const c = FX.deck[FX.i];
   return `<div class="stack" style="max-width:640px">${head}
     <div class="qfdots">${FX.deck.map((x, i) => `<i class="${i < FX.i ? (FX.res[i].ok ? 'ok' : 'bad') : i === FX.i ? 'on' : ''}"></i>`).join('')}</div>
-    <section class="card stack" style="gap:12px"><div class="small muted">${c.src === 'w' ? 'You wrote' : 'You said'} · ${mkLabel(c.b).toLowerCase()}</div>
-      <p class="fxsaid">${esc(c.said)}</p>
+    <section class="card stack" style="gap:12px"><div class="fxtask"><b>Say this correctly, out loud.</b> ${c.src === 'w' ? 'You wrote it' : 'You said it'} with a mistake in <b>${mkLabel(c.b).toLowerCase()}</b>.${FX.show ? '' : ' <span class="muted">Red = wrong word. A red line before a word = a word is missing there.</span>'}</div>
+      <p class="fxsaid">${FX.show ? esc(c.said) : fxMarked(c.said, c.better)}</p>
       ${FX.show ? `<div class="note ok"><b>${esc(c.better)}</b>${c.why ? `<br><span class="small">${esc(c.why)}</span>` : ''}</div>
         <div class="small muted">Say the correct one out loud once more, then mark it.</div>
         <div class="row"><button class="btn primary" data-act="fxok">${I.check} I had it right</button><button class="btn" data-act="fxmiss">I missed it</button><button class="btn ghost sm" data-act="saytext" data-t="${esc(c.better)}">${I.speak} Hear it</button></div>`
@@ -5042,7 +5060,7 @@ function viewWrite() {
 }
 /* ---- wiring ---- */
 const viewToday_v13 = viewToday;
-viewToday = function () { const r = r6(); return r === 'fix' ? viewFix() : r === 'write' ? viewWrite() : viewToday_v13(); };
+viewToday = function () { const r = r6(); return r === 'mistakes' ? viewMk() : r === 'write' ? viewWrite() : viewToday_v13(); };
 const otherPractice_v13 = otherPractice;
 otherPractice = function () {
   const n = fxDeck().length;
