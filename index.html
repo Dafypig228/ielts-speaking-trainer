@@ -745,6 +745,9 @@ b.ink{color:var(--ink);font-weight:600}
 .page18 .chips button .muted{opacity:.75}
 .chips button[aria-pressed="true"] .muted{color:inherit;opacity:.75}
 @media (max-width:480px){.tile{padding:10px 12px;min-height:64px}.tile .t{font-size:14.5px}.tile .s{font-size:12.5px}}
+/* v20: busy button */
+.btn[aria-busy="true"]{opacity:1;cursor:progress;gap:8px;display:inline-flex;align-items:center}
+.btn[aria-busy="true"] .cw-dots{transform:scale(.8)}
 
 </style>
 </head>
@@ -4538,7 +4541,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611171633';
+const BUILD_ID = '202611171758';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -6512,6 +6515,52 @@ viewT1Pick = function () {
       <div class="side"><section class="card"><div class="row"><h2 class="grow">Reported from real tests</h2><span class="small muted">@cdireport</span></div><p class="small muted" style="margin:4px 0 6px">What people described after their test. “Draw it” makes one like it, with invented numbers.</p><div class="list flat wrscroll">${repH}</div></section></div></div></div>`;
 };
 window.addEventListener('click', e => { const b = e.target.closest('[data-act="whist"]'); if (b) { HSEG.v = 'w'; } }, true);
+
+/* ================= v19: Task 1 drawings come from a shared cloud pool, with a visible wait ================= */
+T1S.busyKey = null; T1S.t0 = 0;
+function t1Seen() { return Array.isArray(S.set.t1seen) ? S.set.t1seen : []; }
+t1Gen = async function (o, fallback) {
+  if (!SB.user) { if (fallback && fallback.length) return t1Open(JSON.parse(JSON.stringify(fallback[Math.floor(Math.random() * fallback.length)]))); return toast('Sign in first (Settings).'); }
+  if (T1S.busy) return;
+  if (!o.key && o.kind) o.key = 'k:' + o.kind;
+  const done = essays().filter(e => e.task === 1 && e.t1).map(e => e.t1.id);
+  Object.assign(T1S, {busy: true, busyKey: o.key || null, t0: Date.now()});
+  W2.phase = 't1pick'; if (r6() !== 'write') { W2.keep = true; location.hash = 'write'; } else render();
+  const tick = setInterval(() => { const el = $('#t1wait'); if (el) el.textContent = fmt((Date.now() - T1S.t0) / 1000); }, 500);
+  try {
+    const r = await api('t1gen', {kind: o.kind, desc: o.desc, skip: [...done, ...t1Seen()].slice(-200)});
+    const it = r.item; if (!t1Valid(it)) throw new Error('bad');
+    S.set.t1seen = [...t1Seen(), it.id].slice(-200); saveMeta();
+    Object.assign(T1S, {busy: false, busyKey: null}); clearInterval(tick);
+    t1Open(JSON.parse(JSON.stringify(it)));
+  } catch (e) {
+    Object.assign(T1S, {busy: false, busyKey: null}); clearInterval(tick);
+    const f = fallback && fallback.length ? fallback : T1_BANK.filter(x => x.kind === (o.kind || 'line'));
+    toast((e && e.message && e.message !== 'bad' ? e.message + ' ' : 'Could not draw it right now. ') + (f.length ? 'Here is one from the practice set.' : ''), 6000);
+    if (f.length) t1Open(JSON.parse(JSON.stringify(f[Math.floor(Math.random() * f.length)]))); else render();
+  }
+};
+const t1Btn = (key, label, act, attrs, cls) => T1S.busyKey === key ? `<button class="btn sm ${cls}" disabled aria-busy="true"><span class="cw-dots" aria-hidden="true"><i></i><i></i><i></i></span>Drawing…</button>` : `<button class="btn sm ${cls}" data-act="${act}" ${attrs} ${T1S.busy ? 'disabled' : ''}>${label}</button>`;
+const viewT1Pick_v19 = viewT1Pick;
+viewT1Pick = function () {
+  let h = viewT1Pick_v19();
+  h = h.replace(/<button class="btn sm" data-act="t1new" data-k="(\w+)"[^>]*>New one<\/button>/g, (m, k) => t1Btn('k:' + k, 'New one', 't1new', `data-k="${k}"`, ''))
+       .replace(/<button class="btn sm" data-act="t1rep" data-i="(\d+)"[^>]*>Draw it<\/button>/g, (m, i) => t1Btn('r:' + i, 'Draw it', 't1rep', `data-i="${i}"`, ''));
+  h = h.replace(/<div class="cwait"><div class="row"><span class="cw-dots" aria-hidden="true"><i><\/i><i><\/i><i><\/i><\/span><b class="grow">Drawing a new visual<\/b><\/div><p class="small muted" style="margin:6px 0 0">About 10 seconds.<\/p><\/div>/,
+    `<div class="cwait" role="status"><div class="row"><span class="cw-dots" aria-hidden="true"><i></i><i></i><i></i></span><b class="grow">${T1S.busyKey && T1S.busyKey[0] === 'r' ? 'Drawing the reported chart' : 'Getting a new visual'}</b><span class="mono muted" id="t1wait">${fmt((Date.now() - T1S.t0) / 1000)}</span></div><p class="small muted" style="margin:6px 0 0">Ready ones open at once. A brand-new drawing takes about 5–10 seconds, then it is saved for everyone.</p></div>`);
+  t1Warm();
+  return h;
+};
+function t1Warm() { if (SB.user && !T1S.warmed) { T1S.warmed = true; api('t1warm', {}).catch(() => {}); } }
+const wHome_v19 = wHome;
+wHome = function () { t1Warm(); return wHome_v19.apply(this, arguments); };
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act="t1new"],[data-act="t1rep"]'); if (!b) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  if (b.dataset.act === 't1new') t1Gen({kind: b.dataset.k, key: 'k:' + b.dataset.k}, T1_BANK.filter(x => x.kind === b.dataset.k));
+  else { const r = (W2.rep || [])[+b.dataset.i]; if (r) t1Gen({desc: r.t1.replace(/[^\x20-\x7E’‘“”–—]/g, '').trim(), key: 'r:' + b.dataset.i}, T1_BANK.filter(x => x.kind === 'bar')); }
+}, true);
+SYNC_KEYS.push('t1seen');
 
 init();
 </script>
