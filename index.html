@@ -541,7 +541,8 @@ mark.fxgap::before{content:"missing";position:absolute;top:-1.35em;left:-2px;fon
 </style>
 </head>
 <body>
-<header class="bar" id="hdr"><div class="in"><span class="brand">wasabi</span><span id="chip" class="chip">Connecting…</span></div></header>
+<header class="bar" id="hdr"><div class="in"><span class="brand"><svg width="24" height="24" aria-hidden="true" style="vertical-align:-6px;margin-right:8px;border-radius:6px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#162c55"/><g stroke="#7fa82b" stroke-width="14" stroke-linecap="round" fill="none"><path d="M256 236C250 196 228 168 196 150"/><path d="M256 236C262 190 292 160 330 146"/></g><path d="M196 98c-34-18-82 4-78 44 4 36 46 52 78 30 32 22 74 6 78-30 4-40-44-62-78-44z" fill="#8fbf3a" transform="rotate(-18 196 140)"/><path d="M330 92c-34-18-82 4-78 44 4 36 46 52 78 30 32 22 74 6 78-30 4-40-44-62-78-44z" fill="#a3c93a" transform="rotate(16 330 134)"/><path d="M212 236c0-8 20-14 44-14s44 6 44 14l-8 150c-2 36-18 58-36 58s-34-22-36-58z" fill="#b7d65a"/><g stroke="#86ab33" stroke-width="7" stroke-linecap="round"><path d="M220 276h24M262 300h28M218 330h22M264 356h22M232 392h18"/></g></svg>
+wasabi</span><span id="chip" class="chip">Connecting…</span></div></header>
 <nav class="tabs" aria-label="Sections"><div class="in" id="tabs"></div></nav>
 <main class="wrap" id="view"></main>
 <div id="sheet" aria-modal="true" role="dialog"><div class="scrim" data-act="closesheet"></div><div class="panel"><div class="phead" id="phead"></div><div class="pbody" id="pbody"></div></div></div>
@@ -2664,7 +2665,8 @@ function renderHeader() {
     h.innerHTML = `<div class="in"><button class="xbtn" data-act="pexit" aria-label="Leave">${I.x}</button><div class="ttl">${ttl}</div><span class="pos">${P.deck.length > 1 ? (P.i + 1) + ' of ' + P.deck.length : ''}</span><span id="chip" class="chip" hidden></span></div>${P.deck.length > 1 && P.deck.length <= 14 ? `<div class="segbar" style="grid-template-columns:repeat(${P.deck.length},minmax(0,1fr))" aria-hidden="true">${P.deck.map((x, i) => `<span class="${i < P.i ? 'done' : i === P.i ? 'now' : ''}"></span>`).join('')}</div>` : ''}`;
   } else {
     h.className = 'bar';
-    h.innerHTML = `<div class="in"><a class="brand" href="#today">wasabi</a><span style="flex:1"></span>${examChipHTML()}<span id="chip" class="chip"></span><a class="gear" href="#prefs" aria-label="Settings" ${['prefs', 'admin'].includes(r6()) ? 'aria-current="page"' : ''}>${I.gear}</a></div>`;
+    h.innerHTML = `<div class="in"><a class="brand" href="#today"><svg width="24" height="24" aria-hidden="true" style="vertical-align:-6px;margin-right:8px;border-radius:6px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#162c55"/><g stroke="#7fa82b" stroke-width="14" stroke-linecap="round" fill="none"><path d="M256 236C250 196 228 168 196 150"/><path d="M256 236C262 190 292 160 330 146"/></g><path d="M196 98c-34-18-82 4-78 44 4 36 46 52 78 30 32 22 74 6 78-30 4-40-44-62-78-44z" fill="#8fbf3a" transform="rotate(-18 196 140)"/><path d="M330 92c-34-18-82 4-78 44 4 36 46 52 78 30 32 22 74 6 78-30 4-40-44-62-78-44z" fill="#a3c93a" transform="rotate(16 330 134)"/><path d="M212 236c0-8 20-14 44-14s44 6 44 14l-8 150c-2 36-18 58-36 58s-34-22-36-58z" fill="#b7d65a"/><g stroke="#86ab33" stroke-width="7" stroke-linecap="round"><path d="M220 276h24M262 300h28M218 330h22M264 356h22M232 392h18"/></g></svg>
+wasabi</a><span style="flex:1"></span>${examChipHTML()}<span id="chip" class="chip"></span><a class="gear" href="#prefs" aria-label="Settings" ${['prefs', 'admin'].includes(r6()) ? 'aria-current="page"' : ''}>${I.gear}</a></div>`;
   }
   chip();
 }
@@ -4329,7 +4331,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261117060359';
+const BUILD_ID = '20261117061043';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -4851,12 +4853,12 @@ function fxDeck() {
   due.sort((x, y) => (live.has(y.b) - live.has(x.b)) || ((st[x.k] ? 1 : 0) - (st[y.k] ? 1 : 0)) || y.ts - x.ts);
   return due.slice(0, 8);
 }
-function fxStart() { Object.assign(FX, {deck: fxDeck(), i: 0, show: false, clue: false, res: []}); location.hash = 'mistakes'; render(); }
+function fxStart() { Object.assign(FX, {deck: fxDeck(), i: 0, show: false, clue: 0, res: []}); location.hash = 'mistakes'; render(); }
 function fxMark(ok) {
   const c = FX.deck[FX.i]; if (!c) return;
   const st = fxState(), s = st[c.k] || {n: 0};
-  s.n = ok ? s.n + 1 : 0; s.due = Date.now() + (ok ? [1, 3, 7, 21][Math.min(3, s.n - 1)] * 864e5 : 0); st[c.k] = s; saveMeta();
-  FX.res.push({c, ok}); FX.i++; FX.show = false; FX.clue = false; render();
+  s.n = ok ? (FX.clue ? 1 : s.n + 1) : 0; s.due = Date.now() + (ok ? [1, 3, 7, 21][Math.min(3, s.n - 1)] * 864e5 : 0); st[c.k] = s; saveMeta();
+  FX.res.push({c, ok}); FX.i++; FX.show = false; FX.clue = 0; render();
 }
 function fxMarked(said, better) {
   const a = String(said).split(/\s+/).filter(Boolean), b = String(better).split(/\s+/).filter(Boolean), n = x => x.toLowerCase().replace(/[^a-z0-9']/g, '');
@@ -4872,7 +4874,7 @@ function fxMarked(said, better) {
   return out.join(' ').replace(/<\/mark> <mark class="fxbad">/g, ' ');
 }
 function viewMk() {
-  const head = `<a class="back" href="#today">${I.back} Back</a><div><h1>Your mistakes</h1><p class="lead" style="margin-top:4px">Your own sentences from checked answers and essays. The mistake is marked. Say the whole sentence correctly out loud, then check yourself.</p></div>`;
+  const head = `<a class="back" href="#today">${I.back} Back</a><div><h1>Your mistakes</h1><p class="lead" style="margin-top:4px">Your own sentences from checked answers and essays. Find the mistake yourself and say the sentence correctly. Clues are there if you're stuck; a card solved with a clue comes back sooner.</p></div>`;
   if (!FX.deck.length) {
     const all = mkItems().length;
     return `<div class="stack" style="max-width:640px">${head}<div class="card empty">${all ? 'Nothing is due right now. Cards you got right come back in a few days.' : 'No mistakes collected yet. They are taken from every answer or essay the coach checks.'}</div></div>`;
@@ -4886,13 +4888,13 @@ function viewMk() {
   const c = FX.deck[FX.i];
   return `<div class="stack" style="max-width:640px">${head}
     <div class="qfdots">${FX.deck.map((x, i) => `<i class="${i < FX.i ? (FX.res[i].ok ? 'ok' : 'bad') : i === FX.i ? 'on' : ''}"></i>`).join('')}</div>
-    <section class="card stack" style="gap:12px"><div class="fxtask"><b>Say this correctly, out loud.</b> ${c.src === 'w' ? 'You wrote it' : 'You said it'} with a mistake in <b>${mkLabel(c.b).toLowerCase()}</b>.${FX.show ? '' : ' <span class="muted">Red = wrong word. A red line before a word = a word is missing there.</span>'}</div>
-      <p class="fxsaid">${FX.show ? esc(c.said) : fxMarked(c.said, c.better)}</p>
+    <section class="card stack" style="gap:12px"><div class="fxtask"><b>This sentence has a mistake. Say it correctly, out loud.</b> ${c.src === 'w' ? 'You wrote it' : 'You said it'} in an earlier ${c.src === 'w' ? 'essay' : 'answer'}.</div>
+      <p class="fxsaid">${FX.show || FX.clue >= 2 ? fxMarked(c.said, c.better) : esc(c.said)}</p>
       ${FX.show ? `<div class="note ok"><b>${esc(c.better)}</b>${c.why ? `<br><span class="small">${esc(c.why)}</span>` : ''}</div>
-        <div class="small muted">Say the correct one out loud once more, then mark it.</div>
-        <div class="row"><button class="btn primary" data-act="fxok">${I.check} I had it right</button><button class="btn" data-act="fxmiss">I missed it</button><button class="btn ghost sm" data-act="saytext" data-t="${esc(c.better)}">${I.speak} Hear it</button></div>`
-      : `${FX.clue ? `<div class="note plain small">Clue: ${esc(c.rule || mkLabel(c.b))}</div>` : ''}
-        <div class="row"><button class="btn primary" data-act="fxshow">Show the answer</button>${FX.clue ? '' : '<button class="btn ghost" data-act="fxclue">Give me a clue</button>'}</div>`}
+        <div class="small muted">Say the correct one out loud once more, then mark how it went.</div>
+        <div class="row"><button class="btn primary" data-act="fxok">${I.check} ${FX.clue ? 'Right, with a clue' : 'I had it right'}</button><button class="btn" data-act="fxmiss">I missed it</button><button class="btn ghost sm" data-act="saytext" data-t="${esc(c.better)}">${I.speak} Hear it</button></div>`
+      : `${FX.clue >= 1 ? `<div class="note plain small"><b>Clue 1:</b> it's about ${esc(mkLabel(c.b).toLowerCase())}.</div>` : ''}${FX.clue >= 2 ? `<div class="note plain small"><b>Clue 2:</b> the place is marked above. Red = wrong word; a red line before a word = a word is missing there.</div>` : ''}
+        <div class="row"><button class="btn primary" data-act="fxshow">Check my answer</button>${FX.clue < 2 ? `<button class="btn ghost" data-act="fxclue">${FX.clue ? 'Show where' : 'Give me a clue'}</button>` : ''}</div>`}
     </section></div>`;
 }
 /* ---- coach view: repeating mistakes box, honest pronunciation label, merged words ---- */
@@ -5086,7 +5088,7 @@ document.addEventListener('click', e => {
   switch (d.act) {
     case 'fxstart': fxStart(); break;
     case 'fxshow': FX.show = true; render(); break;
-    case 'fxclue': FX.clue = true; render(); break;
+    case 'fxclue': FX.clue = Math.min(2, (FX.clue || 0) + 1); render(); break;
     case 'fxok': fxMark(true); break;
     case 'fxmiss': fxMark(false); break;
     case 'fxagain': startPractice([d.q], {title: '', back: 'today'}); break;
