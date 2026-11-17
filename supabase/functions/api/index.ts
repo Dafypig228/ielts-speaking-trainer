@@ -837,7 +837,7 @@ Deno.serve(async (req) => {
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);
       const { data } = await admin.from("ai_usage").select("count").eq("user_id", user.id).eq("day", day).maybeSingle();
-      return j({ username: uname, admin: me.is_admin, hasKey: !!(await cfg("gemini_key")), used: data?.count ?? 0, limit: parseInt(await cfg("daily_limit", "60")) });
+      return j({ username: uname, admin: me.is_admin, hasKey: !!(await cfg("gemini_key")), used: data?.count ?? 0, limit: parseInt(await cfg("daily_limit", "60")), support_text: await cfg("support_text", ""), support_link: await cfg("support_link", "") });
     }
 
     if (!me.is_admin) return j({ error: "forbidden", message: "Admins only." }, 403);
@@ -911,6 +911,8 @@ Deno.serve(async (req) => {
         if (typeof body[k] === "string") { const v = body[k].trim(); if (v) await setCfg(k, v); else await admin.from("app_config").delete().eq("key", k); }
       }
       if (typeof body.w_topics === "string" && body.w_topics.length < 60000) await setCfg("w_topics", body.w_topics);
+      if (typeof body.support_text === "string") await setCfg("support_text", body.support_text.trim().slice(0, 1000));
+      if (typeof body.support_link === "string") { const l = body.support_link.trim(); if (!l || /^https:\/\/\S{3,300}$/.test(l)) await setCfg("support_link", l); }
       if (body.daily_limit) await setCfg("daily_limit", String(Math.max(1, Math.min(1000, parseInt(body.daily_limit) || 60))));
       if (body.model) await setCfg("model", String(body.model).trim());
       return j({ ok: true });
