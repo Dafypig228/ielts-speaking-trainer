@@ -767,6 +767,16 @@ body.fitview #view .stick{overscroll-behavior:contain}
 .wpage.wplan{max-width:820px}
 .wpage.wplan>.stack{max-width:none!important}
 @media (min-width:900px){nav.tabs .in{height:100%}nav.tabs .in .tab-sup{margin-top:auto;margin-bottom:8px}}
+/* v22: guests, speaking frames */
+.gbanner{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:14px 16px;margin-bottom:18px;border-radius:var(--r);border:1px solid oklch(0.66 0.17 300 / .5);background:color-mix(in oklch,var(--surface) 88%,oklch(0.66 0.17 300))}
+.gbanner .grow{flex:1 1 320px;line-height:1.45}
+.gbanner.used{border-color:var(--line-strong)}
+.glock{position:relative;opacity:.55;cursor:not-allowed}
+.glock::before{content:'';position:absolute;top:5px;right:5px;width:13px;height:13px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Crect x='5' y='11' width='14' height='10' rx='2'/%3E%3Cpath d='M8 11V8a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Crect x='5' y='11' width='14' height='10' rx='2'/%3E%3Cpath d='M8 11V8a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E") center/contain no-repeat;opacity:.9}
+#gpop{position:fixed;z-index:60;max-width:320px;padding:11px 13px;border-radius:10px;background:var(--ink);color:var(--bg);font-size:14px;line-height:1.45;box-shadow:0 8px 24px oklch(0 0 0 / .25)}
+#gpop a{color:inherit;font-weight:700}
+.dgrid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.li.glock::before{top:50%;right:40px;transform:translateY(-50%)}
 
 </style>
 </head>
@@ -4560,7 +4570,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611171842';
+const BUILD_ID = '202611171902';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -6639,7 +6649,7 @@ window.addEventListener('click', e => {
 }, true);
 /* ---------- login wall ---------- */
 const OPEN_ROUTES = ['prefs', 'guide', 'admin', 'support'];
-const gated = () => sbOn() && SB.client && !SB.user && SB.state === 'out' && !OPEN_ROUTES.includes(r6());
+let gated = () => sbOn() && SB.client && !SB.user && SB.state === 'out' && !OPEN_ROUTES.includes(r6());
 function viewGate() {
   return `<div class="gate stack"><h1>Sign in to use Wasabi</h1><p class="lead" style="margin:0">Wasabi is for a small group of friends. Your answers, essays, mistakes and the coach are tied to your account, so nothing works signed out.</p>${accountCard(false)}<p class="small muted" style="margin:0">No account yet? Ask the person who sent you the link to add your Telegram username. <a href="#guide">What is Wasabi?</a></p></div>`;
 }
@@ -6755,6 +6765,142 @@ mvPlayer = function (a, v, text) {
   }
   return mvPlayer_v20(a, v, text);
 };
+
+/* ================= v21: guests look around with locks and get one free try; speaking frames ================= */
+/* ---------- guests ---------- */
+const GUEST = {used: (() => { try { return localStorage.getItem('ist-guest-used') === '1'; } catch { return false; } })(), contact: 'fforthosv'};
+const isGuest = () => sbOn() && !!SB.client && !SB.user && SB.state === 'out';
+gated = () => false;
+const G_FREE = new Set(['afilter', 'asel', 'btab', 'closesheet', 'dnext', 'dprev', 'dparts', 'dnew', 'drilltopic', 'hseg', 'hpart', 'frgroup', 'gshow', 'hintreset', 'hintx', 'mclose', 'opencard', 'openq', 'opensess', 'opentopic', 'play', 'playall', 'seek', 'seekp', 'say', 'saytext', 'speed', 'setrate', 'setv', 'voicesel', 'sttab', 'wrf', 'wtab', 'whist', 'wgroup', 'w2back', 'w2open', 'w2openh', 'sbin', 'sbout', 'sbsync', 'pwsave', 'pwlater', 'examdate', 'examsave', 'setgoal', 'micsel', 'measure', 'srcsel', 'reveal', 'preveal', 'vers', 'dl', 'star', 'sgroup', 'sfshow', 'sfgot', 'sfmiss', 'sfnext']);
+const G_TRY = new Set(['step', 'pp', 'prec', 'prestart', 'pstop', 'rec', 'recstop', 'redo', 'retry', 'pnext', 'pexit', 'pagain', 'prep', 'prepskip', 'p2go', 'pcoach', 'coach', 'newsession', 'quickdrill', 'paq']);
+const gAllowed = a => G_FREE.has(a) || (!GUEST.used && G_TRY.has(a));
+function gBanner() {
+  return GUEST.used
+    ? `<section class="gbanner used"><div class="grow"><b>That was your free try.</b> Wasabi is for a small group of friends. Want an account? Message <a href="https://t.me/${GUEST.contact}" target="_blank" rel="noopener">@${GUEST.contact}</a> on Telegram.</div><a class="btn sm primary" href="https://t.me/${GUEST.contact}" target="_blank" rel="noopener">Message on Telegram</a><a class="btn sm" href="#prefs">Sign in</a></section>`
+    : `<section class="gbanner"><div class="grow"><b>You're looking around as a guest.</b> Buttons with a lock need an account. You get <b>one free try</b>: answer any speaking question out loud and get the coach's full feedback.</div><button class="btn sm primary" data-act="step" data-n="1">Try it now</button><a class="btn sm" href="#prefs">Sign in</a></section>`;
+}
+function gPop(el) {
+  gPopClose();
+  const r = el.getBoundingClientRect(), d = document.createElement('div'); d.id = 'gpop';
+  d.innerHTML = GUEST.used
+    ? `<b>Needs an account.</b> You've used your free try. Message <a href="https://t.me/${GUEST.contact}" target="_blank" rel="noopener">@${GUEST.contact}</a> on Telegram to get one.`
+    : `<b>Needs an account.</b> Your free try is a speaking answer with the coach's feedback. <a href="#today" data-gtry="1">Try it</a> · <a href="#prefs">Sign in</a>`;
+  document.body.appendChild(d); gpY = scrollY; const w = d.offsetWidth;
+  d.style.left = Math.max(10, Math.min(innerWidth - w - 10, r.left + r.width / 2 - w / 2)) + 'px';
+  d.style.top = (r.bottom + 8 + d.offsetHeight > innerHeight ? r.top - d.offsetHeight - 8 : r.bottom + 8) + 'px';
+}
+function gPopClose() { const p = $('#gpop'); if (p) p.remove(); }
+function gLocks() {
+  if (!isGuest()) return;
+  $$('#view [data-act]').forEach(b => { if (!gAllowed(b.dataset.act)) { b.classList.add('glock'); b.setAttribute('aria-disabled', 'true'); b.dataset.gact = b.dataset.act; b.removeAttribute('data-act'); } });
+  const v = $('#view'); if (v && !['prefs', 'guide'].includes(r6())) v.insertAdjacentHTML('afterbegin', gBanner());
+}
+window.addEventListener('click', e => {
+  if (!e.target.closest('#gpop') && !e.target.closest('.glock')) gPopClose();
+  if (e.target.closest('[data-gtry]')) { gPopClose(); return; }
+  if (!isGuest()) return;
+  const b = e.target.closest('.glock'); if (!b) return;
+  e.stopImmediatePropagation(); e.preventDefault(); gPop(b);
+}, true);
+let gpY = 0; window.addEventListener('scroll', () => { if ($('#gpop') && Math.abs(scrollY - gpY) > 60) gPopClose(); }, {passive: true});
+/* the free coach check */
+async function guestCoach(id) {
+  const a = getAtt(id); if (!a) return;
+  if (GUEST.used) return toast('You have used your free try.');
+  if (COACH.busy.has(id)) return;
+  COACH.busy.add(id); render();
+  try {
+    const m = await measureAttempt(id, true); if (!m) throw new Error("Couldn't read the audio of this answer.");
+    const pcm = m.pcm.length > 16000 * 170 ? m.pcm.subarray(0, 16000 * 170) : m.pcm;
+    const r = await fetch(SUPA_URL + '/functions/v1/api', {method: 'POST', headers: {'Content-Type': 'application/json', apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY}, body: JSON.stringify({action: 'guest_analyze', audio: wavB64(pcm), question: qPayload(a.qid), dur: a.dur, stats: m.st})});
+    let res; try { res = await r.json(); } catch { res = {error: 'bad', message: 'Server error.'}; }
+    if (!r.ok || res.error) throw new Error(res.message || 'The coach failed.');
+    const {usage, ...ai} = res; ai.at = Date.now(); updAtt(id, {ai}, false); OPEN.add(id);
+    GUEST.used = true; try { localStorage.setItem('ist-guest-used', '1'); } catch {}
+  } catch (e) { toast(e.message || 'The coach failed.', 7000); }
+  finally { COACH.busy.delete(id); render(); }
+}
+const coachAttempt_v21 = coachAttempt;
+coachAttempt = function (id) { return isGuest() ? guestCoach(id) : coachAttempt_v21(id); };
+const coachCTA_v21 = coachCTA;
+coachCTA = function (a) {
+  if (!isGuest()) return coachCTA_v21(a);
+  if (COACH.busy.has(a.id)) return `<div class="note plain">The coach is listening to your answer… (10–30 s)</div>`;
+  if (GUEST.used) return '';
+  return `<section class="card stack" style="gap:10px;padding:14px"><div><h2>Your free try</h2><p class="small muted" style="margin:4px 0 0">The coach listens to this answer: your words with pauses marked, grammar fixes, a better version and a band estimate. You get this once without an account.</p></div><div class="row"><button class="btn primary" data-act="pcoach" data-a="${a.id}">${I.spark} Check with coach</button></div></section>`;
+};
+/* ---------- speaking frames ---------- */
+const SF_GROUPS = [['s1', 'Part 1 answers'], ['s2', 'Part 2 talk'], ['s3', 'Part 3 opinions'], ['st', 'Buying time and fixing']];
+const SFRAMES = [
+  ['s1_direct', 'Answer, then why', 'Yes, I do. Mainly because [reason], and [one small detail].', 'Any yes/no Part 1 question: answer first, then one reason and one detail', 's1', 'Do you like cooking?', 'Yes, I do. Mainly because it helps me relax after school, and I usually cook plov with my mum on Sundays.'],
+  ['s1_depends', 'It depends', 'It depends, really. If [situation], I [do X], but when [other situation], I’d rather [do Y].', 'When the honest answer is “sometimes”', 's1', 'Do you prefer to study in the morning or in the evening?', 'It depends, really. If I have a test the next day, I study in the evening, but when I’m not in a hurry, I’d rather do it in the morning, when my head is fresh.'],
+  ['s1_used', 'Then and now', 'I used to [past habit], but these days I [present habit], mostly because [reason].', 'Questions about habits, hobbies, things that changed', 's1', 'Do you read books?', 'I used to read a lot of fantasy, but these days I mostly read articles online, mostly because I have less free time.'],
+  ['s1_notreally', 'Not really', 'Not really, to be honest. I’m more into [what you do like], because [reason].', 'When the answer is no: turn it to something you can talk about', 's1', 'Do you like going to museums?', 'Not really, to be honest. I’m more into being outdoors, because I get bored when I have to stand and read signs.'],
+  ['s1_often', 'How often', 'Quite often, actually. Probably [how many times], usually [when or where].', 'How often / when questions', 's1', 'How often do you use public transport?', 'Quite often, actually. Probably every weekday, usually the bus to school in the morning.'],
+  ['s2_open', 'First line', 'I’d like to talk about [the thing], which [one detail that sets it up].', 'The first sentence of the long turn', 's2', 'Describe a place you visited that you liked.', 'I’d like to talk about Burabay, which is a lake area about three hours from Astana.'],
+  ['s2_when', 'When and who', 'This was back in [time], when I was [situation], and I went with [who].', 'Second sentence: set the scene', 's2', 'Describe a trip you enjoyed.', 'This was back in summer 2024, when I was on holiday after exams, and I went with my cousins.'],
+  ['s2_story', 'What happened', 'What happened was that [event]. At first [first reaction], but then [the turn].', 'The middle: tell it as a story, not a list', 's2', 'Describe a time you solved a problem.', 'What happened was that our robot stopped working an hour before the match. At first we panicked, but then we found a loose wire.'],
+  ['s2_why', 'Why it stuck', 'The reason it stuck with me is that [feeling or lesson].', 'The “explain why” point on every card', 's2', 'Describe a person who helped you.', 'The reason it stuck with me is that he never gave me the answer, he only asked better questions.'],
+  ['s2_close', 'Wrap up', 'So all in all, [short summary], and I still [link to now].', 'When you have 15 seconds left', 's2', 'Describe a gift you received.', 'So all in all, it was a small present, and I still use that pen for every exam.'],
+  ['s3_opinion', 'Opinion, reason, example', 'Personally, I’d say [opinion], mainly because [reason]. For example, [example].', 'The basic Part 3 answer: never stop after the opinion', 's3', 'Should children learn to cook at school?', 'Personally, I’d say yes, mainly because many teenagers can’t cook anything. For example, half of my friends only eat fast food when their parents are away.'],
+  ['s3_compare', 'Then vs now', 'Compared to [the past or another group], [people] nowadays tend to [trend], largely because [cause].', 'Questions about change, generations, the past', 's3', 'How has shopping changed in recent years?', 'Compared to ten years ago, people nowadays tend to buy almost everything online, largely because delivery has become so fast.'],
+  ['s3_balance', 'Both sides', 'On the one hand, [benefit]. On the other hand, [drawback], so overall I think [verdict].', 'Advantages and disadvantages questions', 's3', 'Is it good for young people to work part-time?', 'On the one hand, they learn how to handle money. On the other hand, it can hurt their grades, so overall I think a few hours a week is fine.'],
+  ['s3_future', 'The future', 'I think in the future [prediction], although that will depend on [condition].', 'Will / in the future questions', 's3', 'Will people still read paper books in the future?', 'I think in the future paper books will become more of a hobby, although that will depend on how cheap e-readers get.'],
+  ['s3_general', 'People in my country', 'It’s hard to generalise, but in my country most people [tendency], especially [group].', 'Questions about society, “people in your country”', 's3', 'Do people in your country like to travel?', 'It’s hard to generalise, but in my country most people love travelling inside the country, especially to the mountains near Almaty.'],
+  ['st_think', 'Buy a few seconds', 'That’s an interesting question. I’ve never really thought about it, but I guess [idea].', 'A hard Part 3 question: start talking while you think', 'st', 'Why do some people prefer to live alone?', 'That’s an interesting question. I’ve never really thought about it, but I guess some people just need quiet to recharge.'],
+  ['st_word', 'Lost word', 'I can’t think of the exact word, but it’s a kind of [description].', 'You forgot a word: describe it instead of stopping', 'st', 'What kitchen tools do you use most?', 'I can’t think of the exact word, but it’s a kind of metal thing you use to make garlic into small pieces.'],
+  ['st_fix', 'Fix it out loud', '[the wrong bit], sorry, I mean [correct version].', 'You heard your own mistake: fixing it calmly counts in your favour', 'st', 'What did you do last weekend?', 'I go to the cinema, sorry, I mean I went to the cinema with my brother.'],
+  ['st_add', 'Add a second point', 'Not only that, but [second point] as well.', 'Your answer is too short: add one more idea', 'st', 'Why do people like sport?', 'It keeps them healthy. Not only that, but it’s a good way to meet friends as well.'],
+];
+const SF = {group: 's1', cur: null, shown: false, step: 1, ex: false};
+const sfState = () => (S.set.sframes && typeof S.set.sframes === 'object' ? S.set.sframes : (S.set.sframes = {}));
+const sfLearned = id => ((sfState()[id] || {}).days || []).length >= 3;
+SYNC_KEYS.push('sframes');
+function sfNext() {
+  const st = sfState(), today = todayK(), G = SFRAMES.filter(f => f[4] === SF.group);
+  const due = G.filter(f => !sfLearned(f[0]) && !((st[f[0]] || {}).days || []).includes(today));
+  const pick = due[0] || G.filter(f => !((st[f[0]] || {}).days || []).includes(today))[0] || G[Math.floor(Math.random() * G.length)];
+  Object.assign(SF, {cur: pick[0], shown: false, step: 1, ex: false});
+}
+function viewSFrames() {
+  if (!SF.cur || !SFRAMES.some(f => f[0] === SF.cur && f[4] === SF.group)) sfNext();
+  const f = SFRAMES.find(x => x[0] === SF.cur), G = SFRAMES.filter(x => x[4] === SF.group), st = sfState();
+  const chips = SF_GROUPS.map(([g, n]) => { const all = SFRAMES.filter(x => x[4] === g), L = all.filter(x => sfLearned(x[0])).length; return `<button class="${SF.group === g ? 'on' : ''}" data-act="sgroup" data-g="${g}" aria-pressed="${SF.group === g}">${n} <span class="muted">${L}/${all.length}</span></button>`; }).join('');
+  const side = `<section class="card stack" style="gap:2px"><div class="row"><h2 class="grow">${esc(SF_GROUPS.find(x => x[0] === SF.group)[1])}</h2><span class="small muted">${G.filter(x => sfLearned(x[0])).length} of ${G.length} learned</span></div><div class="list flat">${G.map(x => { const d = ((st[x[0]] || {}).days || []).length; return `<div class="li"><span class="grow"><span class="t">${esc(x[1])}</span><span class="s">${esc(x[3])}</span></span><span class="small ${sfLearned(x[0]) ? '' : 'muted'}">${sfLearned(x[0]) ? 'learned' : d + ' of 3 days'}</span></div>`; }).join('')}</div></section>`;
+  const main = SF.step === 1
+    ? `<section class="card stack" style="gap:10px"><div class="small muted">Step 1 of 2 · say it from memory, out loud</div><h2 style="font-size:20px">${esc(f[1])}</h2><p class="small muted" style="margin:0">${esc(f[3])}.</p>
+      ${SF.shown ? `<div class="note ok"><div class="small">The frame</div><b>${frSlots(f[2])}</b></div><div class="small muted">Close enough counts. Did you have it?</div><div class="row"><button class="btn primary" data-act="sfgot">I had it</button><button class="btn" data-act="sfmiss">Not yet</button></div>` : `<div class="row"><button class="btn primary" data-act="sfshow">Show the frame</button></div>`}</section>`
+    : `<section class="card stack" style="gap:10px"><div class="small muted">Step 2 of 2 · use it</div><h2>Answer this out loud with the frame</h2><p class="wbig" style="margin:0">${esc(f[5])}</p><div class="frame">${frSlots(f[2])}</div>
+      ${SF.ex ? `<div class="note"><div class="small">One way to say it</div>${esc(f[6])}</div>` : `<div class="row"><button class="btn" data-act="sfex">Hear an example</button></div>`}
+      <div class="row"><button class="btn primary" data-act="sfnext">Next frame</button><span class="small muted">Say it twice: once slowly, once at normal speed.</span></div></section>`;
+  return `<div class="stack page18"><a class="back" href="#today">${I.back} Speaking</a><div><h1>Speaking frames</h1><p class="lead" style="margin-top:4px">Ready ways to start and extend answers, so you never freeze. Learned = recalled on 3 different days.</p></div><div class="chips" role="group" aria-label="Frame group">${chips}</div><div class="cols even"><div class="main">${main}</div><div class="side">${side}</div></div></div>`;
+}
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act;
+  if (!['sgroup', 'sfshow', 'sfgot', 'sfmiss', 'sfnext', 'sfex', 'sframes'].includes(a)) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  if (a === 'sframes') { location.hash = 'sframes'; return; }
+  if (a === 'sgroup') { SF.group = b.dataset.g; SF.cur = null; }
+  else if (a === 'sfshow') SF.shown = true;
+  else if (a === 'sfgot') { const st = sfState(), o = st[SF.cur] || {days: []}; if (!o.days.includes(todayK())) o.days.push(todayK()); st[SF.cur] = o; saveMeta(); SF.step = 2; }
+  else if (a === 'sfmiss') SF.step = 2;
+  else if (a === 'sfex') { SF.ex = true; const f = SFRAMES.find(x => x[0] === SF.cur); if (f) speak(f[6], true); }
+  else if (a === 'sfnext') sfNext();
+  render();
+}, true);
+drillsCard = (orig => function () { return orig().replace('</div></section>', `<button class="dtile" data-act="sframes"><span class="dt">Speaking frames</span><span class="ds">${SFRAMES.filter(f => sfLearned(f[0])).length} of ${SFRAMES.length} learned · start and extend answers</span></button></div></section>`); })(drillsCard);
+TABS6[0][3].push('sframes');
+ENCH.push(['sframes', () => Object.keys(sfState()).length > 0]);
+TIPS.push(['[data-act="sframes"]', 'Ready sentence starts for Part 1, 2 and 3, plus ways to buy time and fix mistakes. You say them out loud from memory; one is learned after 3 different days.']);
+G_FREE.add('sframes'); G_FREE.add('sfex');
+/* ---------- render: frames page, guest locks ---------- */
+const render_v21 = render;
+render = function () {
+  render_v21();
+  if (r6() === 'sframes') { const v = $('#view'); v.innerHTML = viewSFrames(); v.dataset.route = 'sframes'; tipsApply(); }
+  gPopClose(); gLocks();
+};
+enchApply = (o => function () { if (!isGuest()) o(); })(enchApply);
 
 init();
 </script>

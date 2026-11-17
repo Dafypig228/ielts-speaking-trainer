@@ -155,7 +155,8 @@ function fmtPauses(stats: any) {
 
 async function analyze(body: any, userId: string) {
   const q = body.question || {};
-  const usage = await bumpUsage(userId);
+  if (!userId && !(await cfg("gemini_key"))) throw Object.assign(new Error("The coach isn't set up yet."), { code: "no_key" });
+  const usage = userId ? await bumpUsage(userId) : { used: 0, limit: 0 };
   const targets: string[] = Array.isArray(body.targets) ? body.targets.filter((x: unknown) => typeof x === "string").slice(0, 4) : [];
   const target = (body.target ? `\nThe student was challenged to use this naturally in the answer: "${body.target}". Say whether they used it and whether it sounded natural.` : "") +
     (targets.length ? `\nBefore answering, the app suggested these phrases: ${targets.map((t) => `"${t}"`).join(", ")}.` : "");
@@ -214,7 +215,7 @@ ${q.part === 2 ? `"card_check": array with one item per "You should say" point, 
   const parts: any[] = [{ text: prompt }];
   if (body.audio) parts.push({ inline_data: { mime_type: body.mime || "audio/wav", data: body.audio } });
   let r;
-  try { r = await gemini(parts, true, 0.3); } catch (e) { await refund(userId, usage.used); throw e; }
+  try { r = await gemini(parts, true, 0.3); } catch (e) { if (userId) await refund(userId, usage.used); throw e; }
   // IELTS overall = mean of the four criteria; .25 rounds up to .5 and .75 up to the next whole band
   if (r.data) r.data.used_targets = targets.length && Array.isArray(r.data.used_targets) ? r.data.used_targets.filter((x: any) => targets.includes(x?.phrase)) : [];
   const b = r.data?.bands;
@@ -321,7 +322,7 @@ Return ONLY JSON:
   const parts: any[] = [{ text: prompt }];
   if (body.audio) parts.push({ inline_data: { mime_type: body.mime || "audio/wav", data: body.audio } });
   let r;
-  try { r = await gemini(parts, true, 0.3); } catch (e) { await refund(userId, usage.used); throw e; }
+  try { r = await gemini(parts, true, 0.3); } catch (e) { if (userId) await refund(userId, usage.used); throw e; }
   return { ...r.data, model: r.model, usage };
 }
 
@@ -792,6 +793,25 @@ async function myVoice(body: any, uid: string) {
   return { url: su?.signedUrl };
 }
 
+/* ---------------- guest: one free coach check for people without an account ---------------- */
+async function guestAnalyze(body: any, req: Request) {
+  if ((await cfg("guest_on", "1")) !== "1") throw Object.assign(new Error("Free tries are switched off right now."), { code: "guest_off" });
+  const audio = String(body.audio || "");
+  if (!audio || audio.length > 5_600_000) throw Object.assign(new Error("The recording is missing or too long."), { code: "bad_request" });
+  const day = new Date().toISOString().slice(0, 10), key = "guest_" + day;
+  const ip = (req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "?").split(",")[0].trim();
+  const h = (await sha(ip + "|" + day + "|wasabi")).slice(0, 16);
+  let st: any = {}; try { st = JSON.parse(await cfg(key, "{}")) || {}; } catch { st = {}; }
+  st.n = st.n || 0; st.ips = st.ips || {};
+  const cap = parseInt(await cfg("guest_cap", "25")) || 25, perIp = parseInt(await cfg("guest_per_ip", "4")) || 4;
+  if (st.n >= cap) throw Object.assign(new Error("Today's free tries are used up. Come back tomorrow, or ask for an account."), { code: "guest_cap" });
+  if ((st.ips[h] || 0) >= perIp) throw Object.assign(new Error("This network has used its free tries for today."), { code: "guest_ip" });
+  st.n++; st.ips[h] = (st.ips[h] || 0) + 1; await setCfg(key, JSON.stringify(st));
+  const clean = { audio, mime: "audio/wav", question: body.question, dur: Math.min(240, Number(body.dur) || 0), stats: body.stats };
+  try { return await analyze(clean, ""); }
+  catch (e) { st.n--; st.ips[h]--; await setCfg(key, JSON.stringify(st)); throw e; }
+}
+
 /* ---------------- handler ---------------- */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -812,6 +832,9 @@ Deno.serve(async (req) => {
       }
       return j({ ok: true });
     }
+
+    if (action === "guest_analyze") return j(await guestAnalyze(body, req));
+    if (action === "guest_info") return j({ on: (await cfg("guest_on", "1")) === "1", contact: await cfg("guest_contact", "fforthosv") });
 
     const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
     const { data: ud, error: ue } = await admin.auth.getUser(token);
@@ -913,6 +936,8 @@ Deno.serve(async (req) => {
       if (typeof body.w_topics === "string" && body.w_topics.length < 60000) await setCfg("w_topics", body.w_topics);
       if (typeof body.support_text === "string") await setCfg("support_text", body.support_text.trim().slice(0, 1000));
       if (typeof body.support_link === "string") { const l = body.support_link.trim(); if (!l || /^https:\/\/\S{3,300}$/.test(l)) await setCfg("support_link", l); }
+      if (typeof body.guest_on === "boolean") await setCfg("guest_on", body.guest_on ? "1" : "0");
+      if (body.guest_cap) await setCfg("guest_cap", String(Math.max(0, Math.min(500, parseInt(body.guest_cap) || 25))));
       if (body.daily_limit) await setCfg("daily_limit", String(Math.max(1, Math.min(1000, parseInt(body.daily_limit) || 60))));
       if (body.model) await setCfg("model", String(body.model).trim());
       return j({ ok: true });
