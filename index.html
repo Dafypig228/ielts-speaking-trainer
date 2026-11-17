@@ -782,6 +782,77 @@ body.fitview #view .stick{overscroll-behavior:contain}
 @media (max-width:350px){.brand>span{display:none}}
 .vrow{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line)}
 .vrow:first-child{border-top:0}
+/* v23: coach loop */
+.lfocus{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 14px;border-radius:12px;background:var(--act-soft);color:var(--ink);border:1px solid color-mix(in oklch,var(--act) 30%,transparent)}
+.lfocus .kick{grid-column:1/-1;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--act-ink);font-weight:600}
+.lfocus b{font-size:15.5px}
+.lfocus .small{grid-column:1;color:var(--muted)}
+.lfocus .lprog{grid-column:2;grid-row:2/4;align-self:center;display:flex;gap:5px}
+.lprog i{width:10px;height:10px;border-radius:50%;border:2px solid var(--act);display:block}
+.lprog i.on{background:var(--act)}
+.lguess .chips,.lguess .chips button{flex-wrap:wrap}
+.lguess .chips{display:flex;gap:8px;flex-wrap:wrap}
+.lguess .chips button{min-width:52px;min-height:44px;font-size:16px;font-weight:600}
+.ltr{line-height:2.1;font-size:16.5px;user-select:none;-webkit-user-select:none}
+.lw{cursor:pointer;border-radius:5px;padding:2px 1px;-webkit-tap-highlight-color:transparent}
+.lw:hover{background:var(--sunken)}
+.lw.on{background:var(--rec-soft);color:var(--rec-ink);text-decoration:underline wavy var(--rec);text-underline-offset:4px}
+.lpz{color:var(--muted);font-weight:700}
+.lpz.mid{color:var(--warn);font-size:1.1em}
+.lverd .lhit{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--sunken)}
+.lverd .lhit .mk{display:inline-flex;width:20px;flex:none;margin-top:2px}
+.lverd .lhit.ok{background:var(--ok-soft)}.lverd .lhit.ok .mk{color:var(--ok)}
+.lverd .lhit.miss{background:var(--rec-soft)}.lverd .lhit.miss .mk{color:var(--rec)}
+.lverd .lhit.part{background:var(--warn-soft)}.lverd .lhit.part .mk{color:var(--warn)}
+.lverd .lhit .grow{display:flex;flex-direction:column;gap:3px}
+.lverd .lhit .q{font-style:italic}
+.lrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:8px 0;border-top:1px solid var(--line);font-size:14.5px}
+.lrow>span:first-child{min-width:92px;color:var(--muted)}
+.lbar{position:relative;flex:1 1 120px;min-width:100px;max-width:220px;height:8px;border-radius:4px;background:var(--sunken);overflow:visible}
+.lbar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--warn)}
+.lbar u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);text-decoration:none}
+.lretry input{width:100%;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.lvlock{border-style:dashed}
+.lfull>summary{cursor:pointer}
+.conf-m{font-size:11.5px;color:var(--muted);border:1px solid var(--line-strong);border-radius:999px;padding:0 6px;margin-left:4px;white-space:nowrap}
+@media (max-width:560px){.lrow>span:first-child{min-width:0;width:100%}.lguess .chips button{min-width:46px}}
+.fixrow .dislink{font-size:13px;margin-left:6px}
+.disbox{flex-basis:100%;display:flex;flex-direction:column;gap:6px;margin:6px 0 4px;padding:10px;border-radius:10px;background:var(--sunken)}
+.disbox input{font:inherit;font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.disres{flex-basis:100%;font-size:14px;margin:4px 0;padding:8px 10px;border-radius:8px;background:var(--sunken)}
+.disres.coach_right{background:var(--rec-soft)}.disres.student_right{background:var(--ok-soft)}
+.morning{border-color:var(--act);background:var(--act-soft)}
+.morning .kick,.wfirst .kick,.lverd .kick,.lmark .kick,.lguess .kick,.lretry .kick{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+#morntext{width:100%;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.weekline{text-align:center;margin-top:8px}
+.row>.hint{flex-basis:100%;order:3}
+.shtext{font-size:19px;line-height:1.6}
+.dtile-rate{border-color:var(--act);background:var(--act-soft)}
+.lguess .chips button[aria-pressed=true]{background:var(--act);color:var(--on-act);border-color:var(--act)}
+.lguess input{width:100%;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+/* v24: support page blocks */
+.sup{max-width:680px;margin:0 auto;gap:16px}
+.sup-text p{margin:0 0 10px;font-size:16.5px;line-height:1.6}
+.sup-text .sup-h{font-size:21px;margin:0 0 8px}
+.sup-fig{margin:0}
+.sup-img{display:block;border-radius:14px;max-width:100%;height:auto}
+.sup-fig.sz-s .sup-img{width:40%;min-width:160px}
+.sup-fig.sz-m .sup-img{width:70%}
+.sup-fig.sz-l .sup-img{width:100%}
+.sup-split{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:20px;align-items:center}
+.sup-split.img-right{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+.sup-split.img-right .sup-sim{order:2}
+.sup-split .sup-img{width:100%}
+.sup-split .sup-sim .sz-s{width:70%}
+@media (max-width:600px){.sup-split,.sup-split.img-right{grid-template-columns:1fr}.sup-split.img-right .sup-sim{order:0}.sup-fig.sz-s .sup-img,.sup-fig.sz-m .sup-img{width:100%}}
+.sup-eb textarea,.sup-eb input[type=text]{width:100%;font:inherit;font-size:16px;padding:9px 11px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.sup-ctl{display:flex;align-items:center;gap:6px}
+.sup-imgedit{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start}
+.sup-imgedit .sup-img{width:120px}
+.sup-noimg{width:120px;height:80px;border:1px dashed var(--line-strong);border-radius:10px;display:grid;place-items:center;text-align:center}
+.sup-add{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sup-prev{max-width:none}
+@media (max-width:480px){.sup-imgedit{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -4583,7 +4654,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611172159';
+const BUILD_ID = '202611172324';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -5109,7 +5180,7 @@ function fxStart() { Object.assign(FX, {deck: fxDeck(), i: 0, show: false, clue:
 function fxMark(ok) {
   const c = FX.deck[FX.i]; if (!c) return;
   const st = fxState(), s = st[c.k] || {n: 0};
-  s.n = ok ? (FX.clue ? 1 : s.n + 1) : 0; s.due = Date.now() + (ok ? [1, 3, 7, 21][Math.min(3, s.n - 1)] * 864e5 : 0); st[c.k] = s; saveMeta();
+  s.n = ok ? (FX.clue ? 1 : s.n + 1) : 0; s.due = Date.now() + (ok ? fxDueDays(s.n) * 864e5 : 0); st[c.k] = s; saveMeta();
   FX.res.push({c, ok}); FX.i++; FX.show = false; FX.clue = 0; render();
 }
 function fxMarked(said, better) {
@@ -5592,7 +5663,7 @@ async function rvCheck() {
   try {
     const e = essays().find(x => x.id === RV.e);
     const r = await api('wcheck', {mode: 'sentences', prompt: e.prompt, items: items.map(({i, s}) => ({i, orig: s.orig, now: s.now, errs: s.errs.map(g => ({said: g.said, better: g.better, rule: g.rule}))}))});
-    for (const x of r.results || []) { const s = RV.sents[x.i]; if (!s) continue; s.state = x.fixed ? 'fixed' : 'again'; if (!x.fixed && Array.isArray(x.still) && x.still.length) s.errs = x.still; if (x.fixed) { const st = fxState(); for (const g of s.errs) { const k = mkKey(g.said + '>' + g.better), o = st[k] || {n: 0}; o.n = s.clue ? 1 : o.n + 1; o.due = Date.now() + (s.clue ? 1 : 3) * 864e5; st[k] = o; } } }
+    for (const x of r.results || []) { const s = RV.sents[x.i]; if (!s) continue; s.state = x.fixed ? 'fixed' : 'again'; if (!x.fixed && Array.isArray(x.still) && x.still.length) s.errs = x.still; if (x.fixed) { const st = fxState(); for (const g of s.errs) { const k = mkKey(g.said + '>' + g.better), o = st[k] || {n: 0}; o.n = s.clue ? 1 : o.n + 1; o.due = Date.now() + (lastWeekMode() ? fxDueDays(o.n) : (s.clue ? 1 : 3)) * 864e5; st[k] = o; } } }
     rvSave(); const left = RV.sents.filter(s => s.state === 'again' || s.state === 'todo').length;
     toast(left ? `${(r.results || []).filter(x => x.fixed).length} fixed, ${left} to go.` : 'All fixed. Now compare with the corrected version.', 5000);
     const nx = RV.sents.findIndex(s => s.state === 'again' || s.state === 'todo'); if (nx >= 0) RV.cur = nx;
@@ -6989,6 +7060,635 @@ window.addEventListener('click', e => {
   addPhrase({phrase: b.dataset.w, meaning: b.dataset.ru, example: b.dataset.ex});
 }, true);
 G_FREE.add('w2pause');
+
+/* ================= v23: the coach loop (one focus, guess, self-mark, verdict, retry, dispute) ================= */
+/* ---------- 1. one focus per skill ---------- */
+const FOCI = {
+  extend: {label: 'Add a reason or example', habit: true, s: 1, target: 'Answer, then add one more thing: a reason ("because…") or an example from your life.'},
+  p3extend: {label: 'Part 3: view, reason, example', habit: true, s: 1, target: 'Give your view, say why, then one example or a comparison. Aim for 40–60 s.'},
+  p2structure: {label: 'Part 2: cover every point', habit: true, s: 1, target: 'One or two sentences per point on the card, then a reason why it matters. Talk until 1:30 at least.'},
+  midpause: {label: "Don't stop mid-sentence", habit: true, s: 1, target: 'If a word won\'t come, keep the sentence going: "what\'s the word…", "something like…", or describe it.'},
+  ontopic: {label: 'Answer the actual question', habit: true, s: 1, w: 1, target: 'First sentence answers the question directly. Then explain.'},
+  paraphrase: {label: 'Say the question in your own words', habit: true, s: 1, w: 1, target: 'Don\'t repeat the examiner\'s words: start with a synonym or a different structure.'},
+  slip: {label: 'Your repeating grammar slip', habit: true, s: 1, w: 1, target: ''},
+  accuracy: {label: 'Fewer grammar mistakes', habit: false, s: 1, w: 1, target: 'Shorter, safer sentences where you\'re unsure. Band 7 is about 1–2 mistakes per 100 words.'},
+  range: {label: 'More precise words', habit: false, s: 1, w: 1, target: 'Use one more exact word or phrase instead of a plain one (good → rewarding, a lot → a great deal).'},
+  wover: {label: 'Task 1: a clear overview', habit: true, w: 1, target: 'Second paragraph starts "Overall," and names the two biggest trends. No numbers in it.'},
+  wpos: {label: 'Task 2: your position from the start', habit: true, w: 1, target: 'Say your answer to the question in the introduction and keep the same one to the conclusion.'},
+};
+SYNC_KEYS.push('focus', 'focusLog');
+const examDaysLeft = () => { const n = daysLeft(); return n == null ? null : n; };
+const lastWeekMode = () => { const n = examDaysLeft(); return n != null && n >= 0 && n <= 7; };
+function errRate(a) {
+  const ai = a && a.ai; if (!ai || ai.error_count == null || !ai.transcript) return null;
+  const n = words(String(ai.transcript).replace(/\[[^\]]*\]/g, ' ').replace(/\b(um+|uh+|erm|er)\b/gi, ' ')).length;
+  return n >= 15 ? +ai.error_count / n * 100 : null;
+}
+const checkedAtts = (n = 8) => allAttempts().filter(a => a.ai && a.ai.bands).sort((x, y) => (y.ai.at || y.ts) - (x.ai.at || x.ts)).slice(0, n);
+function slipShared() {
+  const t = mkTexts(), s = t.filter(x => x.src === 's').slice(-8), w = t.filter(x => x.src === 'w').slice(-8);
+  const cnt = l => { const c = {}; for (const x of l) for (const g of x.errs) { const b = mkBucket(g && g.rule); if (b !== 'other' && b !== 'spell' && b !== 'word') c[b] = (c[b] || 0) + 1; } return c; };
+  const cs = cnt(s), cw = cnt(w);
+  const both = Object.keys(cs).filter(b => cw[b] && cs[b] + cw[b] >= 3).sort((x, y) => (cs[y] + cw[y]) - (cs[x] + cw[x]));
+  return both[0] || null;
+}
+function slipLabel() { const b = slipShared(); return b ? mkLabel(b) : 'Your repeating grammar slip'; }
+function focusPickS(skip) {
+  const l = checkedAtts(8), ok = k => k !== skip && (!lastWeekMode() || FOCI[k].habit);
+  if (!l.length) return 'extend';
+  const share = f => l.filter(f).length / l.length;
+  const cands = [];
+  if (l.filter(a => a.ai.on_topic && a.ai.on_topic.ok === false).length >= 2) cands.push('ontopic');
+  const short = l.filter(a => { const q = Q.get(a.qid); return q && a.dur < ZONE[q.part][0]; });
+  if (short.length / l.length >= 0.5) { const p = n => short.filter(a => (Q.get(a.qid) || {}).part === n).length; cands.push(p(3) >= p(1) && p(3) >= p(2) ? 'p3extend' : p(2) > p(1) ? 'p2structure' : 'extend'); }
+  if (share(a => (a.ai.pauses || []).some(p => p.where === 'mid' && +p.len >= 1.2)) >= 0.5) cands.push('midpause');
+  const rates = l.map(errRate).filter(x => x != null);
+  if (rates.length >= 2 && rates.reduce((x, y) => x + y, 0) / rates.length > 1.5) cands.push(slipShared() ? 'slip' : 'accuracy');
+  if (slipShared()) cands.push('slip');
+  cands.push('range', 'extend', 'paraphrase');
+  return cands.find(ok) || 'extend';
+}
+function focusPickW(skip) {
+  const l = essays().filter(e => e.fb).slice(-8), ok = k => k !== skip && (!lastWeekMode() || FOCI[k].habit);
+  const cands = [];
+  if (l.some(e => e.fb.overview_ok === false || (e.t1 && e.fb.overview && e.fb.overview.present === false))) cands.push('wover');
+  if (l.some(e => e.fb.position_ok === false)) cands.push('wpos');
+  if (slipShared()) cands.push('slip');
+  if (l.length) {
+    const r = l.map(e => (e.fb.errors || []).length / Math.max(50, words(e.text || '').length) * 100);
+    if (r.reduce((x, y) => x + y, 0) / r.length > 1.5) cands.push('accuracy');
+  }
+  cands.push('accuracy', 'wpos', 'wover');
+  return cands.find(ok) || 'accuracy';
+}
+const pickFocus = (skill, skip) => (skill === 'w' ? focusPickW(skip) : focusPickS(skip));
+function focusAll() { if (!S.set.focus || typeof S.set.focus !== 'object') S.set.focus = {}; return S.set.focus; }
+function focusOf(skill) {
+  const all = focusAll();
+  let f = all[skill];
+  if (!f || !FOCI[f.key] || (lastWeekMode() && !FOCI[f.key].habit)) { f = all[skill] = {key: pickFocus(skill), hits: [], misses: 0, since: Date.now()}; saveMeta(); }
+  return f;
+}
+function focusInfo(skill) {
+  const f = focusOf(skill), d = FOCI[f.key];
+  const label = f.key === 'slip' ? slipLabel() : d.label;
+  const target = f.key === 'slip' ? `Watch ${label.toLowerCase()}: say the sentence slower where you usually slip.` : d.target;
+  return {key: f.key, label, target, hits: f.hits.length, misses: f.misses};
+}
+function focusRecord(skill, qid, hit, key) {
+  const f = focusOf(skill);
+  if (key && key !== f.key) return false;
+  S.set.focusLog = [...(Array.isArray(S.set.focusLog) ? S.set.focusLog : []), {ts: Date.now(), skill, key: f.key, qid, hit: !!hit}].slice(-300);
+  let done = false;
+  if (hit) { f.misses = 0; if (!f.hits.includes(qid)) f.hits.push(qid); if (f.hits.length >= 3) done = true; }
+  else f.misses = (f.misses || 0) + 1;
+  if (done) { const old = f.key; focusAll()[skill] = {key: pickFocus(skill, old), hits: [], misses: 0, since: Date.now(), after: old}; toast(`Focus done: ${FOCI[old].label}. Next: ${FOCI[focusAll()[skill].key].label}.`, 6000); }
+  saveMeta();
+  return done;
+}
+function weekCount() {
+  const t = Date.now() - 7 * 864e5, at = allAttempts().filter(a => a.ts >= t);
+  const log = (Array.isArray(S.set.focusLog) ? S.set.focusLog : []).filter(x => x.ts >= t);
+  return {answers: at.length, retries: at.filter(a => a.ai && a.ai.loop && a.ai.loop.prevId).length, hits: log.filter(x => x.hit).length};
+}
+
+/* ---------- 2. the answer loop ---------- */
+const LOOPQ = new Map();
+const isLoopAi = ai => !!(ai && (ai.bands_range || ai.verdict || ai.focus_check));
+const loopOf = a => (a && a.ai && a.ai.loop) || {};
+function setLoop(id, patch) { const a = getAtt(id); if (!a || !a.ai) return; updAtt(id, {ai: {...a.ai, loop: {...loopOf(a), ...patch}}}); }
+function prevPayload(f) {
+  const ai = f.ai, ff = ai.fix_first;
+  return {problem: ff && typeof ff === 'object' ? ff.problem : String(ff || ai.next_time || ''), steps: ff && Array.isArray(ff.steps) ? ff.steps : [], transcript: ai.transcript || '', bands: ai.bands || {}, misses: focusOf('s').misses || 0};
+}
+const api_v23 = api;
+api = function (action, body = {}) {
+  if (action === 'analyze' && body && body.question) { const k = JSON.stringify(body.question) + '|' + body.dur, c = LOOPQ.get(k); if (c) Object.assign(body, c); }
+  return api_v23(action, body);
+};
+const coachAttempt_v23 = coachAttempt;
+coachAttempt = async function (id) {
+  const a = getAtt(id); if (!a || COACH.busy.has(id)) return coachAttempt_v23(id);
+  const retry = !!(P.first && P.aid === id && P.first !== id);
+  let f = retry ? getAtt(P.first) : null;
+  if (f && !(f.ai && f.ai.transcript)) { const t0 = f.ts; f = allAttempts().filter(x => x.qid === a.qid && x.id !== id && x.ts >= t0 && x.ts < a.ts && x.ai && x.ai.transcript).sort((x, y) => y.ts - x.ts)[0] || null; }
+  const fi = focusInfo('s'), ctx = {focus: {key: fi.key, label: fi.label, target: fi.target}, examDays: examDaysLeft()};
+  if (f && f.ai && f.ai.transcript) { ctx.prev = prevPayload(f); if (P.change) ctx.change = P.change; }
+  const k = JSON.stringify(qPayload(a.qid)) + '|' + a.dur, before = a.ai && a.ai.at;
+  LOOPQ.set(k, ctx);
+  try { await coachAttempt_v23(id); } finally { LOOPQ.delete(k); }
+  const b = getAtt(id);
+  if (!b || !b.ai || b.ai.at === before) return;
+  const inP = r6() === 'practice' && P.aid === id;
+  setLoop(id, {fresh: inP, prevId: ctx.prev ? f.id : null, change: ctx.prev ? (P.change || '') : '', focus: fi.key});
+  const ai = getAtt(id).ai;
+  if (!ctx.prev && ai.focus_check && typeof ai.focus_check.hit === 'boolean') focusRecord('s', b.qid, ai.focus_check.hit, fi.key);
+  if (ctx.prev && ai.verdict && ai.verdict.fixed === 'no') { const fo = focusOf('s'); fo.misses = (fo.misses || 0) + 1; saveMeta(); }
+  render();
+};
+const doRec_v23 = doRec;
+doRec = function (again) {
+  if (again) { const el = document.getElementById('lchange'); if (el) P.change = el.value.trim().slice(0, 300); } else P.change = '';
+  return doRec_v23(again);
+};
+/* the focus, shown before answering */
+function focusBanner(skill = 's') {
+  const f = focusInfo(skill);
+  return `<section class="lfocus"><div class="kick">Your focus${lastWeekMode() ? ' · exam week' : ''}</div><b>${esc(f.label)}</b><span class="small">${esc(f.target)}</span><span class="lprog" aria-label="${f.hits} of 3 done">${[0, 1, 2].map(i => `<i class="${i < f.hits ? 'on' : ''}"></i>`).join('')}</span></section>`;
+}
+const viewPractice_v23 = viewPractice;
+viewPractice = function () {
+  const h = viewPractice_v23(), q = curQ();
+  if (!q || isGuest() || P.mode === 'warm' || P.stage !== 'ready' || (R.on && R.qid === q.id)) return h;
+  const i = h.indexOf('<p class="aim">');
+  return i < 0 ? h : h.slice(0, i) + focusBanner('s') + h.slice(i);
+};
+/* transcript as tappable words; mid-sentence pauses drawn as a bar */
+function loopTokens(ai) {
+  const out = [], mids = (ai.pauses || []).filter(p => p.where === 'mid').map(p => +p.len);
+  String(ai.transcript || '').replace(/\[pause ([\d.]+)\s*s?\]|\S+/gi, (m, len) => { out.push(len != null ? {pz: +len, mid: mids.some(x => Math.abs(x - len) < 0.25)} : {w: m}); return m; });
+  return out;
+}
+const normW = w => String(w).toLowerCase().replace(/[^a-z0-9']/g, '');
+function coachSpans(ai, toks) {
+  const ws = toks.map((t, i) => [normW(t.w || ''), i]).filter(([w]) => w);
+  return (ai.grammar || []).map(g => {
+    const said = String(g.said || '').split(/\s+/).map(normW).filter(Boolean); if (!said.length) return null;
+    for (let s = 0; s + said.length <= ws.length; s++) if (said.every((w, j) => ws[s + j][0] === w)) return ws.slice(s, s + said.length).map(x => x[1]);
+    return null;
+  });
+}
+function markView(a) {
+  const ai = a.ai, L = loopOf(a), toks = loopTokens(ai), marked = new Set(L.marked || []);
+  const sp = toks.map((t, i) => t.w != null ? `<span class="lw ${marked.has(i) ? 'on' : ''}" data-act="lmark" data-a="${a.id}" data-i="${i}">${esc(t.w)}</span>` : `<span class="lpz ${t.mid ? 'mid' : ''}" title="pause ${t.pz.toFixed(1)} s${t.mid ? ', in the middle of a sentence' : ''}">${t.mid ? '‖' : '·'}</span>`).join(' ');
+  return `<section class="card stack lmark"><div class="kick">Step 2 of 3</div><h2>Find your own mistakes first</h2><p class="small muted" style="margin:0">Tap the words you think are wrong. <span class="lpz mid">‖</span> = you stopped in the middle of a sentence.</p>
+    <p class="tr ltr">${sp}</p><div class="row"><button class="btn primary" data-act="lreveal" data-a="${a.id}">Show the coach's marks</button><button class="btn ghost sm" data-act="lreveal" data-a="${a.id}" data-skip="1">Skip</button></div></section>`;
+}
+function guessView(a) {
+  return `<section class="card stack lguess"><div class="kick">Step 1 of 3</div><h2>What band was that?</h2><p class="small muted" style="margin:0">Guess before you look. Guessing first makes the feedback stick.</p>
+    <div class="chips" role="group" aria-label="Your guess">${[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5].map(b => `<button data-act="lguess" data-a="${a.id}" data-v="${b}">${fmtB(b)}</button>`).join('')}</div>
+    <div><button class="btn ghost sm" data-act="lguess" data-a="${a.id}" data-v="">Skip</button></div></section>`;
+}
+function bandRange(ai) { const r = ai.bands_range; return r && r.low !== r.high ? `${fmtB(r.low)}–${fmtB(r.high)}` : fmtB(r ? r.low : ai.bands.overall); }
+function verdictView(a) {
+  const ai = a.ai, L = loopOf(a), fc = ai.focus_check, rate = errRate(a);
+  const fl = FOCI[L.focus] ? (L.focus === 'slip' ? slipLabel() : FOCI[L.focus].label) : '';
+  let found = '';
+  if (L.revealed && !L.skipped) {
+    const spans = coachSpans(ai, loopTokens(ai)).filter(Boolean), m = new Set(L.marked || []);
+    const caught = spans.filter(sp => sp.some(i => m.has(i))).length, extra = [...m].filter(i => !spans.some(sp => sp.includes(i))).length;
+    found = `<div class="lrow"><span>Your marks</span><b>${spans.length ? `${caught} of ${spans.length} mistakes found` : 'The coach marked no grammar mistakes'}</b>${extra ? `<span class="small muted">${extra} word${extra > 1 ? 's' : ''} you marked ${extra > 1 ? 'are' : 'is'} fine</span>` : ''}</div>`;
+  }
+  const off = ai.on_topic && ai.on_topic.ok === false ? `<div class="note amber"><b>Off topic.</b> ${esc(ai.on_topic.note || 'This answer does not answer the question.')}</div>` : '';
+  const fh = fc ? `<div class="lhit ${fc.hit ? 'ok' : 'miss'}"><span class="mk">${fc.hit ? I.check : I.x}</span><span class="grow"><b>${esc(fl || 'Your focus')}: ${fc.hit ? 'done' : 'not yet'}</b>${fc.quote ? `<span class="q">“${esc(fc.quote)}”</span>` : ''}${fc.note ? `<span class="small">${esc(fc.note)}</span>` : ''}</span></div>` : '';
+  const er = rate != null ? `<div class="lrow"><span>Mistakes</span><b>${rate.toFixed(1)} per 100 words</b><span class="lbar"><i style="width:${Math.min(100, rate / 4 * 100)}%"></i><u style="left:${1.5 / 4 * 100}%" title="band 7 ≈ 1.5"></u></span><span class="small muted">band 7 ≈ 1.5</span></div>` : '';
+  const g = L.guess != null && L.guess !== '' ? ` <span class="small muted">· your guess ${fmtB(+L.guess)}</span>` : '';
+  return `${off}<section class="card stack lverd"><div class="kick">The coach's verdict</div>${fh}
+    <div class="lrow"><span>Band</span><b>${bandRange(ai)}</b>${g}</div>${er}${found}</section>`;
+}
+function retryCard(a, q) {
+  return `<section class="card stack lretry"><div class="kick">Step 3 of 3</div><h2>Say it again</h2>
+    <label for="lchange" class="small" style="font-weight:600">What will you change? One line.</label>
+    <input id="lchange" maxlength="300" autocomplete="off" placeholder="e.g. add a reason with “because”" value="${esc(P.change || '')}">
+    <div class="row"><button class="btn primary" data-act="lretry">${I.again} Say it again</button><button class="btn sm" data-act="lnext" data-q="${a.qid}">New question, same type</button></div></section>`;
+}
+function retryVerdict(a) {
+  const v = a.ai.verdict, L = loopOf(a); if (!v) return '';
+  const word = {yes: 'Fixed', partly: 'Partly fixed', no: 'Not fixed yet'}[v.fixed] || 'Checked';
+  return `<section class="card stack lverd"><div class="kick">Second try</div><div class="lhit ${v.fixed === 'yes' ? 'ok' : v.fixed === 'no' ? 'miss' : 'part'}"><span class="mk">${v.fixed === 'no' ? I.x : I.check}</span><span class="grow"><b>${word}</b>${v.quote ? `<span class="q">“${esc(v.quote)}”</span>` : ''}${v.change ? `<span class="small">${esc(v.change)}</span>` : ''}</span></div>
+    ${L.change ? `<div class="small muted">You planned: “${esc(L.change)}”</div>` : ''}
+    ${v.next ? `<div class="lrow"><span>Next question</span><b style="font-weight:500">${esc(v.next)}</b></div>` : ''}
+    <div class="row"><button class="btn primary" data-act="lnext" data-q="${a.qid}">New question, same type ${I.next}</button></div></section>`;
+}
+const coachDetail_v23 = coachDetail;
+coachDetail = function (a, q) {
+  const cd = coachDetail_v23(a, q), ai = a.ai;
+  if (!isLoopAi(ai)) return cd;
+  const L = loopOf(a), inP = r6() === 'practice' && P.aid === a.id;
+  if (L.prevId && ai.verdict) {
+    if (!inP) return {main: retryVerdict(a).replace(/<div class="row"><button class="btn primary" data-act="lnext"[\s\S]*?<\/div><\/section>$/, '</section>') + cd.main, side: cd.side};
+    return {main: retryVerdict(a) + `<details class="notes lfull"><summary>The coach's full notes on this try</summary>${cd.main}</details>`, side: cd.side};
+  }
+  if (inP && L.fresh && !L.prevId && L.guess === undefined) return {main: guessView(a), side: ''};
+  if (inP && L.fresh && !L.prevId && !L.revealed) return {main: verdictView(a).replace(/<div class="lrow"><span>Band[\s\S]*?<\/section>$/, '</section>').replace(/<section class="card stack lverd">[\s\S]*<\/section>$/, '') + markView(a), side: ''};
+  return {main: verdictView(a) + (inP ? retryCard(a, q) : '') + cd.main.replace(/<div><button class="btn primary sm" data-act="pagain">[\s\S]*?<\/button><\/div>/, ''), side: cd.side};
+};
+/* better versions: behind one confirm until the second try */
+const versionsBox_v23 = versionsBox;
+function retriedFrom(id) { return allAttempts().some(b => b.ai && b.ai.loop && b.ai.loop.prevId === id); }
+versionsBox = function (a) {
+  if (!a || !a.ai || !isLoopAi(a.ai)) return versionsBox_v23(a);
+  const L = loopOf(a);
+  if (L.prevId || L.showVersions || retriedFrom(a.id)) return versionsBox_v23(a);
+  return `<section class="card stack lvlock"><h2>Better versions</h2><p class="small muted" style="margin:0">They open after your second try. Fixing it yourself first sticks better than reading the answer.</p>
+    <div>${L.askV ? `<span class="small">Sure? </span><button class="btn sm" data-act="lversions" data-a="${a.id}" data-y="1">Show them now</button>` : `<button class="btn ghost sm" data-act="lversions" data-a="${a.id}">I want to see them before trying</button>`}</div></section>`;
+};
+/* the next question of the same kind, not answered yet */
+function sameTypeNext(qid) {
+  const q = Q.get(qid); if (!q) return null;
+  const pool = [...Q.values()].filter(x => x.part === q.part && x.id !== qid && !x.fu && !nAtt(x.id) && !P.deck.includes(x.id) && (q.part !== 1 || x.pid !== q.pid));
+  const l = pool.length ? pool : [...Q.values()].filter(x => x.part === q.part && x.id !== qid && !x.fu);
+  return l.length ? l[Math.floor(Math.random() * l.length)].id : null;
+}
+window.addEventListener('input', e => { if (e.target && e.target.id === 'lchange') P.change = e.target.value.slice(0, 300); }, true);
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const act = b.dataset.act;
+  if (!['lguess', 'lmark', 'lreveal', 'lversions', 'lnext', 'lretry'].includes(act)) return;
+  if (b.closest('.glock')) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  const id = b.dataset.a, a = id && getAtt(id);
+  if (act === 'lguess') setLoop(id, {guess: b.dataset.v === '' ? null : +b.dataset.v});
+  else if (act === 'lmark') { const L = loopOf(a), m = new Set(L.marked || []), i = +b.dataset.i; m.has(i) ? m.delete(i) : m.add(i); setLoop(id, {marked: [...m]}); }
+  else if (act === 'lreveal') setLoop(id, {revealed: true, skipped: !!b.dataset.skip});
+  else if (act === 'lversions') { if (b.dataset.y) setLoop(id, {showVersions: true, askV: false}); else setLoop(id, {askV: true}); }
+  else if (act === 'lretry') { doRec(true); }
+  else if (act === 'lnext') { const n = sameTypeNext(b.dataset.q); if (!n) return toast('No more questions of this type.'); P.first = null; P.change = ''; P.deck.splice(P.i + 1, 0, n); nextQuestion(); return; }
+  render();
+}, true);
+['lguess', 'lmark', 'lreveal', 'lversions'].forEach(x => G_FREE.add(x));
+['lnext', 'lretry'].forEach(x => G_TRY.add(x));
+/* band box shows the range the coach is sure of */
+const bandsBox_v23 = bandsBox;
+bandsBox = function (ai) {
+  const h = bandsBox_v23(ai), r = ai && ai.bands_range;
+  return r && r.low !== r.high ? h.replace(/<div class="bb-big">[^<]*<\/div>/, `<div class="bb-big">${fmtB(r.low)}–${fmtB(r.high)}</div><div class="small muted">bet on ${fmtB(r.low)}</div>`) : h;
+};
+/* ---------- 3. "I disagree" on any marked point ---------- */
+const DIS = {open: null, busy: null};
+const attOfAi = ai => allAttempts().find(x => x.ai === ai);
+function disRow(a, k, i, it) {
+  const key = a.id + ':' + k + ':' + i, done = ((a.ai.disputes || []).filter(d => d.k === k && d.i === i)).pop();
+  const conf = it.conf === 'medium' ? '<span class="conf-m" title="The coach is not sure: it may come from the recording">not sure</span>' : '';
+  if (done) {
+    const w = {coach_right: 'Re-checked: still a mistake.', student_right: 'Re-checked: you\'re right, this is fine.', unclear: 'Re-checked: both can work here.'}[done.verdict];
+    return `${conf}<div class="disres ${done.verdict}"><b>${w}</b> ${esc(done.reason)}</div>`;
+  }
+  if (DIS.busy === key) return `${conf}<div class="disres">Re-checking from scratch…</div>`;
+  if (DIS.open === key) return `${conf}<div class="disbox"><label class="small" for="disarg">Why do you think it's right?</label><input id="disarg" maxlength="600" autocomplete="off" placeholder="e.g. “people” is already plural"><div class="row"><button class="btn sm primary" data-act="ldissend" data-a="${a.id}" data-k="${k}" data-i="${i}">Re-check</button><button class="btn sm ghost" data-act="ldis" data-a="${a.id}" data-k="${k}" data-i="${i}" data-close="1">Cancel</button></div></div>`;
+  return `${conf}<button class="linkbtn dislink" data-act="ldis" data-a="${a.id}" data-k="${k}" data-i="${i}">I disagree</button>`;
+}
+const fixesBox_v23 = fixesBox;
+fixesBox = function (ai) {
+  const a = attOfAi(ai);
+  if (!a || !isLoopAi(ai) || !STANDALONE || isGuest()) return fixesBox_v23(ai);
+  const g = (ai.grammar || []).map((x, i) => `<div class="fixrow"><span class="err">${esc(x.said)}</span><span class="arr">→</span><span class="cor">${esc(x.better)}</span>${x.why ? `<span class="small muted why">${esc(x.why)}</span>` : ''}${disRow(a, 'g', i, x)}</div>`).join('');
+  const v = (ai.vocab || []).slice(0, 4).map((x, i) => `<div class="fixrow"><span class="weak">${esc(x.said)}</span><span class="arr">→</span><span class="cor">${esc((x.better || []).join(' / '))}</span>${x.note ? `<span class="small muted why">${esc(x.note)}</span>` : ''}${disRow(a, 'v', i, x)}</div>`).join('');
+  const r = (ai.repeats || []).map(x => `<div class="fixrow"><span class="weak">“${esc(x.word)}” ×${esc(x.times)}</span><span class="arr">→</span><span class="cor">${esc((x.instead || []).join(' / '))}</span></div>`).join('');
+  return (g ? `<section class="stack" style="gap:4px"><h2>Mistakes</h2>${g}</section>` : '') + (v || r ? `<section class="stack" style="gap:4px"><h2>Better words</h2>${v}${r}</section>` : '');
+};
+async function disSend(id, k, i, arg) {
+  const a = getAtt(id); if (!a || !a.ai) return;
+  const it = (k === 'g' ? a.ai.grammar : a.ai.vocab)[i]; if (!it) return;
+  if (!arg) return toast('Write why you think it\'s right.');
+  const key = id + ':' + k + ':' + i; DIS.busy = key; DIS.open = null; render();
+  try {
+    const r = await api('dispute', {point: {kind: k === 'g' ? 'grammar' : 'vocab', said: it.said, coach: k === 'g' ? it.better : (it.better || []).join(' / ')}, argument: arg, transcript: a.ai.transcript || '', question: qPayload(a.qid)});
+    if (SB.me && r.usage) { SB.me.used = r.usage.used; SB.me.limit = r.usage.limit; }
+    const b = getAtt(id);
+    updAtt(id, {ai: {...b.ai, disputes: [...(b.ai.disputes || []), {k, i, argument: arg, verdict: r.verdict, reason: r.reason, at: Date.now()}]}});
+  } catch (e) { toast(e.message || 'The re-check failed.', 6000); }
+  finally { DIS.busy = null; render(); }
+}
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const act = b.dataset.act;
+  if (act !== 'ldis' && act !== 'ldissend') return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  const key = b.dataset.a + ':' + b.dataset.k + ':' + b.dataset.i;
+  if (act === 'ldis') { DIS.open = b.dataset.close ? null : key; render(); if (DIS.open) setTimeout(() => { const el = document.getElementById('disarg'); if (el) el.focus(); }, 30); }
+  else { const el = document.getElementById('disarg'); disSend(b.dataset.a, b.dataset.k, +b.dataset.i, el ? el.value.trim() : ''); }
+}, true);
+/* ---------- 4. mistakes come back on a schedule set by the test date ---------- */
+function fxDueDays(n) {
+  const k = Math.max(1, n || 1) - 1;
+  return lastWeekMode() ? [1, 2, 2][Math.min(2, k)] : [1, 3, 7, 21][Math.min(3, k)];
+}
+/* ---------- 5. writing: overview / position first, the writing focus, rewrite your own sentences ---------- */
+function wFocusHit(e, key) {
+  const fb = e.fb || {}, words = Math.max(50, wWords(e.text || ''));
+  if (key === 'wover' && e.task !== 1) return null;
+  if (key === 'wpos' && e.task === 1) return null;
+  if (key === 'wover') return fb.overview_ok != null ? !!fb.overview_ok : !!(fb.overview && fb.overview.present);
+  if (key === 'wpos') return fb.position_ok != null ? !!fb.position_ok : null;
+  if (key === 'accuracy') return (fb.errors || []).length / words * 100 <= 1.5;
+  if (key === 'slip') { const b = slipShared(); return b ? !(fb.errors || []).some(g => mkBucket(g.rule) === b) : null; }
+  if (key === 'ontopic') return fb.position_ok != null ? !!fb.position_ok : null;
+  return null;
+}
+function wFirstCard(e) {
+  const fb = e.fb || {}, t1 = e.task === 1;
+  let first = '';
+  if (t1) {
+    const ok = fb.overview_ok != null ? fb.overview_ok : fb.overview && fb.overview.present;
+    first = `<div class="lhit ${ok ? 'ok' : 'miss'}"><span class="mk">${ok ? I.check : I.x}</span><span class="grow"><b>Overview: ${ok ? 'clear' : 'not clear yet'}</b>${fb.overview && fb.overview.quote ? `<span class="q">“${esc(fb.overview.quote)}”</span>` : ''}${!ok && fb.overview && fb.overview.fix ? `<span class="small">A clear one here: ${esc(fb.overview.fix)}</span>` : ''}</span></div>`;
+  } else if (fb.position_ok != null) {
+    const ok = fb.position_ok, p = fb.position || {};
+    first = `<div class="lhit ${ok ? 'ok' : 'miss'}"><span class="mk">${ok ? I.check : I.x}</span><span class="grow"><b>Your position: ${ok ? 'clear from the start' : 'not clear yet'}</b>${p.quote ? `<span class="q">“${esc(p.quote)}”</span>` : ''}${!ok && p.fix ? `<span class="small">Try: ${esc(p.fix)}</span>` : ''}</span></div>`;
+  }
+  const f = e.focus && FOCI[e.focus.key];
+  const fl = f && e.focus.hit != null ? `<div class="lrow"><span>Your focus</span><b>${esc(e.focus.key === 'slip' ? slipLabel() : f.label)}</b>${e.focus.hit == null ? '' : `<span class="small ${e.focus.hit ? 'ok' : 'warnt'}">${e.focus.hit ? 'done' : 'not yet'}</span>`}</div>` : '';
+  const errs = (fb.errors || []).length, rate = errs / Math.max(50, wWords(e.text || '')) * 100;
+  const er = `<div class="lrow"><span>Mistakes</span><b>${rate.toFixed(1)} per 100 words</b><span class="lbar"><i style="width:${Math.min(100, rate / 4 * 100)}%"></i><u style="left:${1.5 / 4 * 100}%"></u></span><span class="small muted">band 7 ≈ 1.5</span></div>`;
+  const rw = errs && !(e.rev && e.rev.done) ? `<div class="small muted">Next: <b>Fix your own text</b> (top right) — rewrite the marked sentences before you open the corrected version.</div>` : '';
+  return `<section class="card stack lverd wfirst"><div class="kick">Check this first</div>${first}${fl}${er}${rw}</section>`;
+}
+const w2Result_v23 = w2Result;
+w2Result = function (e) {
+  if (e && e.fb && !e.focus && !isGuest() && (e.fb.position_ok != null || e.fb.overview_ok != null)) {
+    const key = focusOf('w').key, hit = wFocusHit(e, key);
+    e.focus = {key, hit}; S.set.essays = essays().slice(); saveMeta();
+    if (hit != null) focusRecord('w', e.id, hit, key);
+  }
+  const h = w2Result_v23(e);
+  if (!e || !e.fb) return h;
+  const card = wFirstCard(e);
+  let i = h.indexOf('class="card fixfirst'); i = i >= 0 ? h.indexOf('</section>', i) + 10 : -1;
+  if (i < 10) { const j = h.indexOf('<div class="wg2"><div class="stack">'); i = j >= 0 ? j + 36 : -1; }
+  return i > 0 ? h.slice(0, i) + card + h.slice(i) : card + h;
+};
+/* ---------- 6. exam morning ---------- */
+const MORN = {text: '', qs: []};
+function morningCard() {
+  const n = daysLeft();
+  if (n !== 0 && n !== 1) return '';
+  return `<section class="card stack morning"><div class="kick">${n === 0 ? 'Exam day' : 'Tomorrow is the exam'}</div><h2>${n === 0 ? 'Ten minutes before you go' : 'Tomorrow morning'}</h2><p class="small muted" style="margin:0">Write down what worries you, then warm up your voice with three easy Part 1 answers.</p><div><button class="btn primary" data-act="morning">Start</button></div></section>`;
+}
+function viewMorning() {
+  if (!MORN.qs.length) MORN.qs = shuffle([...Q.values()].filter(q => q.part === 1 && !q.fu)).slice(0, 3).map(q => q.id);
+  return `<div class="stack wpage"><a class="back" href="#today">${I.back} Today</a><div><h1>Exam morning</h1><p class="lead" style="margin-top:4px">Two short steps. About 10 minutes.</p></div>
+    <section class="card stack"><div class="kick">1 · Empty your head</div><h2>What worries you about today?</h2><p class="small muted" style="margin:0">Write it all down for a few minutes. It is not saved anywhere and is gone when you leave this page. Writing worries down before a test frees up attention for the test itself.</p>
+      <textarea id="morntext" rows="6" placeholder="Anything: the examiner, a topic, being late, forgetting words…">${esc(MORN.text)}</textarea></section>
+    <section class="card stack"><div class="kick">2 · Warm up</div><h2>Three easy Part 1 answers</h2><p class="small muted" style="margin:0">Say them out loud. No coach, no score: this is just to get your voice and English going.</p>
+      <ol class="small">${MORN.qs.map(id => `<li>${esc(Q.get(id).t)}</li>`).join('')}</ol>
+      <div><button class="btn primary" data-act="mornwarm">${I.mic} Start the warm-up</button></div></section></div>`;
+}
+window.addEventListener('input', e => { if (e.target && e.target.id === 'morntext') MORN.text = e.target.value; }, true);
+window.addEventListener('hashchange', () => { if (r6() !== 'morning') { MORN.text = ''; MORN.qs = []; } });
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const act = b.dataset.act;
+  if (act !== 'morning' && act !== 'mornwarm') return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  if (act === 'morning') { location.hash = 'morning'; return; }
+  const qs = MORN.qs.slice(); MORN.text = '';
+  startPractice(qs, {back: 'today', title: 'Warm-up', mode: 'warm'});
+}, true);
+['morning', 'mornwarm'].forEach(x => G_FREE.add(x));
+const viewToday_v23 = viewToday;
+viewToday = function () {
+  const h = viewToday_v23(); if (r6() !== 'today') return h;
+  const wc = weekCount(), mc = morningCard();
+  const week = wc.answers ? `<div class="small muted weekline">This week: ${wc.answers} answer${wc.answers > 1 ? 's' : ''}${wc.retries ? `, ${wc.retries} said again` : ''}${wc.hits ? `, focus hit ${wc.hits} time${wc.hits > 1 ? 's' : ''}` : ''}.</div>` : '';
+  const i = h.indexOf('<section');
+  return i < 0 ? mc + h + week : h.slice(0, i) + mc + h.slice(i) + week;
+};
+const render_v23 = render;
+render = function () {
+  render_v23();
+  if (r6() === 'morning') { const v = $('#view'); v.innerHTML = viewMorning(); v.dataset.route = 'morning'; gLocks(); }
+};
+qfAtt = (o => id => o(id) || (P.mode === 'warm' && P.deck.includes((getAtt(id) || {}).qid)))(qfAtt);
+/* ---------- 7. Part 2: did the talk use the notes? ---------- */
+const coachAttempt_v23b = coachAttempt;
+coachAttempt = function (id) {
+  const a = getAtt(id), q = a && Q.get(a.qid);
+  if (q && q.part === 2) { const k = JSON.stringify(qPayload(a.qid)); const n = (S.notes[q.pid] || '').trim(); if (n) LOOPQ.set(k + '#notes', n); }
+  return coachAttempt_v23b(id);
+};
+api = (o => function (action, body = {}) {
+  if (action === 'analyze' && body && body.question && body.question.part === 2) { const n = LOOPQ.get(JSON.stringify(body.question) + '#notes'); if (n) { body.p2notes = n; LOOPQ.delete(JSON.stringify(body.question) + '#notes'); } }
+  return o(action, body);
+})(api);
+function notesCheckBox(ai) {
+  const n = ai && ai.notes_check; if (!n || (!(n.used || []).length && !(n.missed || []).length)) return '';
+  return `<section class="card stack nchk"><h2>Your notes vs your talk</h2>
+    ${(n.used || []).length ? `<div class="small"><b class="ok">Used:</b> ${n.used.map(esc).join(', ')}</div>` : ''}
+    ${(n.missed || []).length ? `<div class="small"><b class="warnt">Never got to:</b> ${n.missed.map(esc).join(', ')}</div><div class="small muted">Notes you don't use cost preparation time. Next card: 1–2 words per point, then move on when you've said them.</div>` : '<div class="small muted">You used everything you planned.</div>'}</section>`;
+}
+coachDetail = (o => function (a, q) {
+  const cd = o(a, q), box = a && a.ai && q && q.part === 2 ? notesCheckBox(a.ai) : '';
+  if (!box || /lguess|lmark/.test(cd.main)) return cd;
+  const i = cd.main.indexOf('<section class="card stack lretry">');
+  cd.main = i >= 0 ? cd.main.slice(0, i) + box + cd.main.slice(i) : box + cd.main;
+  return cd;
+})(coachDetail);
+/* ---------- 8. shadowing: say it along with the better version ---------- */
+const SHW = {text: '', key: null, round: 0, back: ''};
+function shOpen(aid, v) {
+  const a = getAtt(aid); if (!a || !a.ai) return;
+  const t = v === 'h' ? a.ai.higher_version : a.ai.natural_version; if (!t) return;
+  Object.assign(SHW, {text: t, key: typeof mvKey === 'function' ? mvKey(aid, v) : null, round: 0, back: location.hash.slice(1) || 'today'});
+  location.hash = 'shadow';
+}
+const SH_ROUNDS = [['Listen and read along', 'Just follow the words with your eyes.'], ['Whisper along', 'Quietly, at the same time as the voice. Keep up rather than being perfect.'], ['Speak along', 'Full voice, same speed and the same stress on the words.']];
+function viewShadow() {
+  if (!SHW.text) return `<div class="card empty">Open a checked answer and press “Shadow it” on the better version. <a href="#today">Back</a></div>`;
+  const r = SH_ROUNDS[Math.min(2, SHW.round)];
+  return `<div class="stack wpage"><a class="back" href="#${esc(SHW.back)}">${I.back} Back</a><div><h1>Shadowing</h1><p class="lead" style="margin-top:4px">Three rounds with the same text. Copy the rhythm, not just the words.</p></div>
+    <section class="card stack"><div class="kick">Round ${SHW.round + 1} of 3 · ${r[0]}</div><p class="small muted" style="margin:0">${r[1]}</p><p class="vtext shtext">${esc(SHW.text)}</p>
+      <div class="row"><button class="btn primary" data-act="shplay">${I.play} Play</button>${SHW.round < 2 ? `<button class="btn" data-act="shnext">Next round ${I.next}</button>` : `<button class="btn" data-act="shdone">${I.check} Done</button>`}</div></section></div>`;
+}
+function shPlay() {
+  const clip = SHW.key && typeof MV !== 'undefined' && MV.clip && MV.clip[SHW.key];
+  if (clip && clip.st === 'ready' && typeof mvPlay === 'function') mvPlay(SHW.text, SHW.key); else speak(SHW.text, true);
+}
+versionsBox = (o => function (a) {
+  const h = o(a);
+  return h.replace(/(<button class="btn sm" data-act="repeat" data-src="a:([^:"]+):(\w)">[\s\S]*?<\/button>)/, (m, btn, id, v) => `${btn}<button class="btn sm" data-act="shadow" data-a="${id}" data-v="${v}">${I.speak} Shadow it</button>`);
+})(versionsBox);
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const act = b.dataset.act;
+  if (!['shadow', 'shplay', 'shnext', 'shdone'].includes(act)) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  if (act === 'shadow') return shOpen(b.dataset.a, b.dataset.v);
+  if (act === 'shplay') return shPlay();
+  if (act === 'shnext') { SHW.round++; render(); shPlay(); return; }
+  stopSpeak(); location.hash = SHW.back || 'today';
+}, true);
+['shadow', 'shplay', 'shnext', 'shdone'].forEach(x => G_FREE.add(x));
+window.addEventListener('hashchange', () => { if (r6() !== 'shadow') stopSpeak(); });
+/* ---------- 9. rate a friend's answer (only friends who turned sharing on) ---------- */
+SYNC_KEYS.push('shareAnswers');
+const FRR = {item: null, busy: false, guess: null, res: null, none: null, seen: [], fix: ''};
+async function frLoad() {
+  if (FRR.busy) return; FRR.busy = true; FRR.item = null; FRR.res = null; FRR.guess = null; FRR.fix = ''; FRR.none = null; render();
+  try {
+    const r = await api('friend_pick', {qids: [...new Set(allAttempts().map(a => a.qid))].slice(-200), seen: FRR.seen.slice(-50)});
+    if (r.none) FRR.none = r; else FRR.item = r;
+  } catch (e) { FRR.none = {err: e.message || 'Could not load an answer.'}; }
+  FRR.busy = false; render();
+}
+async function frRate() {
+  if (FRR.guess == null) return toast('Pick a band first.');
+  FRR.busy = true; render();
+  try { FRR.res = await api('friend_rate', {key: FRR.item.key}); FRR.seen.push(FRR.item.key); }
+  catch (e) { toast(e.message || 'Could not check.'); }
+  FRR.busy = false; render();
+}
+function frQText(it) { const q = Q.get(it.qid); if (!q) return 'Part ' + (it.part || '?'); return q.part === 2 ? (CM.get(q.pid) || {}).cue || q.t : q.t; }
+function viewRate() {
+  const head = `<a class="back" href="#today">${I.back} Speaking</a><div><h1>Rate a friend's answer</h1><p class="lead" style="margin-top:4px">Listen like an examiner: give a band and name the one thing to fix. Then see what the coach said. Judging someone else's answer trains you to hear your own.</p></div>`;
+  if (!SB.user) return `<div class="stack wpage">${head}<section class="card small muted">Sign in first.</section></div>`;
+  if (!FRR.item && !FRR.none && !FRR.busy) setTimeout(frLoad, 0);
+  if (!FRR.item && !FRR.none) return `<div class="stack wpage">${head}<div class="ideas">Finding an answer…</div></div>`;
+  if (FRR.none && FRR.none.err) return `<div class="stack wpage">${head}<section class="card stack"><h2>Couldn't load an answer</h2><p class="small muted" style="margin:0">${esc(FRR.none.err)}</p><div><button class="btn" data-act="frnext">Try again</button></div></section></div>`;
+  if (FRR.none) return `<div class="stack wpage">${head}<section class="card stack"><h2>${FRR.none.empty ? 'No new answers to rate' : 'Nobody shares answers yet'}</h2><p class="small muted" style="margin:0">Friends' answers show up here only after they turn on “Let friends rate my answers” in Settings. Nobody sees whose answer it is.</p>
+    ${S.set.shareAnswers ? '<div class="small ok">Your answers are shared.</div>' : `<div><button class="btn" data-act="go" data-to="prefs">Share mine in Settings</button></div>`}<div><button class="btn ghost sm" data-act="frnext">Look again</button></div></section></div>`;
+  const it = FRR.item, res = FRR.res;
+  const chips = [5, 5.5, 6, 6.5, 7, 7.5, 8].map(b => `<button data-act="frguess" data-v="${b}" aria-pressed="${FRR.guess === b}" ${res ? 'disabled' : ''}>${fmtB(b)}</button>`).join('');
+  const cmp = res ? `<section class="card stack lverd"><div class="kick">The coach said</div>
+      <div class="lrow"><span>Band</span><b>${res.range && res.range.low !== res.range.high ? `${fmtB(res.range.low)}–${fmtB(res.range.high)}` : fmtB(res.bands.overall)}</b><span class="small muted">· you said ${fmtB(FRR.guess)}</span></div>
+      ${res.problem ? `<div class="lrow"><span>Fix first</span><b style="font-weight:500">${esc(res.problem)}</b></div>` : ''}${FRR.fix ? `<div class="small muted">You wrote: “${esc(FRR.fix)}”</div>` : ''}
+      ${res.transcript ? `<details class="notes"><summary>What they said</summary><p class="tr">${esc(res.transcript)}</p></details>` : ''}
+      <div><button class="btn primary" data-act="frnext">Another answer ${I.next}</button></div></section>` : '';
+  return `<div class="stack wpage">${head}
+    <section class="card stack"><div class="small muted">Part ${it.part || (Q.get(it.qid) || {}).part || ''} · a friend, anonymous</div><p class="qtext small">${esc(frQText(it))}</p><audio controls preload="none" src="${esc(it.audio)}" style="width:100%"></audio></section>
+    <section class="card stack lguess"><h2>Your band</h2><div class="chips" role="group" aria-label="Band">${chips}</div>
+      <label class="small" for="frfix" style="font-weight:600">What should they fix first?</label><input id="frfix" maxlength="200" autocomplete="off" placeholder="e.g. long pauses mid-sentence" value="${esc(FRR.fix)}" ${res ? 'disabled' : ''}>
+      ${res ? '' : `<div><button class="btn primary" data-act="frrate" ${FRR.busy ? 'disabled' : ''}>See what the coach said</button></div>`}</section>${cmp}</div>`;
+}
+window.addEventListener('input', e => { if (e.target && e.target.id === 'frfix') FRR.fix = e.target.value.slice(0, 200); }, true);
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const act = b.dataset.act;
+  if (!['frate', 'frguess', 'frrate', 'frnext'].includes(act)) return;
+  if (b.closest('.glock')) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  if (act === 'frate') { location.hash = 'rate'; return; }
+  if (act === 'frguess') { FRR.guess = +b.dataset.v; render(); return; }
+  if (act === 'frrate') return frRate();
+  frLoad();
+}, true);
+drillsCard = (o => function () { return o().replace('<div class="dgrid">', `<div class="dgrid"><button class="dtile dtile-rate" data-act="frate"><span class="dt">Rate a friend's answer</span><span class="ds">Hear it like an examiner · then see the coach's band</span></button>`); })(drillsCard);
+ENCH.splice(2, 0, ['frate', () => false]);
+TIPS.push(['[data-act="frate"]', "You hear a friend's real answer (anonymous), give a band and the one thing to fix, then see what the coach said. Only answers from friends who turned sharing on."]);
+voiceCard = (o => function () {
+  return o() + `<section class="card stack"><label class="sw"><span>Let friends rate my answers<small>Friends on Wasabi can hear your checked answers in “Rate a friend's answer”, without your name. Off by default; turn it off any time.</small></span><input type="checkbox" data-act="setb" data-k="shareAnswers" ${S.set.shareAnswers ? 'checked' : ''}></label></section>`;
+})(voiceCard);
+render = (o => function () {
+  o();
+  const r = r6();
+  if (r === 'shadow' || r === 'rate') { const v = $('#view'); v.innerHTML = r === 'shadow' ? viewShadow() : viewRate(); v.dataset.route = r; gLocks(); }
+})(render);
+/* exam week: reviews scheduled further out come back within two days */
+function fxCapExamWeek() {
+  if (!lastWeekMode()) return;
+  const st = fxState(), cap = Date.now() + 2 * 864e5; let ch = false;
+  for (const k in st) if (st[k] && st[k].due > cap) { st[k].due = cap; ch = true; }
+  if (ch) saveMeta();
+}
+viewToday = (o => function () { try { fxCapExamWeek(); } catch {} return o(); })(viewToday);
+
+/* ================= v24: Support page made of blocks (text, image, image with text, button), edited in place by the admin ================= */
+const SUP = {page: undefined, text: '', link: '', loading: false, edit: false, draft: null, busy: null, dirty: false};
+async function supLoad(force) {
+  if (SUP.loading || (SUP.page !== undefined && !force)) return;
+  SUP.loading = true;
+  try {
+    if (SB.me && SB.me.support_page !== undefined && !force) { SUP.page = SB.me.support_page; SUP.text = SB.me.support_text || ''; SUP.link = SB.me.support_link || ''; }
+    else {
+      const r = await fetch(SUPA_URL + '/functions/v1/api', {method: 'POST', headers: {'Content-Type': 'application/json', apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY}, body: JSON.stringify({action: 'support_info'})});
+      const d = await r.json(); SUP.page = d.page || null; SUP.text = d.text || ''; SUP.link = d.link || '';
+    }
+  } catch { SUP.page = null; }
+  SUP.loading = false; if (r6() === 'support') render();
+}
+const supId = () => 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function supFromOld() {
+  const b = [{id: supId(), type: 'text', text: SUP.text || "# feeding the coach\n\nwasabi is free for you, but every coach check is a paid AI call. if it helped, you can throw in a bit. no pressure."}];
+  if (SUP.link) b.push({id: supId(), type: 'button', label: 'chip in', url: SUP.link});
+  return b;
+}
+/* plain text with "# " headings and blank-line paragraphs */
+function supText(t) {
+  return String(t || '').split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => /^#\s+/.test(p) ? `<h2 class="sup-h">${esc(p.replace(/^#\s+/, ''))}</h2>` : `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('');
+}
+const supImgTag = b => b.img ? `<img class="sup-img sz-${b.size || 'm'}" src="${esc(b.img)}" alt="${esc(b.alt || '')}" loading="lazy">` : '';
+function supBlock(b) {
+  if (b.type === 'text') return `<div class="sup-text">${supText(b.text)}</div>`;
+  if (b.type === 'image') return b.img ? `<figure class="sup-fig sz-${b.size || 'm'}">${supImgTag(b)}</figure>` : '';
+  if (b.type === 'split') return `<div class="sup-split ${b.side === 'right' ? 'img-right' : ''}">${b.img ? `<div class="sup-sim">${supImgTag(b)}</div>` : ''}<div class="sup-text">${supText(b.text)}</div></div>`;
+  if (b.type === 'button') return b.url ? `<div><a class="btn primary" href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.label || 'Support')}</a></div>` : '';
+  return '';
+}
+const SUP_T = {text: 'Text', image: 'Image', split: 'Image with text', button: 'Button'};
+function supEditBlock(b, i, n) {
+  const ctl = `<div class="sup-ctl"><span class="small muted grow">${SUP_T[b.type]}</span>
+    <button class="btn sm ghost" data-act="supmv" data-i="${i}" data-d="-1" ${i ? '' : 'disabled'} aria-label="Move up">↑</button>
+    <button class="btn sm ghost" data-act="supmv" data-i="${i}" data-d="1" ${i < n - 1 ? '' : 'disabled'} aria-label="Move down">↓</button>
+    <button class="btn sm ghost danger" data-act="supdel" data-i="${i}" aria-label="Delete block">✕</button></div>`;
+  const txt = `<textarea rows="5" data-supf="text" data-i="${i}" placeholder="Text. A line starting with # is a heading. Empty line = new paragraph.">${esc(b.text || '')}</textarea>`;
+  const img = `<div class="sup-imgedit">${b.img ? supImgTag({...b, size: 's'}) : '<div class="sup-noimg small muted">No image yet</div>'}
+      <div class="stack" style="gap:6px"><label class="btn sm">${SUP.busy === b.id ? 'Uploading…' : b.img ? 'Change image' : 'Choose image'}<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-supimg="${i}" hidden></label>
+      <div class="switch2" role="group" aria-label="Size">${[['s', 'Small'], ['m', 'Medium'], ['l', 'Full width']].map(([k, l]) => `<button data-act="supset" data-i="${i}" data-k="size" data-v="${k}" aria-pressed="${(b.size || 'm') === k}">${l}</button>`).join('')}</div>
+      <input type="text" data-supf="alt" data-i="${i}" placeholder="Describe the image (for screen readers)" value="${esc(b.alt || '')}"></div></div>`;
+  let body = '';
+  if (b.type === 'text') body = txt;
+  else if (b.type === 'image') body = img;
+  else if (b.type === 'split') body = `${img}<div class="switch2" role="group" aria-label="Image side">${[['left', 'Image on the left'], ['right', 'Image on the right']].map(([k, l]) => `<button data-act="supset" data-i="${i}" data-k="side" data-v="${k}" aria-pressed="${(b.side || 'left') === k}">${l}</button>`).join('')}</div>${txt}`;
+  else if (b.type === 'button') body = `<input type="text" data-supf="label" data-i="${i}" placeholder="Button text" value="${esc(b.label || '')}"><input type="text" data-supf="url" data-i="${i}" placeholder="https://…" value="${esc(b.url || '')}">`;
+  return `<section class="card stack sup-eb">${ctl}${body}</section>`;
+}
+const SUP_ADD = `<div class="sup-add"><span class="small muted">Add:</span>${Object.entries(SUP_T).map(([k, l]) => `<button class="btn sm" data-act="supadd" data-t="${k}">${I.plus} ${l}</button>`).join('')}</div>`;
+viewSupport = function () {
+  if (SUP.page === undefined) { setTimeout(supLoad, 0); return `<div class="stack gate"><div class="ideas">Loading…</div></div>`; }
+  const admin = !!(SB.me && SB.me.admin);
+  if (SUP.edit && admin) {
+    const d = SUP.draft;
+    return `<div class="stack sup sup-editing"><div class="row"><h1 class="grow">Edit this page</h1><button class="btn ghost" data-act="supcancel">Cancel</button><button class="btn primary" data-act="supsave" ${SUP.busy ? 'disabled' : ''}>Save</button></div>
+      <p class="small muted" style="margin:0">Anyone who opens it sees this, even without an account. Images: PNG, JPG, WebP or GIF. Big photos get shrunk.</p>
+      ${d.map((b, i) => supEditBlock(b, i, d.length) + (i < d.length - 1 ? '' : '')).join('')}${SUP_ADD}
+      <section class="card stack"><div class="small muted">Preview</div><div class="sup sup-prev">${d.map(supBlock).join('')}</div></section></div>`;
+  }
+  const blocks = SUP.page && SUP.page.blocks && SUP.page.blocks.length ? SUP.page.blocks : supFromOld();
+  return `<div class="stack sup">${blocks.map(supBlock).join('')}${admin ? `<div><button class="btn ghost sm" data-act="supedit">Edit this page</button></div>` : ''}</div>`;
+};
+function supSet(i, k, v) { const b = SUP.draft && SUP.draft[i]; if (!b) return; b[k] = v; SUP.dirty = true; }
+/* shrink big photos in the browser, keep PNG/GIF as they are when small */
+async function supShrink(file) {
+  if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) throw new Error('Only PNG, JPG, WebP or GIF images.');
+  if (file.size > 15 * 1024 * 1024) throw new Error('That image is too big (over 15 MB).');
+  const asB64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+  if (file.type === 'image/gif' || file.size < 600 * 1024) { if (file.size > 4 * 1024 * 1024) throw new Error('That GIF is over 4 MB.'); return {b64: await asB64(file), mime: file.type}; }
+  const bmp = await createImageBitmap(file).catch(() => { throw new Error('That file is not a readable image.'); });
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+  return {b64: await asB64(blob), mime: 'image/jpeg'};
+}
+async function supUpload(i, file) {
+  const b = SUP.draft && SUP.draft[i]; if (!b || !file) return;
+  SUP.busy = b.id; render();
+  try { const x = await supShrink(file); const r = await api('support_img', {b64: x.b64, mime: x.mime, name: file.name}); b.img = r.url; SUP.dirty = true; }
+  catch (e) { toast(e.message || 'Upload failed.', 6000); }
+  SUP.busy = null; render();
+}
+async function supSave() {
+  const bad = SUP.draft.find(b => b.type === 'button' && b.url && !/^https:\/\/\S+$/.test(b.url));
+  if (bad) return toast('Button links must start with https://');
+  SUP.busy = 'save'; render();
+  try { const r = await api('support_save', {page: {blocks: SUP.draft}}); SUP.page = r.page; if (SB.me) SB.me.support_page = r.page; SUP.edit = false; SUP.dirty = false; toast('Saved. Everyone sees it now.'); }
+  catch (e) { toast(e.message || 'Could not save.', 6000); }
+  SUP.busy = null; render();
+}
+window.addEventListener('input', e => { const t = e.target; if (t && t.dataset && t.dataset.supf) { supSet(+t.dataset.i, t.dataset.supf, t.value); const pv = document.querySelector('.sup-prev'); if (pv) pv.innerHTML = SUP.draft.map(supBlock).join(''); } }, true);
+window.addEventListener('change', e => { const t = e.target; if (t && t.dataset && t.dataset.supimg != null && t.files && t.files[0]) supUpload(+t.dataset.supimg, t.files[0]); }, true);
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const act = b.dataset.act;
+  if (!['supedit', 'supcancel', 'supsave', 'supadd', 'supdel', 'supmv', 'supset'].includes(act)) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  const i = +b.dataset.i, d = SUP.draft;
+  if (act === 'supedit') { SUP.draft = JSON.parse(JSON.stringify(SUP.page && SUP.page.blocks && SUP.page.blocks.length ? SUP.page.blocks : supFromOld())); SUP.edit = true; SUP.dirty = false; }
+  else if (act === 'supcancel') { SUP.edit = false; SUP.draft = null; }
+  else if (act === 'supsave') return supSave();
+  else if (act === 'supadd') { const t = b.dataset.t; d.push(t === 'button' ? {id: supId(), type: t, label: 'chip in', url: ''} : {id: supId(), type: t, text: '', img: '', size: 'm', side: 'left'}); SUP.dirty = true; }
+  else if (act === 'supdel') { d.splice(i, 1); SUP.dirty = true; }
+  else if (act === 'supmv') { const j = i + +b.dataset.d; if (j >= 0 && j < d.length) { [d[i], d[j]] = [d[j], d[i]]; SUP.dirty = true; } }
+  else if (act === 'supset') supSet(i, b.dataset.k, b.dataset.v);
+  render();
+}, true);
+G_FREE.add('supedit');
+window.addEventListener('beforeunload', e => { if (SUP.edit && SUP.dirty) { e.preventDefault(); e.returnValue = ''; } });
+viewAdmin = (o => function () {
+  return o().replace(/<section class="card stack" style="gap:8px"><h2>Support page<\/h2>[\s\S]*?<\/section>/, `<section class="card stack" style="gap:8px"><h2>Support page</h2><p class="small muted" style="margin:0">Edit it on the page itself: text, images, image beside text, buttons, in any order.</p><div><a class="btn sm" href="#support">Open and edit</a></div></section>`);
+})(viewAdmin);
 
 init();
 </script>
