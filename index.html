@@ -620,6 +620,41 @@ mark.fxgap::before{content:"missing";position:absolute;top:-1.35em;left:-2px;fon
   .stick{position:sticky;top:calc(var(--head-h) + 16px);max-height:calc(100vh - var(--head-h) - 32px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:4px}
   .home2>.c2{position:sticky;top:calc(var(--head-h) + 16px);max-height:calc(100vh - var(--head-h) - 32px);overflow:auto;scrollbar-width:thin}
 }
+/* ---------- v17: motion tokens, new-block entrance, hints, coach wait, show-me ---------- */
+:root{--ease-out:cubic-bezier(.2,.8,.2,1);--d-in:200ms}
+@keyframes wz-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes wz-fade{from{opacity:0}to{opacity:1}}
+@keyframes wz-pop{0%{opacity:0;transform:scale(.97)}60%{opacity:1;transform:scale(1.01)}100%{transform:none}}
+@keyframes wz-out{to{opacity:0;transform:translateY(-4px)}}
+.wz-in{animation:wz-in var(--d-in) var(--ease-out) both}
+.wz-pop{animation:wz-pop 320ms var(--ease-out) both}
+.wz-out{animation:wz-out 150ms ease-in both;pointer-events:none}
+#toast{animation:wz-in 180ms var(--ease-out)}
+.hint{display:flex;align-items:center;gap:10px;background:var(--act-soft);color:var(--ink);border:1px solid color-mix(in oklab,var(--act) 30%,transparent);border-radius:12px;padding:8px 8px 8px 14px;font-size:14.5px;line-height:1.45}
+.hint a{color:var(--act-ink);font-weight:600;white-space:nowrap}
+.hint .btn{flex:none;min-height:36px}
+.nh .nh-li{min-height:44px}
+.nh .nh-mark{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line-strong);display:grid;place-items:center;flex:none;box-sizing:border-box}
+.nh .nh-li.ok .nh-mark{background:var(--ok);border-color:var(--ok);color:var(--on-act)}
+.nh .nh-mark svg{width:14px;height:14px}
+.nh .nh-li.ok .t{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in oklab,var(--muted) 60%,transparent)}
+.cwait{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.cw-dots{display:inline-flex;gap:4px;align-items:center;width:26px;flex:none}
+.cw-dots i{width:5px;height:5px;border-radius:50%;background:var(--act);animation:wz-dot 1.2s ease-in-out infinite}
+.cw-dots i:nth-child(2){animation-delay:.18s}.cw-dots i:nth-child(3){animation-delay:.36s}
+@keyframes wz-dot{0%,100%{opacity:.25}50%{opacity:1}}
+.skel{display:flex;flex-direction:column;gap:9px}
+.skel i{display:block;height:11px;border-radius:6px;background:linear-gradient(90deg,var(--sunken) 0%,color-mix(in oklab,var(--sunken) 55%,var(--surface)) 50%,var(--sunken) 100%);background-size:200% 100%;animation:wz-shim 1.4s linear infinite}
+@keyframes wz-shim{from{background-position:100% 0}to{background-position:-100% 0}}
+.wz-hl{background:var(--act-soft)!important;box-shadow:inset 0 0 0 2px var(--act)!important;border-radius:10px;animation:wz-ring 1.2s ease-in-out 2}
+@keyframes wz-ring{50%{box-shadow:inset 0 0 0 2px color-mix(in oklab,var(--act) 30%,transparent)}}
+details>:not(summary).wz-in{animation-duration:180ms}
+@media (prefers-reduced-motion:reduce){
+  .wz-in,.wz-pop,#toast{animation:wz-fade 120ms linear both}
+  .wz-out{animation:none;opacity:0}
+  .cw-dots i,.skel i{animation:none}.cw-dots i{opacity:.7}
+  .wz-hl{animation:none}
+}
 
 </style>
 </head>
@@ -4413,7 +4448,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261117073728';
+const BUILD_ID = '202611171319';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -5531,22 +5566,208 @@ let w15prev = r6();
 window.addEventListener('hashchange', () => { const r = r6(); if (r === 'write' && w15prev !== 'write' && !['write', 'plan'].includes(W2.phase) && !W2.keep) W2.phase = 'pick'; W2.keep = false; w15prev = r; });
 document.addEventListener('click', e => { const a = e.target.closest('#tabs a[href="#write"]'); if (a && r6() === 'write' && !['write', 'plan'].includes(W2.phase)) { W2.phase = 'pick'; W2.open = null; render(); } });
 
-/* ================= v16: columns follow the scroll, so neither side leaves an empty hole ================= */
-/* A column shorter than the screen sticks to the top; a taller one sticks by its bottom edge once you reach its end. */
-function stickCols() {
-  if (!matchMedia('(min-width:900px)').matches) { $$('.stick').forEach(el => { el.style.position = ''; el.style.top = ''; }); return; }
-  const head = (($('#hdr') || {}).offsetHeight || 56) + 16, vh = window.innerHeight;
-  $$('#view .home2>.c1,#view .home2>.c2,#view .wg2>*,#view .coachgrid>*,#view .stick').forEach(el => {
-    el.style.position = 'sticky'; el.style.alignSelf = 'flex-start';
-    const h = el.offsetHeight;
-    el.style.top = (h + head + 16 <= vh ? head : Math.min(head, vh - h - 16)) + 'px';
-  });
+/* ================= v16: motion that shows what changed, hints, guide ================= */
+I.help = IC('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.4"/><path d="M12 16.8v.2"/>');
+SYNC_KEYS.push('hints');
+const RM = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const HS = () => { const h = S.set.hints && typeof S.set.hints === 'object' ? S.set.hints : (S.set.hints = {}); h.seen = h.seen || {}; h.n = h.n || {}; h.did = h.did || {}; return h; };
+function hintSeen(k) { return !!HS().seen[k]; }
+function hintDone(k) { HS().seen[k] = Date.now(); try { const m = JSON.parse(localStorage.getItem('ist-meta') || '{}'); m.settings = S.set; localStorage.setItem('ist-meta', JSON.stringify(m)); } catch {} saveMeta(); }
+
+/* ---------- 1. motion: animate only blocks that are new on the same page ---------- */
+const MO = {route: null, keys: new Set(), pend: null};
+const MO_SEL = '#view .card, #view section, #view .note, #view .coachin, #view .ideas, #view .cwait, #view .fxsaid, #view .hint, #view .nh';
+function moKey(el) {
+  const h = el.querySelector('h1,h2,h3,summary,b,.t');
+  const t = ((h && h.textContent) || el.textContent || '').replace(/[0-9:·]+/g, '#').replace(/\s+/g, ' ').trim().slice(0, 48);
+  return el.className + '|' + t;
 }
-const render_v15 = render;
-render = function () { const r = render_v15.apply(this, arguments); requestAnimationFrame(stickCols); return r; };
-window.addEventListener('resize', () => requestAnimationFrame(stickCols));
-document.addEventListener('toggle', () => requestAnimationFrame(stickCols), true);
-document.addEventListener('click', () => setTimeout(stickCols, 60));
+function moAfter() {
+  const r = r6() + '/' + W2.phase;
+  const els = [...document.querySelectorAll(MO_SEL)];
+  const keys = els.map(moKey);
+  if (r !== MO.route) { MO.route = r; MO.keys = new Set(keys); return; }
+  const fresh = [];
+  els.forEach((el, i) => { if (!MO.keys.has(keys[i]) && !fresh.some(f => f.contains(el))) fresh.push(el); });
+  keys.forEach(k => MO.keys.add(k));
+  if (fresh.length > 20) return;              // a whole new screen: no motion, just show it
+  fresh.forEach(el => { el.classList.add(el.matches('.note.ok') ? 'wz-pop' : 'wz-in'); el.addEventListener('animationend', () => el.classList.remove('wz-in', 'wz-pop'), {once: true}); });
+}
+/* <details> opened by the person: its content slides in; re-renders don't replay it */
+let moDet = null;
+document.addEventListener('click', e => { const s = e.target.closest('summary'); moDet = s ? s.parentElement : null; }, true);
+document.addEventListener('toggle', e => {
+  const d = e.target; if (d !== moDet || !d.open) return; moDet = null;
+  [...d.children].filter(c => c.tagName !== 'SUMMARY').forEach(c => { c.classList.add('wz-in'); c.addEventListener('animationend', () => c.classList.remove('wz-in'), {once: true}); });
+}, true);
+
+/* ---------- 2. the coach wait: what it is doing, how long, what to expect ---------- */
+const CW = {};
+function coachWaitHTML(id) {
+  return `<div class="cwait" role="status"><div class="row" style="flex-wrap:nowrap"><span class="cw-dots" aria-hidden="true"><i></i><i></i><i></i></span><b class="grow">The coach is listening to your answer</b><span class="mono muted" data-cwt="${id}">0:00</span></div>
+    <p class="small muted" data-cwm="${id}" style="margin:6px 0 10px">Then it checks grammar and words and writes a better version. Usually 10–30 seconds.</p>
+    <div class="skel" aria-hidden="true"><i style="width:94%"></i><i style="width:81%"></i><i style="width:88%"></i><i style="width:46%"></i></div></div>`;
+}
+function cwTick() {
+  for (const id of COACH.busy) if (!CW[id]) CW[id] = Date.now();
+  for (const id of Object.keys(CW)) if (!COACH.busy.has(id)) delete CW[id];
+  $$('[data-cwt]').forEach(e => { const t0 = CW[e.dataset.cwt]; if (!t0) return; const s = Math.floor((Date.now() - t0) / 1000); e.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    if (s >= 35) { const m = $(`[data-cwm="${e.dataset.cwt}"]`); if (m && !m.dataset.long) { m.dataset.long = 1; m.textContent = 'Taking longer than usual. You can leave this page: the feedback will be in History when it is ready.'; } } });
+}
+setInterval(cwTick, 1000);
+const coachCTA_v16 = coachCTA;
+coachCTA = function (a) { return STANDALONE && COACH.busy.has(a.id) ? coachWaitHTML(a.id) : coachCTA_v16(a); };
+const coachBlock_v16 = coachBlock;
+coachBlock = function (a) { return COACH.busy.has(a.id) ? coachWaitHTML(a.id) : coachBlock_v16(a); };
+
+/* ---------- 3. hints: one line per page, one event hint at a time ---------- */
+const H_PAGE = {
+  today: ['Speaking', 'Today’s session runs Part 1, 2 and 3 in the real order, then has you say your mistakes again. Single parts, quick-fire and a full mock test are below it.'],
+  write: ['Writing', 'Write a full Task 2 essay, or train one skill at a time. Questions people got at real tests have their own list.'],
+  mistakes: ['Mistakes', 'Every mistake the coach found in your answers and essays. Each one comes back on a schedule until you say it right three times in a row.'],
+  words: ['Words', 'Phrases from your two books, by topic. Search at the top, or open a group.'],
+  answers: ['History', 'Every answer and essay you saved, with the coach’s feedback. Open one to replay it or hear the better version.'],
+};
+const H_EVENT = [
+  ['voice', () => $('#view .mvp'), 'This is the better version read in your own voice. Listen once, then answer the question again and copy the rhythm.'],
+  ['mk', () => r6() === 'today' && $('#view .mistake'), 'These came up in two or more answers. The Mistakes tab drills them: you say the sentence correctly, with clues only if you need them.'],
+  ['fixown', () => $('#view [data-act="rvstart"]'), 'Try fixing it yourself before you look at the corrected version. Finding your own mistakes is what makes them stick.'],
+];
+function hintHTML(k, title, text, guide) {
+  return `<div class="hint" data-hint="${k}"><div class="grow">${title ? `<b>${esc(title)}.</b> ` : ''}${esc(text)}${guide ? ` <a href="#guide">See everything Wasabi can do</a>` : ''}</div><button class="btn sm ghost" data-act="hintx" data-h="${k}">Got it</button></div>`;
+}
+const HV = {route: null};
+function hintsAfter() {
+  const h = HS(), r = r6(), v = $('#view'); if (!v || inSession()) return;
+  const entered = HV.route !== r; HV.route = r;
+  let shown = false;
+  // the New-here list replaces the page line on Speaking
+  if (r === 'today') shown = nhInsert();
+  const page = H_PAGE[r], pk = 'p-' + r;
+  const onHome = r !== 'write' || W2.phase === 'pick';
+  const busyTask = $('#view .fxsaid, #view .w2text, #view textarea#w2text');
+  if (!shown && page && onHome && !busyTask && !h.seen[pk]) {
+    if (entered) { h.n[pk] = (h.n[pk] || 0) + 1; if (h.n[pk] > 4) { h.seen[pk] = Date.now(); saveMeta(); } }
+    if (!h.seen[pk]) { const host = $('#view .home2 .c1') || v.firstElementChild || v; host.insertAdjacentHTML('afterbegin', hintHTML(pk, page[0], page[1], true)); shown = true; }
+  }
+  if (shown) return;
+  for (const [k, find, text] of H_EVENT) {
+    const ek = 'e-' + k; if (h.seen[ek]) continue;
+    const el = find(); if (!el) continue;
+    const anchor = el.closest('section, .card, .coachin') || el;
+    anchor.insertAdjacentHTML('beforebegin', hintHTML(ek, '', text, false));
+    if (entered) { h.n[ek] = (h.n[ek] || 0) + 1; if (h.n[ek] >= 3) { h.seen[ek] = Date.now(); saveMeta(); } }
+    break;
+  }
+}
+
+/* ---------- 4. New here: five things to try, ticked from what you actually did ---------- */
+function nhItems() {
+  const all = allAttempts(), h = HS();
+  return [
+    ['Answer one question out loud', all.length > 0, 'data-act="step" data-n="1"'],
+    ['Get coach feedback on an answer', all.some(a => a.ai), 'href="#answers"'],
+    ['Hear the better version in your own voice', !!h.did.voice, 'href="#answers"'],
+    ['Drill one of your mistakes', Object.keys(fxState()).length > 0, 'href="#mistakes"'],
+    ['Write an intro or a full essay', essays().length > 0 || (Array.isArray(S.set.wmini) && S.set.wmini.length > 0) || (S.set.wmini && typeof S.set.wmini === 'object' && Object.keys(S.set.wmini).length > 0), 'data-act="wintro"'],
+  ];
+}
+function nhInsert() {
+  if (hintSeen('nh')) return false;
+  const it = nhItems(), done = it.filter(x => x[1]).length;
+  if (done === it.length) { hintDone('nh'); return false; }
+  const host = $('#view .home2 .c1'); if (!host) return false;
+  const rows = it.map(([t, ok, at]) => {
+    const tag = at.startsWith('href') ? 'a' : 'button';
+    return `<${tag} class="li nh-li ${ok ? 'ok' : ''}" ${at}><span class="nh-mark">${ok ? I.check : ''}</span><span class="grow t">${t}</span>${ok ? '' : `<span class="chev">${I.chev}</span>`}</${tag}>`;
+  }).join('');
+  const after = host.querySelector(':scope > section.start, :scope > section.card');
+  const pos = after ? 'afterend' : 'afterbegin', at = after || host;
+  at.insertAdjacentHTML(pos, `<section class="card nh"><div class="row"><h2 class="grow">New here? Five things to try</h2><span class="small muted">${done} of ${it.length}</span></div>
+    <div class="list flat" style="margin-top:4px">${rows}</div><div class="row" style="margin-top:6px"><a class="small" href="#guide">Everything Wasabi can do</a><span class="grow"></span><button class="btn sm ghost" data-act="hintx" data-h="nh">Hide this</button></div></section>`);
+  return true;
+}
+try { MVA.addEventListener('play', () => { const h = HS(); if (!h.did.voice) { h.did.voice = Date.now(); saveMeta(); } }); } catch {}
+
+/* ---------- 5. the guide: every function, each with "Show me" ---------- */
+const GUIDE = [
+  ['Speaking', [
+    ['Today’s session', 'Part 1, Part 2 and Part 3 in the order of the real test, about 12 minutes, then your mistakes from today.', 'today', '#view .steps4, #view .start'],
+    ['One part at a time', 'Random Part 1 questions, a cue card with 1 minute to prepare, or Part 3 discussion.', 'today', '#view [data-act="pp"]'],
+    ['Full mock test', 'All three parts in order, about 14 minutes, like the real thing.', 'today', '#view [data-to="mock"]'],
+    ['Quick-fire Part 1', '10 questions in a row, to train a fast and longer start.', 'today', '#view [data-act="qfstart"]'],
+    ['Paraphrase drill', 'Answer without repeating the question’s words.', 'today', '#view [data-act="pdstart"]'],
+    ['All questions', 'Every Part 1 topic and cue card, to pick one yourself.', 'today', '#view a.li[href="#questions"]'],
+  ]],
+  ['Coach', [
+    ['Coach feedback', 'After an answer: your words with pauses marked, grammar and word fixes, a band estimate and a better version.', 'prefs', '#view [data-k="coachAuto"]', 'It can run by itself after every answer: switch it on here.'],
+    ['Your voice', 'The better version read in your own voice. Play, slow down, tap a sentence to jump there, or download it.', 'answers', '#view .mvp', 'Open an answer that has coach feedback to see it.'],
+  ]],
+  ['Mistakes', [
+    ['Mistake drill', 'Your own sentences with a mistake in them. Say each one correctly; clues only if you ask. They come back after 1, 3, 7 and 21 days.', 'mistakes', '#view [data-act="fxstart"]', 'Mistakes appear after the coach checks an answer.'],
+  ]],
+  ['Writing', [
+    ['Full Task 2 essay', '40 minutes with a plan step, checked against the writing band descriptors.', 'write', '#view [data-act="w2any"]'],
+    ['Question type', 'Read a question, name its type and plan in 10 seconds.', 'write', '#view [data-act="wtype"]'],
+    ['Frames', 'Recall the sentence frames from memory, then use them.', 'write', '#view [data-act="wframes"]'],
+    ['Intro only, or one body paragraph', 'Train one part of the essay and get checked on that part only.', 'write', '#view [data-act="wintro"]'],
+    ['Checking pass', 'Your own old paragraph with its mistakes put back. Find them in 3 minutes.', 'write', '#view [data-act="wcheckp"]'],
+    ['Questions from real tests', 'Reported by people who just took the test, from @cdireport, newest first.', 'write', '#view .wrep'],
+  ]],
+  ['Words and history', [
+    ['Words', 'Phrases from your two books, by topic, with search.', 'words', '#view input[type="search"], #view .search'],
+    ['History', 'Every answer and essay, with feedback. Replay any of them.', 'answers', '#view .list, #view .card'],
+    ['Test date', 'Set it once; the countdown sits in the top bar.', 'today', '.examchip'],
+  ]],
+];
+const GV = {hl: null};
+function viewGuide() {
+  let i = 0;
+  const secs = GUIDE.map(([h, rows]) => `<section class="card stack" style="gap:2px"><h2>${h}</h2><div class="list flat">${rows.map(([t, s]) => `<div class="li"><span class="grow"><span class="t">${t}</span><span class="s">${s}</span></span><button class="btn sm" data-act="gshow" data-g="${i++}">Show me</button></div>`).join('')}</div></section>`);
+  return `<div class="stack wpage"><a class="back" href="#today">${I.back} Back</a><div><h1>What Wasabi can do</h1><p class="lead" style="margin-top:4px">Everything in one place. “Show me” takes you there and points at it.</p></div>
+    <div class="wg2"><div class="stack">${secs.slice(0, 2).join('')}</div><div class="stack">${secs.slice(2).join('')}</div></div>
+    <div class="row"><button class="btn sm ghost" data-act="hintreset">Show the page tips again</button></div></div>`;
+}
+function gShow(n) {
+  const flat = GUIDE.flatMap(g => g[1]); const g = flat[n]; if (!g) return;
+  GV.hl = {route: g[2], sel: g[3], msg: g[4] || ''};
+  if (g[2] === 'write') W2.phase = 'pick';
+  if (r6() === g[2]) render(); else location.hash = g[2];
+}
+function hlAfter() {
+  const g = GV.hl; if (!g || r6() !== g.route) return; GV.hl = null;
+  const el = $(g.sel);
+  if (!el) { toast(g.msg || 'This appears once you have used it.'); return; }
+  el.scrollIntoView({block: 'center', behavior: RM() ? 'auto' : 'smooth'});
+  GV.keep = {sel: g.sel, route: g.route, until: Date.now() + 2600};
+  el.classList.add('wz-hl'); setTimeout(() => { $$('.wz-hl').forEach(x => x.classList.remove('wz-hl')); GV.keep = null; }, 2600);
+  if (g.msg) toast(g.msg);
+}
+function hlKeep() { const k = GV.keep; if (!k || Date.now() > k.until || r6() !== k.route) return; const el = $(k.sel); if (el) el.classList.add('wz-hl'); }
+const viewToday_v16 = viewToday;
+viewToday = function () { return r6() === 'guide' ? viewGuide() : viewToday_v16(); };
+
+/* ---------- header "?" and wiring ---------- */
+const renderHeader_v16 = renderHeader;
+renderHeader = function () {
+  renderHeader_v16();
+  const g = $('#hdr.bar .gear'); if (g && !$('#hdr .helpbtn')) g.insertAdjacentHTML('beforebegin', `<a class="gear helpbtn" href="#guide" aria-label="What Wasabi can do" ${r6() === 'guide' ? 'aria-current="page"' : ''}>${I.help}</a>`);
+};
+const render_v16 = render;
+render = function () {
+  render_v16();
+  try { hintsAfter(); } catch (e) { console.warn('hints', e); }
+  try { moAfter(); } catch (e) { console.warn('motion', e); }
+  try { hlAfter(); hlKeep(); } catch (e) { console.warn('show me', e); }
+  cwTick();
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const d = b.dataset;
+  if (d.act === 'hintx') { e.stopPropagation(); hintDone(d.h); const box = b.closest('.hint, .nh'); if (box) { box.classList.add('wz-out'); setTimeout(render, RM() ? 0 : 160); } else render(); }
+  else if (d.act === 'gshow') { e.stopPropagation(); gShow(+d.g); }
+  else if (d.act === 'hintreset') { e.stopPropagation(); const h = HS(); h.seen = {}; h.n = {}; saveMeta(); toast('Page tips will show again.'); }
+}, true);
 
 init();
 </script>
