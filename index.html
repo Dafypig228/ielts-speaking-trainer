@@ -501,6 +501,21 @@ mark.avoid{background:var(--warn-soft);color:inherit;border-radius:4px;padding:0
 .zonebar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:-6px}
 .zonebar i{display:block;height:100%;background:var(--act);transition:width .25s linear}
 .zonebar i.over{background:var(--ok)}
+/* v13 your-voice player */
+.mvp{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm,10px);background:var(--sunken)}
+.mvp.mvp-off{flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}
+.mvp-row{display:flex;align-items:center;gap:10px}
+.mvplay{background:var(--act);border-color:var(--act);color:var(--on-act)}
+.mvseek{flex:1;min-width:0;accent-color:var(--act);height:28px;cursor:pointer}
+.mvtime{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
+.mvp-tools{display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap}
+.mvlab{display:inline-flex;align-items:center;gap:4px;font-weight:600;margin-right:auto}.mvlab svg{width:14px;height:14px}
+.vs.tap{cursor:pointer;border-radius:4px;transition:background .15s}
+.vs.tap:hover{background:var(--act-soft)}
+.vs.on{background:var(--signal-soft);box-shadow:0 0 0 2px var(--signal-soft)}
+.mvspin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line-strong);border-top-color:var(--act);animation:mvspin .8s linear infinite;flex:none}
+@keyframes mvspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.mvspin{animation-duration:2.4s}}
 
 </style>
 </head>
@@ -577,7 +592,7 @@ const parentTitle = q => q.part === 1 ? TM.get(q.pid).title : CM.get(q.pid).cue;
 const cueShort = c => c.cue.replace(/^Describe\s+/i, '').replace(/\.$/, '').replace(/\s*\(.*?\)\s*/g, ' ').trim();
 
 /* ---------- state ---------- */
-const DEF = {voice: true, rate: 1, tvoice: 'buttery', hideText: false, autoRec: true, autoNext: true, p1Target: 30, p3Target: 60, forceFile: false, transcribe: true, src: 'all', p1Topics: 3, speed: 1, theme: '', goal: 10, autoCoach: false};
+const DEF = {voice: true, rate: 1, tvoice: 'buttery', hideText: false, autoRec: true, autoNext: true, p1Target: 30, p3Target: 60, forceFile: false, transcribe: true, src: 'all', p1Topics: 3, speed: 1, theme: '', goal: 10, autoCoach: false, coachAuto: true, mvAuto: true};
 const S = {att: new Map(), byQ: new Map(), pending: new Map(), phrases: new Map(), starred: new Set(), set: {...DEF}, notes: {}, sessions: [], ideas: {}, mode: 'connecting', metaLoaded: false, liveOK: null};
 let db = null, assets = null, tts = null, dict = null, dlc = null, sample = null, userCap = null;
 try { const m = JSON.parse(localStorage.getItem('ist-meta') || 'null'); if (m) { S.set = {...DEF, ...(m.settings || {})}; S.starred = new Set(m.starred || []); S.notes = m.notes || {}; } } catch {}
@@ -671,7 +686,7 @@ async function localMode() {
 }
 let metaT = null;
 // settings that follow you between phone and computer
-const SYNC_KEYS = ['bandGoal', 'mvSpeed', 'mvStyle', 'fixed', 'fu', 'wordsLang', 'pronOK', 'examDate'];
+const SYNC_KEYS = ['coachAuto', 'mvAuto', 'bandGoal', 'mvSpeed', 'mvStyle', 'fixed', 'fu', 'wordsLang', 'pronOK', 'examDate'];
 function syncSet() { const o = {}; for (const k of SYNC_KEYS) if (S.set[k] !== undefined) o[k] = S.set[k]; return o; }
 function saveMeta() {
   clearTimeout(metaT);
@@ -759,7 +774,7 @@ async function saveRecording(qid, blob, dur, extra = {}) {
   }
   if (STANDALONE && has && !p.failed) { const fn = await fsWrite(S.att.get(id), blob); if (fn) updAtt(id, {file: fn}, false); }
   if (STANDALONE) syncSoon(800);
-  if (STANDALONE && has && !p.failed) measureAttempt(id, true).then(() => { render(); if (S.set.autoCoach && coachReady()) coachAttempt(id); });
+  if (STANDALONE && has && !p.failed) measureAttempt(id, true).then(() => { render(); if (S.set.coachAuto && coachReady() && !qfAtt(id)) coachAttempt(id); });
   reindex(); softRefresh();
   if (has && local && db) toast(assets ? 'Upload failed, so this clip is saved on this device only. Open it later to retry.' : 'Saved on this device only (uploads need edit access).');
   return id;
@@ -3239,11 +3254,20 @@ function pwCard(force) {
     <label for="pwNew2" style="font-weight:600;font-size:14px;margin-bottom:-6px">Repeat it</label><input type="password" id="pwNew2" autocomplete="new-password">
     <div class="row"><button class="btn primary" data-act="pwsave">Save password</button>${force ? '<button class="btn ghost" data-act="pwlater">Later</button>' : ''}</div></section>`;
 }
+function coachCard() {
+  const has = MV.st && MV.st.has;
+  if (!MV.st) setTimeout(() => mvStatus(), 0);
+  return `<section class="card" style="padding:4px 16px"><div style="padding:12px 0 4px"><h2>Coach</h2>${coachLeft() ? `<div class="small muted">${coachLeft()}</div>` : ''}</div>
+    <label class="sw"><span>Check every answer automatically<small>Feedback appears by itself after each answer, in practice and mock tests. Quick-fire answers are skipped.</small></span><input type="checkbox" data-act="setb" data-k="coachAuto" ${S.set.coachAuto ? 'checked' : ''}></label>
+    <label class="sw"><span>Make the better version in your voice too<small>${has ? 'Ready to play by the time you open the feedback. Saved, so it opens instantly later.' : 'Needs a 20-second voice sample: see “Your voice” below.'}</small></span><input type="checkbox" data-act="setb" data-k="mvAuto" ${S.set.mvAuto ? 'checked' : ''}></label></section>`;
+}
+
 function viewSettings() {
   const sw2 = (act, k, opts) => `<div class="switch2" role="group">${opts.map(([v, l]) => `<button data-act="${act}" data-k="${k}" data-v="${v}" aria-pressed="${String(S.set[k] || '') === v}">${l}</button>`).join('')}</div>`;
   const e = examDay();
   return `<div class="stack" style="max-width:640px"><h1>Settings</h1>
     ${STANDALONE ? accountCard(false) : ''}
+    ${STANDALONE && SB.user ? coachCard() : ''}
     <section class="card stack" style="gap:10px"><h2>Phrase explanations</h2>
       ${sw2('setk', 'wordsLang', [['en', 'English'], ['ru', 'Russian']]).replace(`data-v="en" aria-pressed="false"`, `data-v="en" aria-pressed="${WORDS_LANG() === 'en'}"`)}
       <div class="note plain"><b>once in a blue moon</b><br><span class="small muted">${WORDS_LANG() === 'ru' ? 'очень редко' : 'very rarely, almost never'}</span></div>
@@ -4284,7 +4308,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261117042251';
+const BUILD_ID = '20261117043239';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -4546,6 +4570,192 @@ document.addEventListener('click', e => {
     case 'pdleave': pdStop(); PD.phase = 'idle'; break;
   }
 });
+
+/* ================= v13: your-voice player, saved clips, auto mode ================= */
+const MVA = new Audio(); MVA.preload = 'auto';
+Object.assign(MV, {clip: {}, cur: null, rate: 1, cmp: null, chain: Promise.resolve(), drag: false});
+const MV_STYLE_OK = ['natural', 'calm', 'confident', 'lively'];
+async function sha1hex(s) { const h = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(s)); return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 20); }
+// Same key the server uses for its saved clips: <uid>/voice/out/<sha>.mp3
+async function mvPath(text) {
+  const o = mvOpts(), t = String(text).trim().slice(0, 1500);
+  const sp = Math.max(0.7, Math.min(1.3, +o.speed || 1)), st = MV_STYLE_OK.includes(o.style) ? o.style : 'natural';
+  return `${SB.user.id}/voice/out/${await sha1hex([t, sp, st, 0.7].join('|'))}.mp3`;
+}
+async function mvCloud(text) {
+  if (!SB.client || !SB.user) return null;
+  try { const {data} = await SB.client.storage.from('recordings').download(await mvPath(text)); return data && data.size > 800 ? data : null; } catch { return null; }
+}
+async function mvFetch(text, make) {
+  const hit = await mvCloud(text); if (hit || !make) return hit;
+  // one clip at a time: the free voice model doesn't like parallel requests
+  const job = MV.chain.then(async () => {
+    const again = await mvCloud(text); if (again) return again;
+    const r = await api('myvoice', {op: 'say', text, ...mvOpts()});
+    if (r.audio) return new Blob([Uint8Array.from(atob(r.audio), c => c.charCodeAt(0))], {type: r.mime || 'audio/mpeg'});
+    const res = await fetch(r.url); if (!res.ok) throw new Error('Could not download the clip.');
+    return await res.blob();
+  });
+  MV.chain = job.catch(() => {});
+  return job;
+}
+mvURL = async function (text) {
+  const o = mvOpts(), k = text + '|' + o.speed + '|' + o.style;
+  if (MV.url[k]) return MV.url[k];
+  const b = await mvFetch(text, true);
+  return (MV.url[k] = URL.createObjectURL(b));
+};
+async function mvEnsureStatus() { for (let i = 0; i < 40 && !MV.st; i++) { if (!MV.loading) await mvStatus(); else await new Promise(r => setTimeout(r, 250)); } return MV.st; }
+const mvKey = (aid, v) => { const o = mvOpts(); return `${aid}:${v}:${o.speed}:${o.style}`; };
+function mvSents(text) { const s = splitSents(text); return s.length ? s : [String(text)]; }
+async function mvReady(k, blob, text) {
+  const url = URL.createObjectURL(blob);
+  const dur = await probeDur(blob);
+  MV.clip[k] = {st: 'ready', url, blob, text, dur, sents: mvSents(text)};
+}
+async function mvCheck(k, text) {
+  if (MV.clip[k]) return;
+  MV.clip[k] = {st: 'checking', text};
+  const b = await mvCloud(text);
+  if (MV.clip[k] && MV.clip[k].st !== 'checking') return;
+  if (b) await mvReady(k, b, text); else MV.clip[k] = {st: 'none', text};
+  render();
+}
+async function mvMake(k, text, play) {
+  const c = MV.clip[k]; if (c && (c.st === 'making' || c.st === 'ready')) { if (play && c.st === 'ready') mvToggle(k); return; }
+  MV.clip[k] = {st: 'making', text}; render();
+  try { await mvReady(k, await mvFetch(text, true), text); if (play) mvToggle(k, 0); }
+  catch (e) { MV.clip[k] = {st: 'err', text, msg: /sample/i.test(e.message || '') ? 'Save a voice sample first: Settings → Your voice.' : (e.message || 'Could not make the audio.')}; }
+  render();
+}
+/* ---- one player for all your-voice clips ---- */
+function mvLoad(k) { const c = MV.clip[k]; if (!c || c.st !== 'ready') return false; if (MV.cur !== k) { MVA.src = c.url; MV.cur = k; } MVA.playbackRate = MV.rate; return true; }
+function mvToggle(k, at) {
+  if (!mvLoad(k)) return;
+  if (at != null) { try { MVA.currentTime = at; } catch {} }
+  if (MVA.paused || at != null) { stopSpeak(); try { player.pause(); } catch {} if (MV.audio) mvStop(); MVA.play().catch(() => toast("This device couldn't play the clip.")); }
+  else MVA.pause();
+  mvTick();
+}
+function mvTimes(c, d) {
+  const w = c.sents.map(s => s.length + 10), tot = w.reduce((a, b) => a + b, 0), lead = Math.min(0.3, d * 0.03), span = Math.max(0.1, d - lead - 0.2);
+  let acc = 0; return w.map(x => { const t = lead + acc / tot * span; acc += x; return t; });
+}
+function mvSentAt(c, t, d) { if (!d || !c.sents) return -1; const ts = mvTimes(c, d); let i = 0; while (i + 1 < ts.length && t >= ts[i + 1]) i++; return i; }
+const mvDur = k => { const c = MV.clip[k]; return MV.cur === k && isFinite(MVA.duration) && MVA.duration ? MVA.duration : (c && c.dur) || 0; };
+function mvTick() {
+  const k = MV.cur, c = k && MV.clip[k], t = MVA.currentTime || 0;
+  $$('[data-mvr]').forEach(r => { if (MV.drag && document.activeElement === r) return; const kk = r.dataset.mvr, d = mvDur(kk); r.value = kk === k && d ? Math.round(t / d * 1000) : 0; });
+  $$('[data-mvt]').forEach(e => { const kk = e.dataset.mvt; e.textContent = fmt(kk === k ? t : 0) + ' / ' + fmt(mvDur(kk)); });
+  $$('[data-act="mvtoggle"]').forEach(b => { const on = b.dataset.k === k && !MVA.paused; if (b.dataset.on !== String(on)) { b.dataset.on = String(on); b.innerHTML = on ? I.pause : I.play; b.setAttribute('aria-label', on ? 'Pause' : 'Play'); } });
+  const i = c && c.st === 'ready' && (!MVA.paused || t > 0) ? mvSentAt(c, t, mvDur(k)) : -1;
+  $$('[data-mvs]').forEach(s => s.classList.toggle('on', s.dataset.mvs === k && +s.dataset.i === i));
+  if (!MVA.paused && !MV.raf) MV.raf = requestAnimationFrame(() => { MV.raf = 0; mvTick(); });
+}
+['play', 'pause', 'seeked', 'loadedmetadata', 'ratechange'].forEach(ev => MVA.addEventListener(ev, mvTick));
+MVA.addEventListener('ended', () => { try { MVA.currentTime = 0; } catch {} mvTick(); });
+player.addEventListener('play', () => { if (!MVA.paused) MVA.pause(); });
+document.addEventListener('input', e => {
+  const r = e.target.closest && e.target.closest('[data-mvr]'); if (!r) return;
+  const k = r.dataset.mvr; if (!mvLoad(k)) return; MV.drag = true;
+  const d = mvDur(k); if (d) { try { MVA.currentTime = +r.value / 1000 * d; } catch {} }
+  const tl = document.querySelector(`[data-mvt="${k}"]`); if (tl && d) tl.textContent = fmt(+r.value / 1000 * d) + ' / ' + fmt(d);
+});
+document.addEventListener('change', e => { if (e.target.closest && e.target.closest('[data-mvr]')) { MV.drag = false; mvTick(); } });
+function mvDownload(k) {
+  const c = MV.clip[k]; if (!c || !c.blob) return;
+  const a = document.createElement('a'); a.href = c.url;
+  a.download = 'your-voice-' + (c.text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '.mp3';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function mvCompare(aid, k) {
+  if (!MV.clip[k] || MV.clip[k].st !== 'ready') return;
+  MVA.pause(); MV.cmp = k;
+  try { player.pause(); } catch {} playing = null;
+  await playAtt(aid);
+  if (playing !== aid) { MV.cmp = null; return; }
+  toast('Your answer first, then the better version in your voice.', 3500);
+  const onEnd = () => { player.removeEventListener('ended', onEnd); player.removeEventListener('pause', onPause); if (MV.cmp === k) { MV.cmp = null; setTimeout(() => mvToggle(k, 0), 500); } };
+  const onPause = () => { if (!player.ended) { MV.cmp = null; player.removeEventListener('ended', onEnd); player.removeEventListener('pause', onPause); } };
+  player.addEventListener('ended', onEnd); player.addEventListener('pause', onPause);
+}
+function mvPlayer(a, v, text) {
+  if (!MV.st) { if (!MV.wait) { MV.wait = 1; setTimeout(() => mvEnsureStatus().then(() => { MV.wait = 0; render(); }), 0); } return `<div class="mvp mvp-off small muted">Your voice: loading…</div>`; }
+  if (!MV.st.has) return `<div class="mvp mvp-off small"><span class="grow">Hear this in your own voice: record a 20-second sample once.</span><a class="btn sm" href="#prefs">Set it up</a></div>`;
+  const k = mvKey(a.id, v), c = MV.clip[k];
+  if (!c) { setTimeout(() => mvCheck(k, text), 0); return `<div class="mvp mvp-off small muted">Your voice: looking for a saved copy…</div>`; }
+  if (c.st === 'checking') return `<div class="mvp mvp-off small muted">Your voice: looking for a saved copy…</div>`;
+  if (c.st === 'none') return `<div class="mvp mvp-off"><button class="btn sm primary" data-act="mvmake" data-k="${k}" data-a="${a.id}" data-v="${v}">${I.mic} Make it in your voice</button><span class="small muted">about 10–20 s, then it's saved</span></div>`;
+  if (c.st === 'making') return `<div class="mvp mvp-off"><span class="mvspin" aria-hidden="true"></span><span class="small">Making it in your voice… It's saved after this, so next time it opens instantly.</span></div>`;
+  if (c.st === 'err') return `<div class="mvp mvp-off"><span class="small grow" style="color:var(--rec-ink)">${esc(c.msg)}</span><button class="btn sm" data-act="mvmake" data-k="${k}" data-a="${a.id}" data-v="${v}" data-retry="1">Try again</button></div>`;
+  const on = MV.cur === k && !MVA.paused, d = mvDur(k), t = MV.cur === k ? MVA.currentTime || 0 : 0;
+  return `<div class="mvp" role="group" aria-label="Better version in your voice">
+    <div class="mvp-row"><button class="play mvplay" data-act="mvtoggle" data-k="${k}" data-on="${on}" aria-label="${on ? 'Pause' : 'Play'}">${on ? I.pause : I.play}</button>
+      <input type="range" class="mvseek" min="0" max="1000" step="1" value="${d ? Math.round(t / d * 1000) : 0}" data-mvr="${k}" aria-label="Position in the clip">
+      <span class="mono small mvtime" data-mvt="${k}">${fmt(t)} / ${fmt(d)}</span></div>
+    <div class="mvp-tools"><span class="small mvlab">${I.mic} Your voice</span>
+      <button class="btn sm ghost" data-act="mvrate" aria-label="Playback speed">Speed ${MV.rate}×</button>
+      ${a.size || a.rpath || a.asset || a.file || urlCache.has(a.id) ? `<button class="btn sm ghost" data-act="mvcmp" data-k="${k}" data-a="${a.id}">${I.again} Yours, then this</button>` : ''}
+      <button class="btn sm ghost" data-act="mvdl" data-k="${k}">${I.dl} Download</button></div>
+    <div class="small muted">Tap a sentence above to jump to it.</div></div>`;
+}
+/* "Try it like this" with the player built in */
+versionsBox = function (a) {
+  const ai = a.ai; if (!ai || !ai.natural_version) return '';
+  const g = ai.goal || ai.target_band || null, hb = g != null ? Math.min(9, g + 1) : null;
+  const vs = [['n', g != null ? `Band ${fmtB(g)} · your goal` : 'A better version', ai.natural_version]];
+  if (ai.higher_version) vs.push(['h', `Band ${fmtB(hb)} · a step above`, ai.higher_version]);
+  const cur = vs.find(v => v[0] === VERS[a.id]) || vs[0];
+  const mine = STANDALONE && SB.user, k = mine ? mvKey(a.id, cur[0]) : '', c = k && MV.clip[k], ready = c && c.st === 'ready';
+  const sents = mvSents(cur[2]);
+  const txt = sents.map((s, i) => ready ? `<span class="vs tap" role="button" tabindex="0" data-act="mvjump" data-k="${k}" data-i="${i}" data-mvs="${k}">${esc(s)}</span>` : `<span class="vs">${esc(s)}</span>`).join(' ');
+  return `<section class="stack" style="gap:8px"><h2>Try it like this</h2>
+    ${vs.length > 1 ? `<div class="switch2" role="group" aria-label="Version">${vs.map(v => `<button data-act="vers" data-a="${a.id}" data-v="${v[0]}" aria-pressed="${v === cur}">${v[1]}</button>`).join('')}</div>` : ''}
+    <p class="vtext">“${txt}”</p>
+    ${mine ? mvPlayer(a, cur[0], cur[2]) : ''}
+    <div class="row"><button class="btn sm" data-act="saytext" data-t="${esc(cur[2])}">${I.speak} Examiner voice</button><button class="btn sm" data-act="repeat" data-src="a:${a.id}:${cur[0]}">${I.again} Repeat after it</button></div></section>`;
+};
+/* auto: make the clip right after the coach finishes */
+const coachAttempt_v12 = coachAttempt;
+coachAttempt = async function (id) {
+  if (COACH.busy.has(id)) { while (COACH.busy.has(id)) await new Promise(r => setTimeout(r, 400)); return; }
+  await coachAttempt_v12(id);
+  const a = getAtt(id);
+  if (a && a.ai && a.ai.natural_version && S.set.mvAuto && STANDALONE && SB.user) {
+    const st = await mvEnsureStatus();
+    if (st && st.has) { const k = mvKey(id, 'n'); delete MV.clip[k]; mvMake(k, a.ai.natural_version, false); }
+  }
+};
+function qfAtt(id) { const a = getAtt(id); return !!(a && /^#quick/.test(location.hash) && QF.deck && QF.deck.includes(a.qid)); }
+/* the test button in Settings can be stopped */
+const mvPlay_v11 = mvPlay;
+mvPlay = async function (text, key) {
+  if (MV.audio && MV.playKey === (key || text)) { mvStop(); MV.playKey = null; render(); return; }
+  MVA.pause(); MV.playKey = key || text;
+  const p = mvPlay_v11(text, key); setTimeout(render, 50);
+  await p; if (MV.playKey === (key || text)) MV.playKey = null; render();
+};
+const myVoiceCard_v11 = myVoiceCard;
+myVoiceCard = function () {
+  let h = myVoiceCard_v11();
+  if (MV.playKey === 'test' && MV.audio) h = h.replace(/(data-act="mvtest">)[\s\S]*?(<\/button>)/, `$1${I.stop} Stop$2`);
+  if (MV.st && MV.st.has) h = h.replace(/<\/section>$/, `<label class="sw" style="border-top:1px solid var(--line);padding-top:10px"><span>Make the better version in your voice by itself<small>Right after the coach checks an answer. Saved, so it opens instantly later, on phone and PC.</small></span><input type="checkbox" data-act="setb" data-k="mvAuto" ${S.set.mvAuto ? 'checked' : ''}></label></section>`);
+  return h;
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const d = el.dataset;
+  switch (d.act) {
+    case 'mvmake': { const a = getAtt(d.a); if (!a || !a.ai) return; const text = d.v === 'h' ? a.ai.higher_version : a.ai.natural_version; if (d.retry) delete MV.clip[d.k]; MV.clip[d.k] = MV.clip[d.k] && MV.clip[d.k].st === 'none' ? undefined : MV.clip[d.k]; mvMake(d.k, text, true); break; }
+    case 'mvtoggle': mvToggle(d.k); break;
+    case 'mvjump': { const c = MV.clip[d.k]; if (!c || c.st !== 'ready') return; mvLoad(d.k); const go = () => mvToggle(d.k, mvTimes(c, mvDur(d.k))[+d.i] || 0); if (MVA.readyState >= 1) go(); else MVA.addEventListener('loadedmetadata', go, {once: true}); break; }
+    case 'mvrate': MV.rate = MV.rate === 1 ? 0.8 : MV.rate === 0.8 ? 1.2 : 1; MVA.playbackRate = MV.rate; render(); break;
+    case 'mvdl': mvDownload(d.k); break;
+    case 'mvcmp': mvCompare(d.a, d.k); break;
+  }
+});
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.vs.tap')) { e.preventDefault(); e.target.click(); } });
+window.addEventListener('hashchange', () => { if (!MVA.paused) MVA.pause(); });
 
 init();
 </script>
