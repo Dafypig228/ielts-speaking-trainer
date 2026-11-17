@@ -199,7 +199,9 @@ How to choose the root problem: pick the single issue that costs the most band p
 "next_time": one concrete thing to do differently next time.
 "audio_quality": "ok" if the speech is clear enough to judge individual sounds; "noisy" if background noise, music or other voices make sounds hard to judge; "quiet" if the voice is too quiet or far from the microphone.
 "pron_words": array (0-5) of {"word": the word as it should be said, "heard": how it actually sounded, as a simple respelling (e.g. "VEJ-uh-tuh-bul", "zis" for "this"), "tip": how to fix it, under 12 words}. Only words you clearly heard said wrongly (sounds or word stress). If audio_quality is not "ok", return [] and say in "pronunciation" that the recording was too noisy or quiet to judge sounds.
-"follow_up": ${q.part === 3 ? 'one follow-up question a real examiner would ask next, picking up something specific the candidate said (ask why, for an example, a comparison, or about society or the future). Natural spoken English, at most 20 words.' : 'empty string ""'}`;
+${q.part === 2 ? `"card_check": array with one item per "You should say" point, in the card's order: {"point": the point as written on the card, "covered": true if they actually talked about it, "from": roughly the second they started on it (number, or null if not covered), "to": roughly the second they moved on, "note": under 12 words, e.g. "covered in one sentence, needs a detail"}.
+"ran_out": true if the talk ended before all points were covered or stopped short of a natural ending.
+` : ""}"follow_up": ${q.part === 3 ? 'one follow-up question a real examiner would ask next, picking up something specific the candidate said (ask why, for an example, a comparison, or about society or the future). Natural spoken English, at most 20 words.' : 'empty string ""'}`;
   const parts: any[] = [{ text: prompt }];
   if (body.audio) parts.push({ inline_data: { mime_type: body.mime || "audio/wav", data: body.audio } });
   let r;
@@ -207,9 +209,7 @@ How to choose the root problem: pick the single issue that costs the most band p
   // IELTS overall = mean of the four criteria; .25 rounds up to .5 and .75 up to the next whole band
   const b = r.data?.bands;
   if (b && ["fc", "lr", "gra", "p"].every((k) => typeof b[k] === "number" || !isNaN(Number(b[k])))) {
-    const avg = (Number(b.fc) + Number(b.lr) + Number(b.gra) + Number(b.p)) / 4;
-    const whole = Math.floor(avg + 1e-9), frac = avg - whole;
-    b.overall = frac < 0.25 - 1e-9 ? whole : frac < 0.75 - 1e-9 ? whole + 0.5 : whole + 1;
+    b.overall = ieltsRound((Number(b.fc) + Number(b.lr) + Number(b.gra) + Number(b.p)) / 4);
   }
   return { ...r.data, model: r.model, usage };
 }
@@ -255,6 +255,64 @@ Return ONLY JSON: {"question": "...", "heard_ok": true}`;
   let r;
   try { r = await gemini(parts, true, 0.7); } catch (e) { await refund(userId, usage.used); throw e; }
   return { question: String(r.data.question || "").trim(), heard_ok: r.data.heard_ok !== false, model: r.model, usage };
+}
+
+function ieltsRound(avg: number) {
+  const whole = Math.floor(avg + 1e-9), frac = avg - whole;
+  return frac < 0.25 - 1e-9 ? whole : frac < 0.75 - 1e-9 ? whole + 0.5 : whole + 1;
+}
+
+async function mockReport(body: any, userId: string) {
+  const items = Array.isArray(body.items) ? body.items.slice(0, 20) : [];
+  if (!items.length) throw Object.assign(new Error("No checked answers in this test."), { code: "bad_request" });
+  const goal = Number(body.goal) >= 4 && Number(body.goal) <= 9 ? Number(body.goal) : null;
+  const usage = await bumpUsage(userId);
+  const lines = items.map((it: any, i: number) => `Answer ${i + 1} (Part ${it.part}, ${Math.round(it.dur || 0)} s). Question: ${String(it.question || "").slice(0, 200)}
+Transcript: ${String(it.transcript || "").slice(0, 1500)}
+Coach bands for this answer: ${JSON.stringify(it.bands || {})}. Main problem noted: ${String(it.fix || "").slice(0, 200)}${(it.pauses || []).length ? `. Long pauses: ${JSON.stringify(it.pauses).slice(0, 300)}` : ""}`).join("\n\n");
+  const prompt = `${STYLE}
+
+${DESCRIPTORS}
+
+You are an IELTS Speaking examiner giving the result of a full mock test (Parts 1, 2 and 3) to a candidate whose first language is Kazakh/Russian.${goal ? ` Their goal is band ${goal}.` : ""}
+Examiners score the whole performance, not an average of single answers: Part 2 and Part 3 show more of what the candidate can do, so they count for more than short Part 1 answers. Use the band descriptors and the evidence below.
+
+${lines}
+
+Return ONLY a JSON object:
+"bands": {"fc": number, "lr": number, "gra": number, "p": number} for the whole test, 0.5 steps, best fit, fair.
+"band_reasons": {"fc": ..., "lr": ..., "gra": ..., "p": ...} one sentence each: which descriptor fits and what the next half band needs, with a quote from the test.
+"top_issues": array of up to 3 things that cost the most band points across the whole test, most costly first: {"issue": plain name, "evidence": where it happened, with a short quote and the part, "fix": one concrete thing to do in the next few days, including a phrase or frame they can say}.
+"strengths": array of 2 things that already work, specific, with a short quote.
+"plan": array of 3 short, concrete practice tasks for the days before the test, using this app (Part 1 quick-fire, Part 2 cue cards, Part 3 discussion, Repeat after, practising a mistake).`;
+  let r;
+  try { r = await gemini([{ text: prompt }], true, 0.3); } catch (e) { await refund(userId, usage.used); throw e; }
+  const b = r.data?.bands;
+  if (b && ["fc", "lr", "gra", "p"].every((k) => !isNaN(Number(b[k])))) b.overall = ieltsRound((Number(b.fc) + Number(b.lr) + Number(b.gra) + Number(b.p)) / 4);
+  return { ...r.data, model: r.model, usage };
+}
+
+async function paraphrase(body: any, userId: string) {
+  const usage = await bumpUsage(userId);
+  const words: string[] = Array.isArray(body.avoid) ? body.avoid.filter((x: unknown) => typeof x === "string").slice(0, 6) : [];
+  const prompt = `${STYLE}
+
+An IELTS candidate (first language Kazakh/Russian) is practising paraphrase. The examiner asked: "${String(body.question || "").slice(0, 300)}"
+The candidate tried to start their answer WITHOUT repeating these key words or their word family: ${words.map((w) => `"${w}"`).join(", ")}.
+Listen to the recording (only the first sentence or two matter).
+Return ONLY JSON:
+"transcript": what they said, verbatim.
+"heard_ok": false if the audio is silent, mostly noise, or not English; otherwise true.
+"repeated": array of the key words (or same-family words, e.g. "reading" for "read") they repeated. Small words like "do", "you", "like" don't count unless they are a key word.
+"paraphrased": array of the natural replacements they actually used (e.g. "I'm a big fan of books" for "enjoy reading").
+"ok": true if they avoided the key words AND the opening sounds natural and answers the question.
+"better": array of 2 natural spoken openings that paraphrase the key words, each under 15 words.
+"tip": one short sentence, specific to what they said.`;
+  const parts: any[] = [{ text: prompt }];
+  if (body.audio) parts.push({ inline_data: { mime_type: body.mime || "audio/wav", data: body.audio } });
+  let r;
+  try { r = await gemini(parts, true, 0.3); } catch (e) { await refund(userId, usage.used); throw e; }
+  return { ...r.data, model: r.model, usage };
 }
 
 /* ---------------- voice cloning test (admin only) ---------------- */
@@ -427,6 +485,8 @@ Deno.serve(async (req) => {
     if (action === "ideas") return j(await ideas(body, user.id));
     if (action === "followup") return j(await followup(body, user.id));
     if (action === "myvoice") return j(await myVoice(body, user.id));
+    if (action === "mockreport") return j(await mockReport(body, user.id));
+    if (action === "paraphrase") return j(await paraphrase(body, user.id));
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);
       const { data } = await admin.from("ai_usage").select("count").eq("user_id", user.id).eq("day", day).maybeSingle();

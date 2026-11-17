@@ -468,6 +468,40 @@ mark.voc{background:var(--act-soft);color:inherit;border-radius:4px;padding:0 2p
 
 .bb-why{grid-column:1/-1;font-size:13px;line-height:1.4;color:var(--muted);margin-top:-2px}
 
+/* v12: test report, card check, quick-fire, paraphrase */
+.issues{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:12px;font-size:15.5px;line-height:1.45}
+.iss-fix{margin-top:4px;background:var(--ok-soft);border-radius:8px;padding:8px 10px;font-size:14.5px}
+.cardbar{position:relative;height:26px;border-radius:8px;background:var(--sunken);overflow:hidden}
+.cardbar .seg{position:absolute;top:3px;bottom:3px;border-radius:6px;background:var(--act-soft);box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--act) 45%,transparent);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700;color:var(--act-ink);overflow:hidden}
+.cardbar em{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.5}
+.ccl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ccl li{display:flex;gap:10px;align-items:flex-start;font-size:15px}
+.ccl .mk{width:22px;height:22px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:700}
+.ccl .mk svg{width:14px;height:14px}
+.ccl li.ok .mk{background:var(--ok-soft);color:var(--ok)}
+.ccl li.miss .mk{background:var(--rec-soft);color:var(--rec)}
+.ccl .t{font-weight:550}
+.qfdots{display:flex;gap:6px}
+.qfdots i{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.qfdots i.done{background:var(--act)}
+.qfdots i.cur{background:var(--ink)}
+.qfscore{display:flex;gap:12px;flex-wrap:wrap}
+.qfscore>div{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:15px}
+.qfscore b{font-size:30px;font-weight:700;margin-right:4px}
+.qfscore span{display:block;color:var(--muted);font-size:13.5px}
+.qfrow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+.list .qfrow:first-child{border-top:0}
+.qfrow .t{display:block;font-size:15px}
+.qfrow .s{display:block;font-size:12.5px;color:var(--muted)}
+.qfm{font-size:13px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.qfm.good{background:var(--ok-soft);color:var(--ok)}
+.qfm.mid{background:var(--warn-soft);color:var(--warn)}
+.qfm.bad{background:var(--rec-soft);color:var(--rec)}
+mark.avoid{background:var(--warn-soft);color:inherit;border-radius:4px;padding:0 3px;text-decoration:underline wavy color-mix(in oklab,var(--warn) 60%,transparent);text-underline-offset:4px}
+.zonebar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:-6px}
+.zonebar i{display:block;height:100%;background:var(--act);transition:width .25s linear}
+.zonebar i.over{background:var(--ok)}
+
 </style>
 </head>
 <body>
@@ -3932,7 +3966,7 @@ function bandsBox(ai) {
   const low = rows.reduce((m, [k]) => (m == null || +b[k] < +b[m] ? k : m), null);
   const pos = v => Math.max(0, Math.min(100, (+v - 4) / 5 * 100));
   const gap = g != null && b.overall != null ? g - +b.overall : null;
-  return `<section class="card bandbox"><div class="bb-top"><div><div class="small muted">This answer</div><div class="bb-big">${fmtB(b.overall)}</div></div>
+  return `<section class="card bandbox"><div class="bb-top"><div><div class="small muted">${ai.label || 'This answer'}</div><div class="bb-big">${fmtB(b.overall)}</div></div>
       ${g != null ? `<div style="text-align:right"><div class="small muted">Your goal</div><div class="bb-goal">${fmtB(g)}</div><div class="small ${gap <= 0 ? 'ok' : 'muted'}">${gap <= 0 ? 'reached' : fmtB(gap) + ' to go'}</div></div>` : ''}</div>
     ${rows.map(([k, l]) => `<div class="bb-row ${k === low && rows.length > 1 ? 'low' : ''}"><span>${l}${k === low && rows.length > 1 ? ' <span class="small">· lowest</span>' : ''}</span><span class="bb-bar"><i style="width:${pos(b[k])}%"></i>${g != null ? `<em style="left:${pos(g)}%" title="Goal ${fmtB(g)}"></em>` : ''}</span><b>${fmtB(b[k])}</b>${ai.band_reasons && ai.band_reasons[k] ? `<span class="bb-why">${esc(ai.band_reasons[k])}</span>` : ''}</div>`).join('')}
     ${g == null ? `<div class="bb-set"><div class="small muted" style="margin-bottom:6px">Set your goal so the coach aims at it:</div>${goalChips('sm')}</div>` : ''}</section>`;
@@ -4250,7 +4284,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261116145611';
+const BUILD_ID = '20261117042251';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -4269,6 +4303,249 @@ async function checkNewer() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkNewer(); });
 setInterval(checkNewer, 10 * 60 * 1000);
 setTimeout(checkNewer, 20000);
+
+/* ================= v12: mock test report, Part 2 card check, quick-fire Part 1, paraphrase drill ================= */
+
+/* ---------- shared: stop recording by itself after the speaker goes quiet ---------- */
+function watchSilence(getAn, o) {
+  // o: {silence, minSpeech, noSpeech, onStop, onSpeech}
+  const t0 = performance.now(); let first = 0, lastLoud = 0, stopped = false, buf = null;
+  const loop = () => {
+    if (stopped) return;
+    const an = getAn();
+    if (an) {
+      buf = buf && buf.length === an.fftSize ? buf : new Uint8Array(an.fftSize);
+      an.getByteTimeDomainData(buf); let m = 0; for (const v of buf) m = Math.max(m, Math.abs(v - 128));
+      const lvl = m / 64, now = performance.now();
+      if (lvl > 0.16) { lastLoud = now; if (!first) { first = now; o.onSpeech && o.onSpeech((now - t0) / 1000); } }
+      if (first && now - lastLoud > o.silence && now - first > o.minSpeech) { stopped = true; o.onStop('silence'); return; }
+      if (!first && now - t0 > o.noSpeech) { stopped = true; o.onStop('none'); return; }
+    }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  return () => { stopped = true; };
+}
+
+/* =================== 1. Mock test report =================== */
+const MR = {busy: '', done: 0, total: 0, stage: ''};
+async function mockReport(sid) {
+  const sess = S.sessions.find(x => x.id === sid) || M.sess; if (!sess || MR.busy) return;
+  if (!SB.user) return toast('Sign in first (Settings).');
+  const ids = (sess.items || []).map(x => x.aid).filter(id => getAtt(id));
+  if (!ids.length) return toast('No recorded answers in this test.');
+  const todo = ids.filter(id => !getAtt(id).ai);
+  Object.assign(MR, {busy: sid, done: 0, total: todo.length, stage: 'answers'}); render();
+  try {
+    for (const id of todo) { await coachAttempt(id); if (!getAtt(id).ai) throw new Error('The coach stopped (see the message above). The report needs every answer checked.'); MR.done++; render(); }
+    MR.stage = 'report'; render();
+    const items = ids.map(id => getAtt(id)).filter(a => a && a.ai).map(a => { const q = Q.get(a.qid) || {}; const f = a.ai.fix_first; return {part: q.part, question: q.part === 2 ? (CM.get(q.pid) || {}).cue : q.t, dur: a.dur, transcript: (a.ai.transcript || '').slice(0, 1500), bands: a.ai.bands, fix: f && typeof f === 'object' ? f.problem : f || '', pauses: (a.ai.pauses || []).slice(0, 3).map(p => ({len: p.len, before: p.before, cause: p.cause}))}; });
+    const r = await api('mockreport', {items, goal: goalBand()});
+    const {usage, ...rep} = r; if (SB.me && usage) { SB.me.used = usage.used; SB.me.limit = usage.limit; }
+    sess.report = {...rep, at: Date.now(), n: items.length, goal: goalBand()}; await saveSession(sess);
+  } catch (e) { toast(e.message || 'Could not make the report.', 7000); }
+  MR.busy = ''; render();
+}
+function testPauses(sess) {
+  const out = [];
+  for (const it of sess.items || []) { const a = getAtt(it.aid); if (!a || !a.ai) continue; for (const p of a.ai.pauses || []) if (+p.len >= 1.2) out.push({...p, aid: a.id, dur: (a.stats && a.stats.dur) || a.dur, part: (Q.get(a.qid) || {}).part}); }
+  return out.sort((x, y) => y.len - x.len).slice(0, 5);
+}
+function reportCard(sess) {
+  if (!STANDALONE) return '';
+  const n = (sess.items || []).filter(x => getAtt(x.aid)).length;
+  if (MR.busy === sess.id) return `<section class="card stack" style="gap:8px"><h2>Test report</h2><div class="rpstate">${I.speak}<span class="grow">${MR.stage === 'answers' ? `Checking answer ${Math.min(MR.done + 1, MR.total)} of ${MR.total}…` : 'Writing the report for the whole test…'}</span></div><p class="small muted" style="margin:0">You can keep using the app. Each answer uses one coach check, plus one for the report.</p></section>`;
+  const rp = sess.report;
+  if (!rp) {
+    const left = (sess.items || []).filter(x => { const a = getAtt(x.aid); return a && !a.ai; }).length;
+    return `<section class="card stack" style="gap:8px"><h2>Test report</h2><p class="small muted" style="margin:0">One result for the whole test, like the real one: four bands with reasons, what cost you most, and what to practise before the exam.${left ? ` ${left} of ${n} answers still need the coach first; this does it for you.` : ''}</p><div><button class="btn primary" data-act="mreport" data-s="${sess.id}" ${n ? '' : 'disabled'}>Get the test report</button></div></section>`;
+  }
+  const stale = (sess.items || []).some(x => { const a = getAtt(x.aid); return a && a.ai && a.ai.at > rp.at; });
+  const pz = testPauses(sess);
+  return `<section class="stack" style="gap:12px"><div class="sec-h" style="margin-top:0"><h2>Test report</h2><button class="linkbtn" data-act="mreport" data-s="${sess.id}">${stale ? 'Update (answers changed)' : 'Make again'}</button></div>
+    ${bandsBox({bands: rp.bands, band_reasons: rp.band_reasons, goal: rp.goal, label: 'Whole test'})}
+    ${(rp.top_issues || []).length ? `<section class="card stack" style="gap:10px"><h2>What cost you most</h2><ol class="issues">${rp.top_issues.map(x => `<li><b>${esc(x.issue)}</b>${x.evidence ? `<div class="small muted">${esc(x.evidence)}</div>` : ''}${x.fix ? `<div class="iss-fix">${esc(x.fix)}</div>` : ''}</li>`).join('')}</ol></section>` : ''}
+    ${(rp.strengths || []).length ? `<section class="card stack" style="gap:6px"><h2>Already working</h2>${rp.strengths.map(x => `<p style="margin:0;font-size:15px">${esc(x)}</p>`).join('')}</section>` : ''}
+    ${pz.length ? `<section class="stack" style="gap:6px"><h2>Longest pauses in the test</h2><div class="list">${pz.map(p => `<div class="pzrow"><button class="btn sm" data-act="seekp" data-a="${p.aid}" data-t="${(+p.at || 0).toFixed(1)}" data-d="${p.dur || 1}">${I.play} ${(+p.len).toFixed(1)} s</button><div class="grow"><div class="pz-ctx">${badge(p.part || 1)}${p.before ? `…${esc(p.before)} ` : ''}<mark class="pz">pause</mark>${p.after ? ` ${esc(p.after)}…` : ''}</div>${p.cause ? `<div class="small muted">${esc(p.cause)}</div>` : ''}${p.instead ? `<div class="pz-say">Fill it with: <b>“${esc(p.instead)}”</b></div>` : ''}</div></div>`).join('')}</div></section>` : ''}
+    ${(rp.plan || []).length ? `<section class="card stack" style="gap:6px"><h2>Before the exam</h2><ol class="ff-steps">${rp.plan.map(x => `<li>${esc(x)}</li>`).join('')}</ol></section>` : ''}</section>`;
+}
+const viewSummary_v11 = viewSummary;
+viewSummary = function (sess) {
+  const h = viewSummary_v11(sess);
+  if (!sess) return h;
+  const i = h.indexOf('<div class="list">');
+  return i < 0 ? h : h.slice(0, i) + reportCard(sess) + `<h2 style="margin:6px 0 0">Answers</h2>` + h.slice(i);
+};
+
+/* =================== 2. Part 2: which card points you covered =================== */
+function cardCheckBox(a, q) {
+  const cc = a.ai.card_check; if (!Array.isArray(cc) || !cc.length) return '';
+  const dur = (a.stats && a.stats.dur) || a.dur || 120;
+  const covered = cc.filter(x => x.covered).length;
+  const segs = cc.map((x, i) => x.covered && x.from != null && x.to != null && +x.to > +x.from ? `<i class="seg" style="left:${Math.min(98, Math.max(0, +x.from / dur * 100))}%;width:${Math.max(2, Math.min(100 - Math.min(98, +x.from / dur * 100), (+x.to - +x.from) / dur * 100))}%"><span>${i + 1}</span></i>` : '').join('');
+  return `<section class="card stack" style="gap:8px"><div class="row"><h2 class="grow">The card</h2><span class="chip ${covered === cc.length ? 'ok' : 'warn'}">${covered} of ${cc.length} points</span></div>
+    <div class="cardbar" aria-hidden="true">${segs}<em style="left:${Math.min(100, 120 / Math.max(dur, 120) * 100)}%"></em></div>
+    <div class="small muted" style="margin-top:-4px">How your ${fmt(dur)} was spread across the points${dur < 90 ? '. Aim for at least 1:30 so every point gets a detail.' : '.'}</div>
+    <ol class="ccl">${cc.map((x, i) => `<li class="${x.covered ? 'ok' : 'miss'}"><span class="mk">${x.covered ? I.check : '–'}</span><span class="grow"><span class="t">${esc(x.point)}</span>${x.covered && x.from != null && x.to != null ? ` <span class="small muted">${fmt(+x.from)}–${fmt(+x.to)}</span>` : x.covered ? '' : ' <span class="small" style="color:var(--rec)">skipped</span>'}${x.note ? `<span class="small muted" style="display:block">${esc(x.note)}</span>` : ''}</span></li>`).join('')}</ol>
+    ${a.ai.ran_out ? '<div class="note amber">You ran out before finishing the card. Spend less on the first point: one sentence of background, then move on.</div>' : ''}</section>`;
+}
+const coachDetail_v11 = coachDetail;
+coachDetail = function (a, q) {
+  const cd = coachDetail_v11(a, q);
+  if (q && q.part === 2 && a.ai) { const box = cardCheckBox(a, q); if (box) cd.main = /class="card fixfirst/.test(cd.main) ? cd.main.replace('</section>', '</section>' + box) : box + cd.main; }
+  return cd;
+};
+
+/* =================== 3. Quick-fire Part 1 =================== */
+const QF = {deck: [], i: 0, phase: 'idle', res: [], stopWatch: null, run: 0, delay: null};
+function qfDeck() {
+  const fresh = l => { const n = l.filter(id => !nAtt(id)); return shuffle(n.length >= 10 ? n : l); };
+  const byTopic = new Map();
+  for (const id of fresh(topics.filter(t => matchSrc(t.src)).flatMap(t => t.qs.map(q => q.id)))) { const t = Q.get(id).pid; if (!byTopic.has(t)) byTopic.set(t, id); if (byTopic.size >= 10) break; }
+  return [...byTopic.values()];
+}
+function qfStart() { qfStop(); Object.assign(QF, {deck: qfDeck(), i: 0, phase: 'idle', res: []}); location.hash = 'quick'; }
+function qfStop() { QF.run++; if (QF.stopWatch) QF.stopWatch(); QF.stopWatch = null; stopSpeak(); if (R.on && R.opts && R.opts.qf) abortRec(); }
+async function qfGo() {
+  const run = ++QF.run;
+  while (QF.i < QF.deck.length && run === QF.run) {
+    const qid = QF.deck[QF.i];
+    QF.phase = 'ask'; QF.delay = null; render();
+    await speak(Q.get(qid).t, true);
+    if (run !== QF.run) return;
+    QF.phase = 'rec'; render();
+    const id = await new Promise(res => {
+      startRec(qid, {limit: 45, gesture: false, qf: true, onDone: res});
+      QF.stopWatch = watchSilence(() => R.on ? R.an : null, {silence: 2200, minSpeech: 2500, noSpeech: 9000, onSpeech: d => { QF.delay = d; render(); }, onStop: () => { if (R.on && R.qid === qid) stopRec(); }});
+    });
+    if (QF.stopWatch) QF.stopWatch(); QF.stopWatch = null;
+    if (run !== QF.run) return;
+    const a = id && getAtt(id);
+    QF.res.push({qid, aid: id || null, delay: QF.delay, dur: a ? a.dur : 0});
+    QF.i++;
+  }
+  if (run === QF.run) { QF.phase = 'done'; render(); }
+}
+function viewQuick() {
+  const n = QF.deck.length;
+  if (!n) return `<div class="card empty">No questions. <a href="#today">Back</a></div>`;
+  const head = `<a class="back" href="#today" data-act="qfleave">${I.back} Back</a><div><h1>Quick-fire Part 1</h1><p class="lead" style="margin-top:4px">${n} questions in a row. Start talking as soon as the question ends; go quiet for 2 seconds and the next one comes.</p></div>`;
+  const dots = `<div class="qfdots">${QF.deck.map((_, i) => `<i class="${i < QF.i ? 'done' : i === QF.i && QF.phase !== 'done' && QF.phase !== 'idle' ? 'cur' : ''}"></i>`).join('')}</div>`;
+  if (QF.phase === 'idle') return `<div class="stack" style="max-width:720px">${head}<div class="note">The goal: start within 1.5 seconds and talk for 20 seconds or more, with a reason and an example. Don't plan, just go: “Well, honestly…” buys you a second.</div><div><button class="btn primary big" data-act="qfgo">${I.play} Start</button></div></div>`;
+  if (QF.phase === 'done') {
+    const ok1 = QF.res.filter(r => r.delay != null && r.delay <= 1.5).length, ok2 = QF.res.filter(r => r.dur >= 20).length;
+    const cls = (v, g, y) => v == null ? 'bad' : v <= g ? 'good' : v <= y ? 'mid' : 'bad';
+    return `<div class="stack" style="max-width:760px">${head}
+      <div class="qfscore"><div><b>${ok1}</b> of ${QF.res.length}<span>started within 1.5 s</span></div><div><b>${ok2}</b> of ${QF.res.length}<span>reached 20 s</span></div></div>
+      <div class="list">${QF.res.map(r => { const q = Q.get(r.qid); return `<div class="qfrow"><span class="grow"><span class="t">${esc(q.t)}</span><span class="s">${esc(TM.get(q.pid).title)}</span></span><span class="qfm ${cls(r.delay, 1.5, 3)}">${r.delay == null ? 'no answer' : r.delay.toFixed(1) + ' s start'}</span><span class="qfm ${r.dur >= 20 ? 'good' : r.dur >= 12 ? 'mid' : 'bad'}">${fmt(r.dur || 0)}</span>${r.aid ? `<button class="btn sm" data-act="play" data-a="${r.aid}" aria-label="Play">${I.play}</button>` : ''}</div>`; }).join('')}</div>
+      <p class="small muted" style="margin:0">Every answer is saved in My answers, where you can press Coach on any of them.</p>
+      <div class="row"><button class="btn primary" data-act="qfnew">${I.again} 10 new questions</button><a class="btn" href="#answers">My answers</a></div></div>`;
+  }
+  const q = Q.get(QF.deck[QF.i]);
+  const st = QF.phase === 'ask' ? `<div class="rpstate">${I.speak}<span class="grow">Listen…</span></div>`
+    : `<div class="rpstate you">${I.mic}<span class="grow">${QF.delay == null ? '<b>Go!</b> Start talking.' : `Started after <b>${QF.delay.toFixed(1)} s</b>. Keep going: reason, example.`} <span class="small muted" data-rtime>0:00</span></span><button class="btn sm" data-act="qfnext">Next ${I.next}</button></div><div class="zonebar"><i data-rbar style="width:0"></i></div>`;
+  return `<div class="stack" style="max-width:720px">${head}${dots}<div class="card stack" style="gap:6px"><div class="small muted">Question ${QF.i + 1} of ${n} · ${esc(TM.get(q.pid).title)}</div><div class="qtext" style="font-size:24px;font-weight:650;line-height:1.25">${esc(q.t)}</div></div>${st}<div><button class="btn ghost" data-act="qfend">End here</button></div></div>`;
+}
+
+/* =================== 4. Paraphrase drill =================== */
+const STOP = new Set('a an the do does did you your yours are is was were be been being have has had what which who whom whose when where why how there here this that these those it its in on at to of for from with about any some much many more most often usually like would could should will can may might me my i we our they their them he she his her or and but if so not no yes ever very really kind type sort things thing people person'.split(' '));
+function keyWords(t) {
+  const w = String(t).toLowerCase().replace(/[^a-z' -]/g, ' ').split(/\s+/).filter(x => x.length > 2 && !STOP.has(x));
+  return [...new Set(w)].slice(0, 3);
+}
+const PD = {deck: [], i: 0, phase: 'idle', res: {}, stopWatch: null, mr: null, stream: null, run: 0};
+function pdStart() {
+  pdStop();
+  const ids = shuffle(topics.filter(t => matchSrc(t.src)).flatMap(t => t.qs.map(q => q.id))).filter(id => keyWords(Q.get(id).t).length >= 1 && keyWords(Q.get(id).t).length <= 3).slice(0, 8);
+  Object.assign(PD, {deck: ids, i: 0, phase: 'idle', res: {}});
+  location.hash = 'para';
+}
+function pdStop() { PD.run++; if (PD.stopWatch) PD.stopWatch(); PD.stopWatch = null; stopSpeak(); try { if (PD.mr && PD.mr.state !== 'inactive') { PD.mr.onstop = null; PD.mr.stop(); } } catch {} PD.mr = null; try { PD.stream && PD.stream.getTracks().forEach(t => t.stop()); } catch {} PD.stream = null; }
+async function pdAsk() {
+  const run = ++PD.run; const qid = PD.deck[PD.i];
+  PD.phase = 'ask'; render();
+  await speak(Q.get(qid).t, true);
+  if (run !== PD.run) return;
+  try { if (!PD.stream) PD.stream = await getMic({echoCancellation: true, noiseSuppression: true, autoGainControl: true}); } catch { toast('The microphone is blocked.'); PD.phase = 'idle'; render(); return; }
+  const chunks = []; const mr = new MediaRecorder(PD.stream); PD.mr = mr;
+  let an = null; try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const src = actx.createMediaStreamSource(PD.stream); an = actx.createAnalyser(); an.fftSize = 512; src.connect(an); } catch {}
+  mr.ondataavailable = e => e.data && e.data.size && chunks.push(e.data);
+  mr.onstop = async () => {
+    if (run !== PD.run) return;
+    PD.phase = 'check'; render();
+    try {
+      const blob = new Blob(chunks, {type: (mr.mimeType || 'audio/webm').split(';')[0]});
+      const d = await mvDecode(blob, 20);
+      const r = await api('paraphrase', {audio: d.b64, mime: 'audio/wav', question: Q.get(qid).t, avoid: keyWords(Q.get(qid).t)});
+      if (SB.me && r.usage) { SB.me.used = r.usage.used; SB.me.limit = r.usage.limit; }
+      PD.res[qid] = r;
+    } catch (e) { PD.res[qid] = {err: e.message || 'Could not check it.'}; }
+    if (run === PD.run) { PD.phase = 'result'; render(); }
+  };
+  mr.start(200); PD.phase = 'rec'; render();
+  PD.stopWatch = watchSilence(() => an, {silence: 1600, minSpeech: 1500, noSpeech: 8000, onStop: () => { try { mr.state !== 'inactive' && mr.stop(); } catch {} }});
+  setTimeout(() => { try { if (PD.mr === mr && mr.state !== 'inactive') mr.stop(); } catch {} }, 15000);
+}
+function hlAvoid(t, words) {
+  let h = esc(t);
+  for (const w of words) h = h.replace(new RegExp('\\b(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\w*)', 'i'), '<mark class="avoid">$1</mark>');
+  return h;
+}
+function viewPara() {
+  const n = PD.deck.length;
+  const head = `<a class="back" href="#today" data-act="pdleave">${I.back} Back</a><div><h1>Paraphrase drill</h1><p class="lead" style="margin-top:4px">Start your answer without repeating the highlighted words. One or two sentences is enough.</p></div>`;
+  if (!n) return `<div class="stack" style="max-width:720px">${head}<div class="card empty">No questions.</div></div>`;
+  if (PD.i >= n) {
+    const rs = PD.deck.map(id => PD.res[id]).filter(r => r && !r.err && r.heard_ok !== false), ok = rs.filter(r => r.ok).length;
+    return `<div class="stack" style="max-width:720px">${head}<div class="qfscore"><div><b>${ok}</b> of ${rs.length}<span>openings without the key words</span></div></div>
+      <p class="small muted" style="margin:0">“Paraphrases effectively” is part of band 7 and 8 vocabulary. A quick swap in the first sentence is the easiest place to show it.</p>
+      <div class="row"><button class="btn primary" data-act="pdnew">${I.again} 8 new questions</button></div></div>`;
+  }
+  const qid = PD.deck[PD.i], q = Q.get(qid), kw = keyWords(q.t), r = PD.res[qid];
+  let body;
+  if (PD.phase === 'idle') body = `<div><button class="btn primary big" data-act="pdgo">${I.play} ${PD.i ? 'Next question' : 'Start'}</button></div>`;
+  else if (PD.phase === 'ask') body = `<div class="rpstate">${I.speak}<span class="grow">Listen…</span></div>`;
+  else if (PD.phase === 'rec') body = `<div class="rpstate you">${I.mic}<span class="grow"><b>Your turn.</b> Go quiet when you finish.</span><button class="btn sm" data-act="pddone">Done</button></div>`;
+  else if (PD.phase === 'check') body = `<div class="rpstate">${I.check}<span class="grow">Checking…</span></div>`;
+  else body = r && r.err ? `<div class="note amber">${esc(r.err)}</div>` : r && r.heard_ok === false ? `<div class="note amber">Couldn't hear you clearly. Try again a bit closer to the microphone.</div>` : `
+    <section class="card stack" style="gap:8px"><div class="row"><span class="chip ${r.ok ? 'ok' : 'warn'}">${r.ok ? 'Nice paraphrase' : (r.repeated || []).length ? 'You repeated: ' + esc(r.repeated.join(', ')) : 'Not quite'}</span></div>
+      <p class="tr" style="margin:0">“${esc(r.transcript || '')}”</p>
+      ${(r.paraphrased || []).length ? `<div class="small"><b>Swaps you made:</b> ${r.paraphrased.map(esc).join(' · ')}</div>` : ''}
+      ${(r.better || []).length ? `<div class="stack" style="gap:4px"><div class="small" style="font-weight:600">Other ways to start</div>${r.better.map(b => `<div class="row" style="flex-wrap:nowrap"><span class="grow" style="font-size:15px">“${esc(b)}”</span><button class="btn sm" data-act="saytext" data-t="${esc(b)}" aria-label="Hear it">${I.speak}</button></div>`).join('')}</div>` : ''}
+      ${r.tip ? `<div class="small muted">${esc(r.tip)}</div>` : ''}</section>`;
+  const after = PD.phase === 'result' ? `<div class="row"><button class="btn primary" data-act="pdnext">${PD.i + 1 < n ? 'Next question ' + I.next : 'See the result'}</button><button class="btn" data-act="pdretry">${I.again} Try this one again</button></div>` : '';
+  return `<div class="stack" style="max-width:720px">${head}<div class="qfdots">${PD.deck.map((_, i) => `<i class="${i < PD.i ? 'done' : i === PD.i ? 'cur' : ''}"></i>`).join('')}</div>
+    <div class="card stack" style="gap:6px"><div class="small muted">Question ${PD.i + 1} of ${n} · ${esc(TM.get(q.pid).title)}</div><div class="qtext" style="font-size:24px;font-weight:650;line-height:1.3">${hlAvoid(q.t, kw)}</div><div class="small muted">Avoid: ${kw.map(w => `<b>${esc(w)}</b>`).join(', ')}</div></div>
+    ${body}${after}</div>`;
+}
+
+/* ---------- wiring ---------- */
+const viewToday_v11 = viewToday;
+viewToday = function () { const r = r6(); return r === 'quick' ? viewQuick() : r === 'para' ? viewPara() : viewToday_v11(); };
+const otherPractice_v11 = otherPractice;
+otherPractice = function () {
+  const extra = [['qfstart', I.mic, 'Quick-fire Part 1', '10 questions in a row: train a fast, longer start'], ['pdstart', I.words, 'Paraphrase drill', 'Answer without repeating the question’s words']];
+  return otherPractice_v11().replace('<div class="list">', `<div class="list">${extra.map(([act, ic, t, s]) => `<button class="li" data-act="${act}"><span class="muted" style="width:22px;display:grid;place-items:center">${ic}</span><span class="grow"><span class="t">${t}</span><span class="s">${s}</span></span><span class="chev">${I.chev}</span></button>`).join('')}`);
+};
+window.addEventListener('hashchange', () => { const r = r6(); if (r !== 'quick' && (QF.phase === 'ask' || QF.phase === 'rec')) { qfStop(); QF.phase = QF.i ? 'done' : 'idle'; } if (r !== 'para') { pdStop(); if (PD.phase !== 'result') PD.phase = 'idle'; } });
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const d = el.dataset;
+  switch (d.act) {
+    case 'mreport': mockReport(d.s); break;
+    case 'qfstart': case 'qfnew': qfStart(); break;
+    case 'qfgo': qfGo(); break;
+    case 'qfnext': if (R.on && R.opts && R.opts.qf) stopRec(); break;
+    case 'qfend': qfStop(); if (R.on) stopRec(); QF.phase = 'done'; render(); break;
+    case 'qfleave': qfStop(); QF.phase = 'idle'; break;
+    case 'pdstart': case 'pdnew': pdStart(); break;
+    case 'pdgo': pdAsk(); break;
+    case 'pddone': try { PD.mr && PD.mr.state !== 'inactive' && PD.mr.stop(); } catch {} break;
+    case 'pdnext': PD.i++; PD.phase = 'idle'; render(); if (PD.i < PD.deck.length) pdAsk(); break;
+    case 'pdretry': delete PD.res[PD.deck[PD.i]]; pdAsk(); break;
+    case 'pdleave': pdStop(); PD.phase = 'idle'; break;
+  }
+});
 
 init();
 </script>
