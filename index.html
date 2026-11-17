@@ -4570,7 +4570,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611171902';
+const BUILD_ID = '202611171916';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -6830,29 +6830,56 @@ coachCTA = function (a) {
   return `<section class="card stack" style="gap:10px;padding:14px"><div><h2>Your free try</h2><p class="small muted" style="margin:4px 0 0">The coach listens to this answer: your words with pauses marked, grammar fixes, a better version and a band estimate. You get this once without an account.</p></div><div class="row"><button class="btn primary" data-act="pcoach" data-a="${a.id}">${I.spark} Check with coach</button></div></section>`;
 };
 /* ---------- speaking frames ---------- */
-const SF_GROUPS = [['s1', 'Part 1 answers'], ['s2', 'Part 2 talk'], ['s3', 'Part 3 opinions'], ['st', 'Buying time and fixing']];
+const SF_GROUPS = [['s1', 'Part 1 templates'], ['s2', 'Part 2 long turn'], ['s3', 'Part 3 analysis'], ['op', 'Opinion'], ['cmp', 'Contrast'], ['why', 'Reasons'], ['ex', 'Examples'], ['fill', 'Buying time'], ['end', 'Ending']];
+/* [id, what it does, frame, Russian, group, part for the practice question] — from the Fluent Future speaking guide */
 const SFRAMES = [
-  ['s1_direct', 'Answer, then why', 'Yes, I do. Mainly because [reason], and [one small detail].', 'Any yes/no Part 1 question: answer first, then one reason and one detail', 's1', 'Do you like cooking?', 'Yes, I do. Mainly because it helps me relax after school, and I usually cook plov with my mum on Sundays.'],
-  ['s1_depends', 'It depends', 'It depends, really. If [situation], I [do X], but when [other situation], I’d rather [do Y].', 'When the honest answer is “sometimes”', 's1', 'Do you prefer to study in the morning or in the evening?', 'It depends, really. If I have a test the next day, I study in the evening, but when I’m not in a hurry, I’d rather do it in the morning, when my head is fresh.'],
-  ['s1_used', 'Then and now', 'I used to [past habit], but these days I [present habit], mostly because [reason].', 'Questions about habits, hobbies, things that changed', 's1', 'Do you read books?', 'I used to read a lot of fantasy, but these days I mostly read articles online, mostly because I have less free time.'],
-  ['s1_notreally', 'Not really', 'Not really, to be honest. I’m more into [what you do like], because [reason].', 'When the answer is no: turn it to something you can talk about', 's1', 'Do you like going to museums?', 'Not really, to be honest. I’m more into being outdoors, because I get bored when I have to stand and read signs.'],
-  ['s1_often', 'How often', 'Quite often, actually. Probably [how many times], usually [when or where].', 'How often / when questions', 's1', 'How often do you use public transport?', 'Quite often, actually. Probably every weekday, usually the bus to school in the morning.'],
-  ['s2_open', 'First line', 'I’d like to talk about [the thing], which [one detail that sets it up].', 'The first sentence of the long turn', 's2', 'Describe a place you visited that you liked.', 'I’d like to talk about Burabay, which is a lake area about three hours from Astana.'],
-  ['s2_when', 'When and who', 'This was back in [time], when I was [situation], and I went with [who].', 'Second sentence: set the scene', 's2', 'Describe a trip you enjoyed.', 'This was back in summer 2024, when I was on holiday after exams, and I went with my cousins.'],
-  ['s2_story', 'What happened', 'What happened was that [event]. At first [first reaction], but then [the turn].', 'The middle: tell it as a story, not a list', 's2', 'Describe a time you solved a problem.', 'What happened was that our robot stopped working an hour before the match. At first we panicked, but then we found a loose wire.'],
-  ['s2_why', 'Why it stuck', 'The reason it stuck with me is that [feeling or lesson].', 'The “explain why” point on every card', 's2', 'Describe a person who helped you.', 'The reason it stuck with me is that he never gave me the answer, he only asked better questions.'],
-  ['s2_close', 'Wrap up', 'So all in all, [short summary], and I still [link to now].', 'When you have 15 seconds left', 's2', 'Describe a gift you received.', 'So all in all, it was a small present, and I still use that pen for every exam.'],
-  ['s3_opinion', 'Opinion, reason, example', 'Personally, I’d say [opinion], mainly because [reason]. For example, [example].', 'The basic Part 3 answer: never stop after the opinion', 's3', 'Should children learn to cook at school?', 'Personally, I’d say yes, mainly because many teenagers can’t cook anything. For example, half of my friends only eat fast food when their parents are away.'],
-  ['s3_compare', 'Then vs now', 'Compared to [the past or another group], [people] nowadays tend to [trend], largely because [cause].', 'Questions about change, generations, the past', 's3', 'How has shopping changed in recent years?', 'Compared to ten years ago, people nowadays tend to buy almost everything online, largely because delivery has become so fast.'],
-  ['s3_balance', 'Both sides', 'On the one hand, [benefit]. On the other hand, [drawback], so overall I think [verdict].', 'Advantages and disadvantages questions', 's3', 'Is it good for young people to work part-time?', 'On the one hand, they learn how to handle money. On the other hand, it can hurt their grades, so overall I think a few hours a week is fine.'],
-  ['s3_future', 'The future', 'I think in the future [prediction], although that will depend on [condition].', 'Will / in the future questions', 's3', 'Will people still read paper books in the future?', 'I think in the future paper books will become more of a hobby, although that will depend on how cheap e-readers get.'],
-  ['s3_general', 'People in my country', 'It’s hard to generalise, but in my country most people [tendency], especially [group].', 'Questions about society, “people in your country”', 's3', 'Do people in your country like to travel?', 'It’s hard to generalise, but in my country most people love travelling inside the country, especially to the mountains near Almaty.'],
-  ['st_think', 'Buy a few seconds', 'That’s an interesting question. I’ve never really thought about it, but I guess [idea].', 'A hard Part 3 question: start talking while you think', 'st', 'Why do some people prefer to live alone?', 'That’s an interesting question. I’ve never really thought about it, but I guess some people just need quiet to recharge.'],
-  ['st_word', 'Lost word', 'I can’t think of the exact word, but it’s a kind of [description].', 'You forgot a word: describe it instead of stopping', 'st', 'What kitchen tools do you use most?', 'I can’t think of the exact word, but it’s a kind of metal thing you use to make garlic into small pieces.'],
-  ['st_fix', 'Fix it out loud', '[the wrong bit], sorry, I mean [correct version].', 'You heard your own mistake: fixing it calmly counts in your favour', 'st', 'What did you do last weekend?', 'I go to the cinema, sorry, I mean I went to the cinema with my brother.'],
-  ['st_add', 'Add a second point', 'Not only that, but [second point] as well.', 'Your answer is too short: add one more idea', 'st', 'Why do people like sport?', 'It keeps them healthy. Not only that, but it’s a good way to meet friends as well.'],
+  ['op1', 'Honest opinion', 'To be perfectly honest, I’d say that...', 'Честно говоря, я бы сказал, что...', 'op', 3],
+  ['op2', 'Your perspective', 'From my perspective, it seems that...', 'С моей точки зрения, кажется, что...', 'op', 3],
+  ['op3', 'What strikes you', 'What strikes me the most is...', 'Больше всего меня поражает то, что...', 'op', 3],
+  ['op4', 'Choosing', 'If I had to choose, I’d probably go for...', 'Если бы мне пришлось выбрать, я бы остановился на...', 'op', 1],
+  ['cm1', 'Two sides', 'On the one hand..., on the other hand...', 'С одной стороны..., с другой стороны...', 'cmp', 3],
+  ['cm2', 'Past vs now', 'Compared to the past, nowadays people tend to...', 'По сравнению с прошлым, сегодня люди склонны...', 'cmp', 3],
+  ['cm3', 'Your view against others', 'In contrast to..., I personally believe that...', 'В отличие от..., я лично считаю, что...', 'cmp', 3],
+  ['cm4', 'The difference', 'What makes it different is...', 'Что делает это отличающимся, так это...', 'cmp', 3],
+  ['wy1', 'Main reason', 'The main reason why I think so is...', 'Основная причина, почему я так думаю...', 'why', 3],
+  ['wy2', 'Largely because', 'This is largely because...', 'Это в значительной степени потому, что...', 'why', 3],
+  ['wy3', 'Result', 'As a consequence...', 'В результате...', 'why', 3],
+  ['wy4', 'That’s why', 'That’s exactly why...', 'Вот именно поэтому...', 'why', 3],
+  ['ex1', 'A memory as example', 'For instance, I vividly remember when...', 'Например, я отчетливо помню, когда...', 'ex', 3],
+  ['ex2', 'Illustrate', 'To illustrate my point...', 'Чтобы проиллюстрировать мою мысль...', 'ex', 3],
+  ['ex3', 'Example that comes to mind', 'A good example that comes to mind is...', 'Хороший пример, который приходит в голову...', 'ex', 3],
+  ['ex4', 'Clarify', 'What I mean by this is...', 'Что я имею в виду под этим, так это...', 'ex', 3],
+  ['fl1', 'Thought-provoking', 'That’s a thought-provoking question...', 'Это наводящий на размышления вопрос...', 'fill', 3],
+  ['fl2', 'A moment to think', 'Let me think for a moment...', 'Дайте-ка подумать...', 'fill', 3],
+  ['fl3', 'It depends', 'Well, it really depends on the situation...', 'Ну, это действительно зависит от ситуации...', 'fill', 1],
+  ['fl4', 'Never thought about it', 'Honestly, I’ve never thought about it deeply, but...', 'Честно говоря, я никогда не задумывался глубоко, но...', 'fill', 3],
+  ['en1', 'Strong ending', 'All in all, I strongly believe that...', 'В целом, я твердо верю, что...', 'end', 3],
+  ['en2', 'What really matters', 'At the end of the day, what really matters is...', 'В конце концов, самое главное это...', 'end', 3],
+  ['en3', 'Sum it up', 'So, to sum it up...', 'Итак, подводя итог...', 'end', 3],
+  ['p11', 'Intro + reason + example', 'Well, to be honest, I usually... because... For example...', 'Ну, если честно, я обычно... потому что... Например...', 's1', 1],
+  ['p12', 'Contrast (it depends)', 'It really depends. Sometimes I..., while on other occasions I...', 'Это действительно зависит. Иногда я..., а в других случаях я...', 's1', 1],
+  ['p13', 'Elaborated reason', 'I guess the main reason why I... is that... Besides...', 'Думаю, основная причина, почему я..., в том что... Кроме того...', 's1', 1],
+  ['p21', 'Story: start', 'I’d like to talk about... which...', 'Я хотел бы рассказать о..., который...', 's2', 2],
+  ['p22', 'Story: why special', 'The reason why it is so special to me is that...', 'Причина, по которой это так важно для меня...', 's2', 2],
+  ['p23', 'Story: the memory', 'I vividly remember when...', 'Я отчетливо помню, когда...', 's2', 2],
+  ['p24', 'Story: ending', 'All in all, it was such a memorable experience because...', 'В целом, это был такой запоминающийся опыт, потому что...', 's2', 2],
+  ['p25', 'Description: start', 'What I’d like to describe is...', 'То, что я хотел бы описать, это...', 's2', 2],
+  ['p26', 'Description: when', 'As far as I remember, it happened...', 'Насколько я помню, это произошло...', 's2', 2],
+  ['p27', 'Description: one more thing', 'One more thing I should mention is...', 'Еще одна вещь, которую я должен упомянуть...', 's2', 2],
+  ['p28', 'Description: sum up', 'So, to sum up, it was...', 'Итак, подводя итог, это было...', 's2', 2],
+  ['p29', 'Background', 'First of all, let me give you a bit of background...', '', 's2', 2],
+  ['p2a', 'What happened next', 'After that, what happened was...', '', 's2', 2],
+  ['p2b', 'How it turned out', 'Eventually, it turned out that...', '', 's2', 2],
+  ['p2c', 'Looking back', 'Looking back, I realize that...', '', 's2', 2],
+  ['p2d', 'Fascinated', 'I was absolutely fascinated by...', 'Я был очарован...', 's2', 2],
+  ['p2e', 'Impressed most', 'What impressed me the most was...', 'Больше всего меня впечатлило...', 's2', 2],
+  ['p2f', 'Couldn’t believe', 'I couldn’t believe my eyes when...', 'Я не мог поверить глазам...', 's2', 2],
+  ['p31', 'Comparison', 'Compared to the past, nowadays people tend to... This is largely because...', '', 's3', 3],
+  ['p32', 'Opposing views', 'Some people argue that..., while others claim that... Personally, I think...', '', 's3', 3],
+  ['p33', 'Comparison to self', 'Unlike most people, I prefer to... since...', '', 's3', 3],
+  ['p34', 'Not my cup of tea', 'Frankly speaking, it’s not really my cup of tea, but I sometimes...', '', 's3', 3],
 ];
-const SF = {group: 's1', cur: null, shown: false, step: 1, ex: false};
+const SF = {group: 's1', cur: null, shown: false, step: 1, q: ''};
 const sfState = () => (S.set.sframes && typeof S.set.sframes === 'object' ? S.set.sframes : (S.set.sframes = {}));
 const sfLearned = id => ((sfState()[id] || {}).days || []).length >= 3;
 SYNC_KEYS.push('sframes');
@@ -6860,38 +6887,39 @@ function sfNext() {
   const st = sfState(), today = todayK(), G = SFRAMES.filter(f => f[4] === SF.group);
   const due = G.filter(f => !sfLearned(f[0]) && !((st[f[0]] || {}).days || []).includes(today));
   const pick = due[0] || G.filter(f => !((st[f[0]] || {}).days || []).includes(today))[0] || G[Math.floor(Math.random() * G.length)];
-  Object.assign(SF, {cur: pick[0], shown: false, step: 1, ex: false});
+  const qs = [...Q.values()].filter(q => q.part === pick[5]), q = qs[Math.floor(Math.random() * qs.length)];
+  Object.assign(SF, {cur: pick[0], shown: false, step: 1, q: q ? qPayload(q.id).text : ''});
 }
 function viewSFrames() {
   if (!SF.cur || !SFRAMES.some(f => f[0] === SF.cur && f[4] === SF.group)) sfNext();
   const f = SFRAMES.find(x => x[0] === SF.cur), G = SFRAMES.filter(x => x[4] === SF.group), st = sfState();
   const chips = SF_GROUPS.map(([g, n]) => { const all = SFRAMES.filter(x => x[4] === g), L = all.filter(x => sfLearned(x[0])).length; return `<button class="${SF.group === g ? 'on' : ''}" data-act="sgroup" data-g="${g}" aria-pressed="${SF.group === g}">${n} <span class="muted">${L}/${all.length}</span></button>`; }).join('');
-  const side = `<section class="card stack" style="gap:2px"><div class="row"><h2 class="grow">${esc(SF_GROUPS.find(x => x[0] === SF.group)[1])}</h2><span class="small muted">${G.filter(x => sfLearned(x[0])).length} of ${G.length} learned</span></div><div class="list flat">${G.map(x => { const d = ((st[x[0]] || {}).days || []).length; return `<div class="li"><span class="grow"><span class="t">${esc(x[1])}</span><span class="s">${esc(x[3])}</span></span><span class="small ${sfLearned(x[0]) ? '' : 'muted'}">${sfLearned(x[0]) ? 'learned' : d + ' of 3 days'}</span></div>`; }).join('')}</div></section>`;
+  const side = `<section class="card stack" style="gap:2px"><div class="row"><h2 class="grow">${esc(SF_GROUPS.find(x => x[0] === SF.group)[1])}</h2><span class="small muted">${G.filter(x => sfLearned(x[0])).length} of ${G.length} learned</span></div><div class="list flat">${G.map(x => { const d = ((st[x[0]] || {}).days || []).length; return `<div class="li"><span class="grow"><span class="t">${esc(x[1])}</span><span class="s">${esc(x[2])}</span></span><span class="small ${sfLearned(x[0]) ? '' : 'muted'}">${sfLearned(x[0]) ? 'learned' : d + ' of 3 days'}</span></div>`; }).join('')}</div></section>`;
+  const slot = t => esc(t).replace(/\.\.\./g, '<span class="slot">…</span>');
   const main = SF.step === 1
-    ? `<section class="card stack" style="gap:10px"><div class="small muted">Step 1 of 2 · say it from memory, out loud</div><h2 style="font-size:20px">${esc(f[1])}</h2><p class="small muted" style="margin:0">${esc(f[3])}.</p>
-      ${SF.shown ? `<div class="note ok"><div class="small">The frame</div><b>${frSlots(f[2])}</b></div><div class="small muted">Close enough counts. Did you have it?</div><div class="row"><button class="btn primary" data-act="sfgot">I had it</button><button class="btn" data-act="sfmiss">Not yet</button></div>` : `<div class="row"><button class="btn primary" data-act="sfshow">Show the frame</button></div>`}</section>`
-    : `<section class="card stack" style="gap:10px"><div class="small muted">Step 2 of 2 · use it</div><h2>Answer this out loud with the frame</h2><p class="wbig" style="margin:0">${esc(f[5])}</p><div class="frame">${frSlots(f[2])}</div>
-      ${SF.ex ? `<div class="note"><div class="small">One way to say it</div>${esc(f[6])}</div>` : `<div class="row"><button class="btn" data-act="sfex">Hear an example</button></div>`}
-      <div class="row"><button class="btn primary" data-act="sfnext">Next frame</button><span class="small muted">Say it twice: once slowly, once at normal speed.</span></div></section>`;
-  return `<div class="stack page18"><a class="back" href="#today">${I.back} Speaking</a><div><h1>Speaking frames</h1><p class="lead" style="margin-top:4px">Ready ways to start and extend answers, so you never freeze. Learned = recalled on 3 different days.</p></div><div class="chips" role="group" aria-label="Frame group">${chips}</div><div class="cols even"><div class="main">${main}</div><div class="side">${side}</div></div></div>`;
+    ? `<section class="card stack" style="gap:10px"><div class="small muted">Step 1 of 2 · say it in English from memory, out loud</div><h2 style="font-size:20px">${esc(f[1])}</h2>${f[3] ? `<p class="wbig" style="margin:0">${esc(f[3])}</p>` : '<p class="small muted" style="margin:0">No Russian for this one: recall it from the name.</p>'}
+      ${SF.shown ? `<div class="note ok"><div class="small">The frame</div><b>${slot(f[2])}</b></div><div class="small muted">Close enough counts. Did you have it?</div><div class="row"><button class="btn primary" data-act="sfgot">I had it</button><button class="btn" data-act="sfmiss">Not yet</button></div>` : `<div class="row"><button class="btn primary" data-act="sfshow">Show the frame</button></div>`}</section>`
+    : `<section class="card stack" style="gap:10px"><div class="small muted">Step 2 of 2 · use it in a real answer</div><h2>Answer this out loud, starting with the frame</h2><p class="wbig" style="margin:0">${esc(SF.q)}</p><div class="frame">${slot(f[2])}</div>
+      <p class="small muted" style="margin:0">Use it as a start, then say your own ideas. Examiners mark down answers that sound learned by heart.</p>
+      <div class="row"><button class="btn primary" data-act="sfnext">Next frame</button></div></section>`;
+  return `<div class="stack page18"><a class="back" href="#today">${I.back} Speaking</a><div><h1>Speaking frames</h1><p class="lead" style="margin-top:4px">The structures from your Fluent Future guide. See the Russian, say the English. Learned = recalled on 3 different days.</p></div><div class="chips" role="group" aria-label="Frame group">${chips}</div><div class="cols even"><div class="main">${main}</div><div class="side">${side}</div></div></div>`;
 }
 window.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act;
-  if (!['sgroup', 'sfshow', 'sfgot', 'sfmiss', 'sfnext', 'sfex', 'sframes'].includes(a)) return;
+  if (!['sgroup', 'sfshow', 'sfgot', 'sfmiss', 'sfnext', 'sframes'].includes(a)) return;
   e.stopImmediatePropagation(); e.preventDefault();
   if (a === 'sframes') { location.hash = 'sframes'; return; }
   if (a === 'sgroup') { SF.group = b.dataset.g; SF.cur = null; }
   else if (a === 'sfshow') SF.shown = true;
   else if (a === 'sfgot') { const st = sfState(), o = st[SF.cur] || {days: []}; if (!o.days.includes(todayK())) o.days.push(todayK()); st[SF.cur] = o; saveMeta(); SF.step = 2; }
   else if (a === 'sfmiss') SF.step = 2;
-  else if (a === 'sfex') { SF.ex = true; const f = SFRAMES.find(x => x[0] === SF.cur); if (f) speak(f[6], true); }
   else if (a === 'sfnext') sfNext();
   render();
 }, true);
-drillsCard = (orig => function () { return orig().replace('</div></section>', `<button class="dtile" data-act="sframes"><span class="dt">Speaking frames</span><span class="ds">${SFRAMES.filter(f => sfLearned(f[0])).length} of ${SFRAMES.length} learned · start and extend answers</span></button></div></section>`); })(drillsCard);
+drillsCard = (orig => function () { return orig().replace('</div></section>', `<button class="dtile" data-act="sframes"><span class="dt">Speaking frames</span><span class="ds">${SFRAMES.filter(f => sfLearned(f[0])).length} of ${SFRAMES.length} learned · from your Fluent Future guide</span></button></div></section>`); })(drillsCard);
 TABS6[0][3].push('sframes');
 ENCH.push(['sframes', () => Object.keys(sfState()).length > 0]);
-TIPS.push(['[data-act="sframes"]', 'Ready sentence starts for Part 1, 2 and 3, plus ways to buy time and fix mistakes. You say them out loud from memory; one is learned after 3 different days.']);
+TIPS.push(['[data-act="sframes"]', 'The structures from your Fluent Future guide. You see the Russian and say the English frame out loud, then use it to start a real answer. One is learned after 3 different days.']);
 G_FREE.add('sframes'); G_FREE.add('sfex');
 /* ---------- render: frames page, guest locks ---------- */
 const render_v21 = render;
