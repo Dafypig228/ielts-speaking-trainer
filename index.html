@@ -539,8 +539,8 @@ mark.fxgap::before{content:"missing";position:absolute;top:-1.35em;left:-2px;fon
 .fxsaid{padding-top:10px}
 /* v15 wasabi: writing, mistakes */
 .wpage{max-width:1180px}.wnarrow{max-width:640px}
-.wgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
-@media (min-width:960px){.wgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.wgrid.wide{grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr)}}
+.wg2{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+@media (min-width:960px){.wg2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.wg2.wide{grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr)}}
 .list.flat{border:0;background:none;border-radius:0}
 .list.flat .li{padding-left:0;padding-right:0;background:none}
 .list.flat>.li+.li,.list.flat>.li+div,.list.flat>div+.li{border-top:1px solid var(--line)}
@@ -577,6 +577,30 @@ mark.fxgap::before{content:"missing";position:absolute;top:-1.35em;left:-2px;fon
 :root[data-theme=dark] .brand .logo-l{display:none}:root[data-theme=dark] .brand .logo-d{display:block}
 /* words: search stays in reach while the list scrolls */
 #view[data-route=words] .search{position:sticky;top:calc(var(--head-h) + 6px);z-index:5;box-shadow:0 -10px 0 var(--bg),0 8px 12px -6px color-mix(in oklab,var(--bg) 90%,transparent)}
+
+/* v16 desktop layout: centred page, wider columns, compact phrase lists */
+@media (min-width:900px){
+  .wrap{max-width:1320px;margin:0 auto;justify-self:center}
+  .home2>.c1{max-width:760px}.home2>.c2{max-width:540px}
+  .wgrid{display:grid;grid-template-columns:260px minmax(0,1fr);gap:24px}
+  .wgrid>nav{max-width:none}
+}
+.steps4 .st{width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-top:1px solid var(--line);cursor:pointer;border-radius:0}
+.steps4 .st:first-child{border-top:0}
+.steps4 .st:hover{background:var(--act-soft)}
+.steps4 .st .grow{display:flex;flex-direction:column}
+.steps4 .st .chev{align-self:center;color:var(--muted)}
+.arow{cursor:pointer}
+@media (min-width:1100px){
+  #view[data-route=words] .wmain .list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  #view[data-route=words] .wmain .list>.went{border-top:1px solid var(--line)}
+  #view[data-route=words] .wmain .list>.went:nth-child(-n+2){border-top:0}
+  #view[data-route=words] .wmain .list>.went:nth-child(odd){border-right:1px solid var(--line)}
+}
+#view[data-route=words] .went{padding:9px 12px;gap:6px 10px}
+#view[data-route=words] .went .btn{min-height:34px;padding:0 10px;font-size:14px}
+#view[data-route=words] .went .langbtn{min-height:34px}
+@media (min-width:900px){#view[data-route=prefs]>.stack,#view[data-route=admin]>.stack{margin-left:auto;margin-right:auto}}
 
 </style>
 </head>
@@ -2793,7 +2817,7 @@ function viewToday() {
     const state = s.done ? 'done' : s === next ? 'next' : '';
     const mark = s.done ? `<span class="mark done">${I.check}</span>` : `<span class="mark ${state}">${s.n}</span>`;
     const sub = s.done && s.part ? `Done · ${Math.max(1, Math.round(s.secs / 60))} min${s.twice ? ' · ' + plural(s.twice, 'answer') + ' said twice' : ''}` : s.some && !s.done ? `${s.some} of ${s.deck.length} answered · ${esc(s.sub)}` : esc(s.sub);
-    return `<div class="st ${state}">${mark}<div class="grow"><div class="t">${s.part ? badge(s.part) : ''}${esc(s.title)}</div><div class="s">${sub}</div></div></div>`;
+    return `<button class="st ${state}" data-act="step" data-n="${s.n}">${mark}<span class="grow"><span class="t">${s.part ? badge(s.part) : ''}${esc(s.title)}</span><span class="s">${sub}</span></span><span class="chev">${I.chev}</span></button>`;
   };
   const session = `<section class="card"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px"><h1 style="font-size:20px">Today's session</h1><span class="small muted">about 12 min</span></div>
     <p class="small muted" style="margin:2px 0 6px">In the same order as the real test.</p>
@@ -3209,6 +3233,7 @@ function viewAnswers() {
     list = days.size ? [...days].map(([k, m]) => `<h2 class="dayh">${dname(k)}</h2><div class="list">${[...m].map(([qid, xs]) => ansRow(qid, xs, wide() && A.sel === qid)).join('')}</div>`).join('') : (all.length ? '<div class="card empty">No answers for this part yet.</div>' : `<div class="list">${emptyRow('No answers yet', 'Your answers appear here, grouped by day, with both tries and the coach’s notes.')}</div><div style="margin-top:12px"><a class="btn primary" href="#today">Start practising ${I.next}</a></div>`);
   }
   const left = `<div style="flex:1 1 380px;min-width:0;max-width:${wide() ? '460px' : 'none'};display:flex;flex-direction:column;gap:12px">${mistakesCard(true)}${chips}<div>${list}</div></div>`;
+  if (wide() && A.f !== 'mock' && !(A.sel && Q.has(A.sel))) { const lastA = allAttempts().slice().sort((x, y) => y.ts - x.ts)[0]; if (lastA) A.sel = lastA.qid; }
   const right = wide() && A.f !== 'mock' ? `<div style="flex:999 1 400px;min-width:0">${A.sel && Q.has(A.sel) ? `<section class="card">${ansDetail(A.sel)}</section>` : '<div class="card empty">Pick an answer to see both tries and the coach\'s notes.</div>'}</div>` : '';
   return `<h1 style="margin-bottom:16px">My answers</h1><div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">${left}${right}</div>`;
 }
@@ -3267,12 +3292,12 @@ function viewWords() {
     const l = [...S.phrases.values()].sort((a, b) => b.ts - a.ts).filter(p => !qn || (p.phrase + ' ' + p.meaning + ' ' + (p.en || '')).toLowerCase().includes(qn));
     body = l.length ? `<div class="list">${l.map(p => `<div class="went"><div class="grow" style="min-width:200px"><div class="t">${esc(p.phrase)}</div><div class="s">${esc(lang === 'ru' ? (p.meaning || p.en || enOf(p.phrase)) : (p.en || enOf(p.phrase) || p.meaning))}</div><div class="s">next review ${when(p.due || p.ts)}</div></div><div class="acts"><button class="btn sm" data-act="wuse" data-t="${esc(p.phrase)}">Use it</button><button class="btn sm danger" data-act="phdel" data-id="${p.id}" aria-label="Delete ${esc(p.phrase)}">${I.trash}</button></div></div>`).join('')}</div>`
       : `<div class="card empty">${qn ? 'No saved phrase matches.' : 'Save phrases from your books or from the coach with the + button. They come back for review on a schedule (1, 2, 4, 8… days).'}</div>`;
-    return `<div class="stack" style="max-width:860px"><h1>Words and phrases</h1>${banner}${sw}${search}${body}</div>`;
+    return `<div class="stack"><h1>Words and phrases</h1>${banner}${sw}${search}${body}</div>`;
   }
   if (qn) {
     const hits = WGROUPS.flatMap(([g]) => wEntries(g)).filter(e => (e.t + ' ' + e.ru + ' ' + e.en).toLowerCase().includes(qn));
     body = hits.length ? `<div class="list">${hits.map(wEntryHTML).join('')}</div>` : '<div class="card empty">No phrase matches.</div>';
-    return `<div class="stack" style="max-width:860px"><h1>Words and phrases</h1>${banner}${sw}${search}${body}</div>`;
+    return `<div class="stack"><h1>Words and phrases</h1>${banner}${sw}${search}${body}</div>`;
   }
   const counts = {structures: '31', idioms: String(STUDY.idioms.length), vocab: STUDY.vocab.length + ' topics', grammar: String(STUDY.grammar.length)};
   counts.structures = String(wEntries('structures').length);
@@ -3406,7 +3431,7 @@ document.addEventListener('click', e => {
     case 'paq': startPractice([d.q], {title: '', back: r6() === 'answers' ? 'answers' : 'today'}); break;
     case 'fix': openFix(d.k); break;
     case 'fixgo': { const i = F.qs.findIndex(id => F.res[id] !== true); startPractice(F.qs, {start: Math.max(0, i), mode: 'fix', fix: F.key, back: 'fix', title: 'Fix'}); break; }
-    case 'asel': if (wide()) { A.sel = d.q; render(); } else openSheet({type: 'ans', id: d.q}); break;
+    case 'asel': if (wide()) { A.sel = d.q; if (r6() !== 'answers') location.hash = 'answers'; else render(); } else openSheet({type: 'ans', id: d.q}); break;
     case 'afilter': A.f = d.v; render(); break;
     case 'wtab': W.tab = d.v; render(); break;
     case 'wgroup': e.preventDefault(); W.group = d.v; render(); break;
@@ -4369,7 +4394,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261117070700';
+const BUILD_ID = '20261117072113';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -5177,7 +5202,7 @@ function wHome() {
   const repH = rep.length ? rep.map((r, i) => `<div class="li wrep"><span class="grow"><span class="s"><b>${esc(r.date || '')}</b>${r.centre ? ' · ' + esc(r.centre) : ''} · ${WT_NAMES[wtType(r.t2)]}</span><span class="wq">${esc(r.t2)}</span></span><button class="btn sm" data-act="w2rep" data-i="${i}">Write</button></div>`).join('') : `<div class="emptyrow"><span class="s">${SB.user ? 'Loading the latest reports…' : 'Sign in to see questions reported from real tests.'}</span></div>`;
   return `<div class="stack wpage"><div class="row" style="align-items:flex-end;flex-wrap:wrap"><div class="grow"><h1>Writing</h1><p class="lead" style="margin-top:4px">Task 2 · 40 minutes · at least 250 words</p></div><button class="btn primary" data-act="w2any">${I.pen} Write a full essay</button></div>
     ${d && d.text && d.text.trim() ? `<section class="card row"><span class="grow"><b>Unfinished essay</b><span class="small muted" style="display:block">${esc(d.prompt.slice(0, 90))}…</span></span><button class="btn primary sm" data-act="w2resume">Continue</button></section>` : ''}
-    <div class="wgrid"><div class="stack">
+    <div class="wg2"><div class="stack">
       <section class="card stack" style="gap:2px"><h2>Short trainings</h2><p class="small muted" style="margin:0 0 6px">One skill at a time, checked on that skill only.</p><div class="list flat">${tr}</div></section>
       <section class="card stack" style="gap:2px"><h2>Your essays</h2>${list.length ? `<div class="list flat">${list.slice(0, 6).map(e => `<button class="li" data-act="w2open" data-e="${e.id}"><span class="band">${fmtB(e.fb && e.fb.bands && e.fb.bands.overall)}</span><span class="grow"><span class="t">${esc(e.prompt.slice(0, 70))}${e.prompt.length > 70 ? '…' : ''}</span><span class="s">${new Date(e.ts).toLocaleDateString([], {day: 'numeric', month: 'short'})} · ${e.words} words · ${e.minutes} min</span></span><span class="chev">${I.chev}</span></button>`).join('')}</div>` : '<p class="small muted" style="margin:0">None yet. Your first essay shows up here with its band.</p>'}</section>
       <section class="card stack" style="gap:8px"><h2>Your own question</h2><textarea id="w2own" rows="3" placeholder="Paste a Task 2 question here.">${esc(W2.own)}</textarea><div class="row"><button class="btn" data-act="w2own">Use this question</button></div></section></div>
@@ -5195,7 +5220,7 @@ function viewQType() {
   }
   const p = QT.deck[QT.i], right = wtType(p), rp = repOf(p);
   return `<div class="stack wpage">${wBack()}<div class="row"><h1 class="grow">Question type</h1><div class="qfdots" style="width:240px">${QT.deck.map((x, i) => `<i class="${i < QT.i ? (QT.res[i] ? 'ok' : 'bad') : i === QT.i ? 'on' : ''}"></i>`).join('')}</div></div>
-    <div class="wgrid"><div class="stack"><section class="card stack" style="gap:8px"><div class="row"><span class="small muted grow">${rp ? `Reported · ${esc(rp.centre || '')} · ${esc(rp.date || '')}` : 'Task 2 question'}</span><span class="mono muted" id="qttime" style="font-weight:700">${QT.pick ? '' : '0:10'}</span></div><p class="wbig">${esc(p)}</p></section>
+    <div class="wg2"><div class="stack"><section class="card stack" style="gap:8px"><div class="row"><span class="small muted grow">${rp ? `Reported · ${esc(rp.centre || '')} · ${esc(rp.date || '')}` : 'Task 2 question'}</span><span class="mono muted" id="qttime" style="font-weight:700">${QT.pick ? '' : '0:10'}</span></div><p class="wbig">${esc(p)}</p></section>
       <div class="qtgrid">${W_TYPES.map(([k, l]) => `<button class="btn qtb ${QT.pick ? (k === right ? 'right' : k === QT.pick ? 'wrong' : '') : ''}" data-act="qtpick" data-k="${k}" ${QT.pick ? 'disabled' : ''}>${l}</button>`).join('')}</div></div>
     <div>${QT.pick ? `<section class="card stack" style="gap:8px;border-color:${QT.pick === right ? 'var(--ok)' : 'var(--rec)'}"><div><b style="color:${QT.pick === right ? 'var(--ok)' : 'var(--rec-ink)'}">${QT.pick === right ? 'Right.' : 'Not quite: it’s ' + WT_NAMES[right].toLowerCase() + '.'}</b></div><h2>The plan for this type</h2><ol class="w2plan">${WT_PLAN[right].map(x => `<li>${esc(x)}</li>`).join('')}</ol><div class="row"><button class="btn primary" data-act="qtnext">Next question</button><button class="btn" data-act="qtwrite">Write this one</button></div></section>` : '<section class="card small muted">The type decides the plan. Pick it from the wording before you think about ideas.</section>'}</div></div></div>`;
 }
@@ -5231,7 +5256,7 @@ function viewFrames() {
     <textarea id="frfill" rows="3" placeholder="Your sentence">${esc(FR.fill)}</textarea>
     ${FR.res ? frResult(FR.res) : ''}
     <div class="row"><button class="btn primary" data-act="frcheck" ${FR.busy ? 'disabled' : ''}>${FR.busy ? 'Checking…' : 'Check this sentence'}</button><button class="btn" data-act="frnext">Next frame</button><span class="small muted">Grammar and fit only. No band.</span></div></section>`;
-  return `<div class="stack wpage">${wBack()}<h1>Frames</h1><div class="wgrid"><div class="stack">${main}</div><div>${side}</div></div></div>`;
+  return `<div class="stack wpage">${wBack()}<h1>Frames</h1><div class="wg2"><div class="stack">${main}</div><div>${side}</div></div></div>`;
 }
 function frResult(r) {
   const errs = r.errors || [];
@@ -5268,7 +5293,7 @@ viewWrite = function () {
   const openE = W2.open && essays().find(x => x.id === W2.open);
   if (ph === 'result' && openE) return w2Result(openE);
   const md = W_MODES[W2.mode] || W_MODES.full, ty = wtType(W2.prompt);
-  if (ph === 'plan') return `<div class="stack wpage">${wBack()}<h1>${md.name}</h1><div class="wgrid"><div class="stack">
+  if (ph === 'plan') return `<div class="stack wpage">${wBack()}<h1>${md.name}</h1><div class="wg2"><div class="stack">
       <section class="card stack" style="gap:6px"><div class="small muted">${WT_NAMES[ty]}${repOf(W2.prompt) ? ' · reported ' + esc(repOf(W2.prompt).date || '') : ''}</div><p class="wbig">${esc(W2.prompt)}</p><div class="small muted">${md.min} minutes${W2.mode === 'full' ? ', the last 3 for checking. At least 250 words.' : '.'}</div></section>
       <section class="card stack" style="gap:8px"><h2>Plan first${W2.mode === 'full' ? ' (about 5 minutes)' : ''}</h2>${planBox(true)}<p class="small muted" style="margin:0">One example per body paragraph, in a few words. This is where essays get stuck if it's skipped.</p></section>
       <div class="row"><button class="btn primary big" data-act="w2go">Start the ${md.min} minutes</button></div></div>
@@ -5276,7 +5301,7 @@ viewWrite = function () {
   if (ph === 'write') {
     const l = w2Left(), n = wWords(W2.text);
     return `<div class="stack wpage"><div class="row" style="flex-wrap:nowrap"><span class="grow small muted">${md.name} · ${WT_NAMES[ty]}</span><span class="w2time mono ${l < 0 ? 'late' : ''}" id="w2time">${(l < 0 ? '+' : '') + fmt(Math.abs(l))}</span></div>
-      <div class="wgrid wide"><div class="stack"><section class="card" style="font-weight:600">${esc(W2.prompt)}</section>
+      <div class="wg2 wide"><div class="stack"><section class="card" style="font-weight:600">${esc(W2.prompt)}</section>
         <textarea id="w2text" class="w2text ${W2.mode !== 'full' ? 'short' : ''}" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="sentences" placeholder="${W2.mode === 'intro' ? 'Two sentences: the question in your words, then your position.' : W2.mode === 'para' ? 'One body paragraph: claim, why, example, result.' : 'Write your essay here. Spell-check is off, like in the exam.'}">${esc(W2.text)}</textarea>
         <div class="row"><span class="small" id="w2count"><b>${n}</b> words${W2.mode === 'full' && n < 250 ? ' · need 250' : ''}</span><span class="grow"></span><button class="btn primary" data-act="w2done">Finish and check</button></div>
         ${W2.mode === 'full' ? `<section class="card stack" id="w2check" style="gap:6px" ${l <= 180 ? '' : 'hidden'}><h2>Last 3 minutes: check only these</h2>${w2CheckList()}</section>` : ''}</div>
@@ -5300,7 +5325,7 @@ async function wMiniSubmit() {
 function viewMini() {
   const m = W2.mini || {}, errs = m.errors || [], pts = m.points || [];
   const k = {}; for (const e of errs) { const b = mkBucket(e.rule); k[b] = (k[b] || 0) + 1; }
-  return `<div class="stack wpage">${wBack()}<h1>${W_MODES[m.mode].name}: checked</h1><div class="wgrid"><div class="stack">
+  return `<div class="stack wpage">${wBack()}<h1>${W_MODES[m.mode].name}: checked</h1><div class="wg2"><div class="stack">
     ${m.note ? `<section class="card fixfirst"><div class="kick">What matters most</div><p style="margin:6px 0 0">${esc(m.note)}</p></section>` : ''}
     ${pts.length ? `<section class="card stack" style="gap:6px"><h2>${m.mode === 'intro' ? 'Paraphrase and position' : 'Development'}</h2>${pts.map(p => `<div class="w2err"><b>${esc(p.point || '')}</b>${p.fix ? `<div class="small">${esc(p.fix)}</div>` : ''}</div>`).join('')}</section>` : ''}
     <section class="card stack" style="gap:6px"><h2>Your text</h2><p class="tr" style="white-space:pre-wrap">${esc(m.text)}</p>
@@ -5320,7 +5345,7 @@ w2Result = function (e) {
   const fixed = e.rev && e.rev.done;
   return `<div class="stack wpage"><a class="back" href="#write" data-act="w2back">${I.back} Writing</a>
     <div class="row" style="align-items:flex-end;flex-wrap:wrap"><div class="grow"><h1>Your essay, checked</h1><p class="lead" style="margin-top:4px">${WT_NAMES[wtType(e.prompt)]} · <span class="${late ? 'warnt' : ''}">${e.minutes} min</span> · <span class="${short ? 'warnt' : ''}">${e.words} words</span></p></div>${(fb.errors || []).length ? `<button class="btn primary" data-act="rvstart" data-e="${e.id}">${I.pen} ${fixed ? 'Keep fixing your text' : 'Fix your own text'}</button>` : ''}</div>
-    <div class="wgrid"><div class="stack">
+    <div class="wg2"><div class="stack">
       ${fb.summary ? `<section class="card fixfirst"><div class="kick">What costs you most</div><p style="margin:6px 0 0;font-size:16px;font-weight:550">${esc(fb.summary)}</p></section>` : ''}
       <section class="card stack" style="gap:2px"><h2>Mistakes in this essay</h2><p class="small muted" style="margin:0 0 6px">Counted, not shown: you find them in “Fix your own text”.</p>
         ${still.length ? `<div class="small warnt" style="margin-top:6px">Still there from before</div><div class="list flat">${still.map(row).join('')}</div>` : ''}
@@ -5369,7 +5394,7 @@ function viewRevise() {
       <div class="row" style="flex-wrap:wrap"><button class="btn primary sm" data-act="rvdone">Done with this one</button>${s.clue < 3 ? `<button class="btn sm" data-act="rvclue">${['Clue: what kind', 'Clue: where', 'Show the answer'][s.clue]}</button>` : ''}<button class="btn ghost sm" data-act="rvskip">Skip</button></div></section>` : '<section class="card small muted">Pick a highlighted sentence.</section>';
   return `<div class="stack wpage"><a class="back" href="#write" data-act="rvback">${I.back} Back to the check</a>
     <div class="row" style="align-items:flex-end;flex-wrap:wrap"><div class="grow"><h1>Fix your own text</h1><p class="lead" style="margin-top:4px">Highlighted sentences have a mistake. Find it and rewrite the sentence.</p></div><span class="small"><b>${fixedN} of ${todo.length}</b> fixed</span><button class="btn primary" data-act="rvcheck" ${edited && !RV.busy ? '' : 'disabled'}>${RV.busy ? 'Checking…' : 'Re-check my changes'}</button></div>
-    <div class="wgrid wide"><section class="card rvtext">${paras.map(p => `<p>${p.join(' ')}</p>`).join('')}</section><div class="stack">${panel}<section class="card small muted">Clues go one step at a time: what kind, then where, then the answer. A sentence fixed without clues counts as known; with clues it comes back in Mistakes sooner.</section></div></div></div>`;
+    <div class="wg2 wide"><section class="card rvtext">${paras.map(p => `<p>${p.join(' ')}</p>`).join('')}</section><div class="stack">${panel}<section class="card small muted">Clues go one step at a time: what kind, then where, then the answer. A sentence fixed without clues counts as known; with clues it comes back in Mistakes sooner.</section></div></div></div>`;
 }
 async function rvCheck() {
   const items = RV.sents.map((s, i) => ({i, s})).filter(x => x.s.state === 'edited');
@@ -5405,7 +5430,7 @@ function viewCheckPass() {
   const words = CP.words.map((w, i) => { const t = CP.tap.has(i), sp = inSpan(i); const cls = CP.done ? (sp ? (CP.spans.some(s => s === sp && [...CP.tap].some(k => k >= s.from && k <= s.to)) ? 'hit' : 'missed') : t ? 'false' : '') : t ? 'tap' : ''; return `<button class="cpw ${cls}" data-act="cptap" data-i="${i}" ${CP.done ? 'disabled' : ''}>${esc(w)}</button>`; }).join(' ');
   const live = mkLive().filter(s => s.b !== 'spell').slice(0, 3);
   return `<div class="stack wpage">${wBack()}<div class="row" style="align-items:flex-end"><div class="grow"><h1>Checking pass</h1><p class="lead" style="margin-top:4px">A paragraph from your essay of ${new Date(CP.src.e.ts).toLocaleDateString([], {day: 'numeric', month: 'short'})}, as you wrote it. It has <b>${CP.spans.length} mistakes</b>. Tap the words that are wrong.</p></div><span class="w2time mono" id="cptime">${fmt(Math.max(0, 180 - (Date.now() - CP.t0) / 1000))}</span></div>
-    <div class="wgrid wide"><div class="stack"><section class="card cptext">${words}</section>
+    <div class="wg2 wide"><div class="stack"><section class="card cptext">${words}</section>
       ${CP.done ? `<section class="card stack" style="gap:8px"><div class="qfscore"><b>${found}</b> of ${CP.spans.length} found${wrongTaps ? ` · ${wrongTaps} tapped by mistake` : ''}</div>${CP.spans.map(s => `<div class="w2err"><span class="err">${esc(s.g.said)}</span> → <span class="cor">${esc(s.g.better)}</span> <span class="small muted">${esc(mkLabel(mkBucket(s.g.rule)).toLowerCase())}</span></div>`).join('')}<div class="row"><button class="btn primary" data-act="wcheckp">Another paragraph</button><button class="btn" data-act="w2back">Back to Writing</button></div></section>` : `<div class="row"><span class="small">Tapped: <b>${CP.tap.size}</b></span><span class="grow"></span><button class="btn primary" data-act="cpdone">I'm done</button></div>`}</div>
     <section class="card stack" style="gap:8px"><h2>Check these, in this order</h2><ol class="w2plan"><li>Every singular noun: does it have a / an / the?</li><li>Every verb: does it agree with its subject?</li>${live.map(s => `<li>${esc(s.label)}</li>`).join('')}</ol><p class="small muted" style="margin:0">The same list the essay timer shows at 3:00 left.</p></section></div></div>`;
 }
@@ -5417,7 +5442,7 @@ function viewMistakes() {
   let drill = viewMk().replace(/^<div class="stack" style="max-width:640px">/, '<div class="stack">').replace(/<a class="back"[\s\S]*?<\/p><\/div>/, '');
   if (!FX.deck.length && !FX.res.length) { const n = fxDeck().length; drill = `<section class="card stack" style="gap:10px"><h2>${n ? `${n} sentence${n > 1 ? 's' : ''} to practise` : 'Nothing due right now'}</h2><p class="small muted" style="margin:0">Your own sentences, with no marks. Find the mistake, say the sentence right out loud, then check. Clues only when you ask.</p>${n ? `<div class="row"><button class="btn primary" data-act="fxstart">Start · about 3 min</button></div>` : ''}</section>`; }
   return `<div class="stack wpage"><div><h1>Mistakes</h1><p class="lead" style="margin-top:4px">From your speaking answers and essays. One list.</p></div>
-    <div class="wgrid"><div class="stack">${drill}</div><div class="stack"><section class="card stack" style="gap:2px"><h2>Your patterns</h2>${live.length ? `<div class="list flat">${live.map(s => `<div class="li" style="align-items:flex-start"><span class="grow"><span class="t" style="font-size:15px">${s.label}</span><span class="s">in ${s.inTexts} of ${s.n} checked texts${s.now ? ` · ${s.now} in the last` : ''}</span></span><span class="small ${tags[s.status][1]}" style="font-weight:700">${tags[s.status][0]}</span></div>`).join('')}</div>` : '<p class="small muted" style="margin:0">Patterns appear after the coach checks a few answers or essays.</p>'}
+    <div class="wg2"><div class="stack">${drill}</div><div class="stack"><section class="card stack" style="gap:2px"><h2>Your patterns</h2>${live.length ? `<div class="list flat">${live.map(s => `<div class="li" style="align-items:flex-start"><span class="grow"><span class="t" style="font-size:15px">${s.label}</span><span class="s">in ${s.inTexts} of ${s.n} checked texts${s.now ? ` · ${s.now} in the last` : ''}</span></span><span class="small ${tags[s.status][1]}" style="font-weight:700">${tags[s.status][0]}</span></div>`).join('')}</div>` : '<p class="small muted" style="margin:0">Patterns appear after the coach checks a few answers or essays.</p>'}
       ${gone.length ? `<div class="note ok small" style="margin-top:8px"><b>Gone:</b> ${gone.map(s => s.label.toLowerCase()).join(', ')}.</div>` : ''}</section>
       <section class="card stack" style="gap:2px"><h2>Where they come from</h2><div class="list flat"><div class="li"><span class="grow">Speaking answers</span><b>${fromS}</b></div><div class="li"><span class="grow">Essays and trainings</span><b>${fromW}</b></div></div></section></div></div></div>`;
 }
