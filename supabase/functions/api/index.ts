@@ -394,6 +394,93 @@ Return ONLY a JSON object:
   return { ...r.data, model: r.model, usage };
 }
 
+/* ---------------- reported topics from the public @cdireport page ---------------- */
+function tgText(html: string) {
+  return html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#(\d+);/g, (_m, d) => String.fromCharCode(Number(d)));
+}
+function parseCdi(html: string) {
+  const out: any[] = [];
+  for (const chunk of html.split('tgme_widget_message_wrap').slice(1)) {
+    const post = (chunk.match(/data-post="([^"]+)"/) || [])[1];
+    const m = chunk.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+    if (!post || !m) continue;
+    const txt = tgText(m[1]);
+    if (!/#writing/i.test(txt)) continue;
+    const head = txt.split("\n")[0].replace(/[^\x20-\x7E]/g, "").trim();
+    const [date, centre] = head.split(/\s+-\s+/);
+    const grab = (a: RegExp, b: RegExp) => { const i = txt.search(a); if (i < 0) return ""; const rest = txt.slice(i).replace(a, ""); const j = rest.search(b); return (j < 0 ? rest : rest.slice(0, j)).replace(/[^\x20-\x7E‘-”—\n]/g, "").replace(/\s+/g, " ").trim(); };
+    const t1 = grab(/Part\s*1\s*/i, /Part\s*2/i), t2 = grab(/Part\s*2\s*/i, /Report your questions|@cdireport_admin|cdireport\.t\.me/i);
+    if (t2.length < 30) continue;
+    const time = (chunk.match(/<time[^>]*datetime="([^"]+)"/) || [])[1] || "";
+    out.push({ post, date: (date || "").trim(), centre: (centre || "").trim(), t1, t2, at: time });
+  }
+  return out;
+}
+async function reported() {
+  let cache: any = null;
+  try { cache = JSON.parse(await cfg("cdi_cache", "null")); } catch { /* none */ }
+  if (cache && Date.now() - cache.ts < 6 * 3600e3) return cache.items;
+  const items: any[] = []; let before = "";
+  try {
+    for (let page = 0; page < 4; page++) {
+      const r = await fetch("https://t.me/s/cdireport" + (before ? "?before=" + before : ""), { headers: { "User-Agent": "Mozilla/5.0" } });
+      if (!r.ok) break;
+      const html = await r.text();
+      items.push(...parseCdi(html));
+      const ids = [...html.matchAll(/data-post="cdireport\/(\d+)"/g)].map((x) => Number(x[1]));
+      if (!ids.length) break;
+      before = String(Math.min(...ids));
+    }
+  } catch { /* keep what we have */ }
+  if (!items.length) return cache ? cache.items : [];
+  const seen = new Set<string>(); const uniq = items.filter((x) => (seen.has(x.t2) ? false : (seen.add(x.t2), true))).sort((a, b) => (b.at || "").localeCompare(a.at || "")).slice(0, 60);
+  await setCfg("cdi_cache", JSON.stringify({ ts: Date.now(), items: uniq }));
+  return uniq;
+}
+
+/* ---------------- short writing checks: intro, paragraph, frame, re-checked sentences ---------------- */
+const RULES = `For "rule" use one of exactly: "articles a/an/the", "verb tense", "subject-verb agreement", "plural / countable", "prepositions", "word form", "word choice", "punctuation", or another short lowercase name if none fits.`;
+async function wcheck(body: any, userId: string) {
+  const mode = String(body.mode || "");
+  const q = String(body.prompt || "").slice(0, 800);
+  const usage = await bumpUsage(userId);
+  let prompt = "";
+  if (mode === "intro" || mode === "para") {
+    const text = String(body.text || "").slice(0, 3000);
+    prompt = `${STYLE}
+
+You are checking one part of an IELTS Writing Task 2 answer by a student whose first languages are Kazakh and Russian.
+Question: ${q}
+${mode === "intro" ? "The student wrote ONLY the introduction: the question in their own words, then their position." : "The student wrote ONE body paragraph. It should have: a clear claim, why it is true, one specific example (one person or case, not a list), and what it leads to."}
+${body.plan ? `Their plan: ${JSON.stringify(body.plan).slice(0, 400)}` : ""}
+Text:
+"""
+${text}
+"""
+Return ONLY JSON:
+"note": 1-2 sentences: the one thing that matters most in this ${mode === "intro" ? "introduction" : "paragraph"}, concrete, quoting them. No praise.
+"points": array (0-3) of {"point": what is missing or weak, in plain words, "fix": a concrete suggestion, a sentence frame where useful}. ${mode === "intro" ? "Check: is the question paraphrased (not copied), is the position clear and does it answer what the question asks?" : "Check each of: claim, why, example (specific?), result. Only list what is actually weak."}
+"errors": array of EVERY language error, at most 15: {"said": exact wrong words copied from the text (2-10 words), "better": corrected words, "why": under 10 words, "rule": ...}. ${RULES}
+"better": the same ${mode === "intro" ? "introduction" : "paragraph"} as a band 7 writer would write it, same ideas, plain accurate words.`;
+  } else if (mode === "frame") {
+    prompt = `A student practising IELTS Writing Task 2 sentence frames wrote one sentence using this frame: "${String(body.frame || "").slice(0, 300)}".
+The essay question: ${q}
+Their sentence: "${String(body.text || "").slice(0, 600)}"
+Return ONLY JSON: "fits": true if the sentence follows the frame's structure (wording can vary a little) and makes sense for this question; "errors": array of language errors {"said","better","why","rule"} (${RULES}); "note": one short sentence, specific, no praise.`;
+  } else if (mode === "sentences") {
+    const items = Array.isArray(body.items) ? body.items.slice(0, 30) : [];
+    prompt = `A student is correcting their own IELTS essay. For each item you get the original sentence, the mistakes that were found in it, and the student's new version.
+Essay question: ${q}
+Items:
+${items.map((it: any) => `#${Number(it.i)} original: "${String(it.orig || "").slice(0, 400)}" | mistakes: ${JSON.stringify(it.errs || []).slice(0, 600)} | new: "${String(it.now || "").slice(0, 400)}"`).join("\n")}
+For each item decide if ALL the listed mistakes are fixed in the new version and no new error was added.
+Return ONLY JSON: {"results": [{"i": number, "fixed": true|false, "still": array of the mistakes still there or newly added, each {"said": exact words from the NEW version, "better", "why", "rule"} (${RULES})}]}`;
+  } else throw Object.assign(new Error("Unknown check."), { code: "bad_request" });
+  let r;
+  try { r = await gemini([{ text: prompt }], true, 0.2); } catch (e) { await refund(userId, usage.used); throw e; }
+  return { ...r.data, model: r.model, usage };
+}
+
 /* ---------------- voice cloning test (admin only) ---------------- */
 const VOICE_MODELS: Record<string, { key: string; label: string }> = {
   fish: { key: "fish_key", label: "Fish Audio S2.1 Pro (free)" },
@@ -567,7 +654,8 @@ Deno.serve(async (req) => {
     if (action === "mockreport") return j(await mockReport(body, user.id));
     if (action === "paraphrase") return j(await paraphrase(body, user.id));
     if (action === "essay") return j(await essay(body, user.id));
-    if (action === "wtopics") { let t: unknown = []; try { t = JSON.parse(await cfg("w_topics", "[]")); } catch { /* empty */ } return j({ topics: Array.isArray(t) ? t.slice(0, 200) : [] }); }
+    if (action === "wtopics") { let t: unknown = []; try { t = JSON.parse(await cfg("w_topics", "[]")); } catch { /* empty */ } return j({ topics: Array.isArray(t) ? t.slice(0, 200) : [], reported: await reported() }); }
+    if (action === "wcheck") return j(await wcheck(body, user.id));
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);
       const { data } = await admin.from("ai_usage").select("count").eq("user_id", user.id).eq("day", day).maybeSingle();
