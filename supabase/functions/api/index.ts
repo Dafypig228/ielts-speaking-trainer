@@ -101,10 +101,10 @@ function questionText(q: any) {
   return `Part ${q.part} question: ${q.text}`;
 }
 
-async function gemini(parts: any[], json = true, temperature = 0.6) {
+async function gemini(parts: any[], json = true, temperature = 0.6, fast = false) {
   const key = await cfg("gemini_key");
   if (!key) throw Object.assign(new Error("The admin hasn't added a Gemini API key yet."), { code: "no_key" });
-  const models = [...new Set([await cfg("model", "gemini-flash-latest"), "gemini-flash-latest", "gemini-2.5-flash"])];
+  const models = fast ? ["gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-2.5-flash"] : [...new Set([await cfg("model", "gemini-flash-latest"), "gemini-flash-latest", "gemini-2.5-flash"])];
   let last = "";
   for (const m of models) {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
@@ -112,7 +112,7 @@ async function gemini(parts: any[], json = true, temperature = 0.6) {
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         contents: [{ role: "user", parts }],
-        generationConfig: { temperature, ...(json ? { responseMimeType: "application/json" } : {}) },
+        generationConfig: { temperature, ...(json ? { responseMimeType: "application/json" } : {}), ...(fast && m === "gemini-2.5-flash" ? { thinkingConfig: { thinkingBudget: 0 } } : {}) },
       }),
     });
     if (r.status === 404) { last = `model ${m} not found`; continue; }
@@ -518,9 +518,22 @@ function t1Brief(it: any) {
   return JSON.stringify(it).slice(0, 3000);
 }
 
-async function t1gen(body: any) {
-  const kind = ["line", "bar", "pie", "table", "process", "map"].includes(String(body.kind)) ? String(body.kind) : "";
-  const desc = String(body.desc || "").slice(0, 600);
+const T1K = ["line", "bar", "pie", "table", "process", "map"];
+function t1Ok(it: any) {
+  if (!it || typeof it !== "object" || !it.title) return false;
+  const num = (a: any) => Array.isArray(a) && a.length && a.every((v: any) => isFinite(Number(v)));
+  const k = it.kind;
+  if (k === "line" || k === "bar") return Array.isArray(it.x) && it.x.length >= 2 && Array.isArray(it.series) && it.series.length > 0 && it.series.every((x: any) => x && x.name && num(x.values) && x.values.length === it.x.length);
+  if (k === "pie") return Array.isArray(it.charts) && it.charts.length > 0 && it.charts.every((c: any) => Array.isArray(c.parts) && c.parts.length >= 2);
+  if (k === "table") return Array.isArray(it.cols) && Array.isArray(it.rows) && it.rows.length > 0 && it.rows.every((r: any) => r.name && num(r.values));
+  if (k === "process") return Array.isArray(it.steps) && it.steps.length >= 3;
+  if (k === "map") return Array.isArray(it.maps) && it.maps.length === 2 && it.maps.every((m: any) => Array.isArray(m.items) && m.items.length >= 2);
+  return false;
+}
+const t1Norm = (d: string) => d.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim().slice(0, 300);
+async function t1Pool(): Promise<any[]> { try { const p = JSON.parse(await cfg("t1_pool", "[]")); return Array.isArray(p) ? p : []; } catch { return []; } }
+async function t1Save(it: any) { const p = await t1Pool(); if (it.src && p.some((x) => x.src === it.src)) return; p.push(it); await setCfg("t1_pool", JSON.stringify(p.slice(-400))); }
+async function t1Make(kind: string, desc: string) {
   const prompt = `Create ONE practice visual for IELTS Academic Writing Task 1${desc ? ` that matches this description reported by a test taker: "${desc}". Keep its topic, years and categories when they are given; invent plausible numbers.` : ` of kind "${kind || "line"}" on an everyday academic topic (energy, transport, education, spending, population, tourism, health, environment).`}
 Return ONLY JSON with these keys:
 "kind": one of "line", "bar", "pie", "table", "process", "map";
@@ -531,8 +544,51 @@ and the data for that kind:
 - table: "cols": 3-4 column labels, "unit": text, "rows": 4-6 objects {"name", "values": numbers, one per column}.
 - process: "steps": 6-10 objects {"label": short stage, 2-7 words, "note": optional detail, 0-6 words}, "cycle": true if the last stage leads back to the first.
 - map: "maps": exactly 2 objects {"label": year or "Now"/"Planned", "items": 6-10 objects {"name": 1-3 words, "x": 0-11, "y": 0-7, "w": 1-6, "h": 1-4, "kind": one of "building", "green", "water", "road", "sport", "parking"}} on a 12 by 8 grid, row 0 is north. Items in one map must not overlap. Keep some features the same, remove some, add some, change some.`;
-  const r = await gemini([{ text: prompt }], true, 0.8);
-  return { item: r.data, model: r.model };
+  const r = await gemini([{ text: prompt }], true, 0.8, true);
+  const it = r.data; if (!t1Ok(it)) throw Object.assign(new Error("The drawing came out broken. Try again."), { code: "gemini_error" });
+  it.id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); it.gen = true; it.ts = Date.now();
+  if (desc) it.src = t1Norm(desc); else it.kind = it.kind || kind;
+  await t1Save(it);
+  return it;
+}
+function later(p: Promise<unknown>) { const er = (globalThis as any).EdgeRuntime; const q = p.catch(() => {}); if (er && er.waitUntil) er.waitUntil(q); }
+async function t1gen(body: any) {
+  const kind = T1K.includes(String(body.kind)) ? String(body.kind) : "";
+  const desc = String(body.desc || "").slice(0, 600).trim();
+  const skip = new Set(Array.isArray(body.skip) ? body.skip.map(String) : []);
+  const pool = await t1Pool();
+  if (desc) {
+    const hit = pool.find((x) => x.src === t1Norm(desc));
+    if (hit) return { item: hit, cached: true };
+    return { item: await t1Make("", desc), cached: false };
+  }
+  const k = kind || T1K[Math.floor(Math.random() * T1K.length)];
+  const free = pool.filter((x) => !x.src && x.kind === k && !skip.has(x.id));
+  if (free.length) {
+    if (free.length < 3) later(t1Make(k, ""));
+    return { item: free[Math.floor(Math.random() * free.length)], cached: true };
+  }
+  const it = await t1Make(k, "");
+  later(t1Make(k, ""));
+  return { item: it, cached: false };
+}
+/* fill the pool ahead of time: one per kind that is short, and the newest reported Task 1 descriptions */
+async function t1warm() {
+  const last = Number(await cfg("t1_warm_ts", "0")) || 0;
+  if (Date.now() - last < 10 * 60 * 1000) return { ok: true, skipped: true };
+  await setCfg("t1_warm_ts", String(Date.now()));
+  const pool = await t1Pool(), jobs: (() => Promise<unknown>)[] = [];
+  for (const k of T1K) if (pool.filter((x) => !x.src && x.kind === k).length < 2) jobs.push(() => t1Make(k, ""));
+  try {
+    const c = JSON.parse(await cfg("cdi_cache", "null"));
+    const have = new Set(pool.map((x) => x.src).filter(Boolean));
+    for (const r of (c?.items || []).filter((r: any) => r.t1 && r.t1.trim().length > 25).slice(0, 12)) {
+      const d = String(r.t1).replace(/[^\x20-\x7E’‘“”–—]/g, "").trim();
+      if (!have.has(t1Norm(d)) && jobs.length < 8) jobs.push(() => t1Make("", d));
+    }
+  } catch { /* no reports cached */ }
+  later((async () => { for (const j of jobs) { try { await j(); } catch { /* next */ } } })());
+  return { ok: true, started: jobs.length };
 }
 
 async function essay1(body: any, userId: string) {
@@ -776,6 +832,7 @@ Deno.serve(async (req) => {
     if (action === "wcheck") return j(await wcheck(body, user.id));
     if (action === "essay1") return j(await essay1(body, user.id));
     if (action === "t1gen") return j(await t1gen(body));
+    if (action === "t1warm") return j(await t1warm());
     if (action === "hunt") return j(await hunt(body));
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);
