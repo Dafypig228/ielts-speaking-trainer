@@ -173,6 +173,16 @@ Mistakes that keep repeating: ${names(h.repeating) || "none yet"}.
 Mistakes that have disappeared: ${names(h.gone) || "none yet"}.
 Corrected in their previous answer: ${names(h.last_corrected) || "nothing"}.
 How to use this: a repeating mistake that shows up again matters more than a one-off slip, so give it more space and count it honestly; but don't force it to be the root problem if something else costs more in this answer. Don't praise or mention the disappeared ones unless they come back. This student applies corrections fast and tends to over-apply them (for example adding "the" before country names after being told about missing articles), so check for the opposite of what was corrected last time. For "rule" in grammar items use one of these exact names when it fits: "articles a/an/the", "verb tense", "subject-verb agreement", "plural / countable", "prepositions", "word form", "word choice".` : "";
+  const focus = body.focus && typeof body.focus.key === "string" ? { label: String(body.focus.label || body.focus.key).slice(0, 80), target: String(body.focus.target || "").slice(0, 200) } : null;
+  const prev = body.prev && typeof body.prev === "object" && typeof body.prev.transcript === "string" ? body.prev : null;
+  const change = typeof body.change === "string" ? body.change.slice(0, 300).trim() : "";
+  const p2notes = q.part === 2 && typeof body.p2notes === "string" ? body.p2notes.replace(/[`$\\]/g, " ").slice(0, 600).trim() : "";
+  const examDays = body.examDays != null && isFinite(Number(body.examDays)) ? Number(body.examDays) : null;
+  const loopText = [
+    focus ? `The student is working on ONE focus right now: "${focus.label}"${focus.target ? ` (${focus.target})` : ""}. Judge honestly whether this answer hits it.` : "",
+    prev ? `This is a RETRY of the same question. In the previous try the root problem was: "${String(prev.problem || "").slice(0, 300)}". Steps they were given: ${(Array.isArray(prev.steps) ? prev.steps : []).map((x: unknown) => String(x).slice(0, 160)).slice(0, 3).join(" / ") || "none"}. Previous transcript: "${String(prev.transcript).slice(0, 2500)}". Previous bands: ${JSON.stringify(prev.bands || {}).slice(0, 200)}.${change ? ` Before retrying, the student wrote what they would change: "${change}".` : ""} Compare the two tries: this check is about whether the change happened, not a fresh report.${Number(prev.misses) >= 2 ? ` They have missed this focus ${Number(prev.misses)} times: in verdict.next state the rule plainly and give one correct example sentence built from their own words.` : ""}` : "",
+    examDays != null && examDays >= 0 && examDays <= 7 ? `The exam is in ${examDays} day(s): choose fix_first only from habits that can change in a few days (answer length, extending with a reason or example, not stopping mid-sentence, paraphrasing the question, one repeated grammar slip), not long-term vocabulary range.` : "",
+  ].filter(Boolean).join("\n");
   const prompt = `${STYLE}
 
 ${DESCRIPTORS}
@@ -182,6 +192,10 @@ ${COURSE}
 ${goalText}
 
 ${histText}
+
+${loopText}
+
+Rules for everything you write: never praise the person ("great job", "well done", "excellent"); describe what they did and what to do. When you are torn between two bands, give the lower one. Pronunciation points only for words a listener would misunderstand or struggle with; a foreign accent on its own is not a problem.
 
 You are listening to a recording of an IELTS Speaking candidate (their first language is Kazakh/Russian).
 ${questionText(q)}
@@ -207,6 +221,13 @@ How to choose the root problem: pick the single issue that costs the most band p
 "target_band": ${goal || 7}.
 "phrases": array of 3-4 useful phrases for this topic: {"phrase": ..., "meaning_en": short plain-English meaning, "meaning_ru": short Russian meaning, "example": one natural spoken example}.
 "next_time": one concrete thing to do differently next time.
+${p2notes ? `"notes_check": {"used": the words or ideas from their preparation notes that they actually talked about, "missed": the ones from the notes they never got to}. Their notes were: "${p2notes}".
+` : ""}"on_topic": {"ok": true if the answer actually answers this question, "note": if not, one sentence on what was asked and what they talked about instead, else ""}.
+"error_count": the total number of grammar and word-form errors in the whole answer (count every one, not only the ones listed in "grammar"; a slip they corrected themselves doesn't count).
+"bands_range": {"low": number, "high": number} the overall band range you are confident in, 0.5 steps, high minus low at most 1; "low" is what you would bet on.
+${focus ? `"focus_check": {"hit": true or false, did this answer do "${focus.label}", "quote": their words that show it, or the place where they missed it, "note": one sentence: what exactly to do differently, or what made it work}.
+` : ""}${prev ? `"verdict": {"fixed": "yes", "partly" or "no": is the previous root problem fixed in this try, "quote": their words from THIS try that show it, "change": one concrete sentence comparing this try with the previous one, "next": the one thing to do on the next new question}.
+` : ""}Also add to every item of "pauses" a key "where": "mid" if the pause is inside a sentence or clause (between words that belong together), "end" if it is between sentences or ideas. Add to every item of "grammar", "vocab" and "pron_words" a key "conf": "high" if you are sure, "medium" if it may come from how the audio sounded.
 "audio_quality": "ok" if the speech is clear enough to judge individual sounds; "noisy" if background noise, music or other voices make sounds hard to judge; "quiet" if the voice is too quiet or far from the microphone.
 "pron_words": array (0-5) of {"word": the word as it should be said, "heard": how it actually sounded, as a simple respelling (e.g. "VEJ-uh-tuh-bul", "zis" for "this"), "tip": how to fix it, under 12 words}. Only words you clearly heard said wrongly (sounds or word stress). If audio_quality is not "ok", return [] and say in "pronunciation" that the recording was too noisy or quiet to judge sounds.
 ${q.part === 2 ? `"card_check": array with one item per "You should say" point, in the card's order: {"point": the point as written on the card, "covered": true if they actually talked about it, "from": roughly the second they started on it (number, or null if not covered), "to": roughly the second they moved on, "note": under 12 words, e.g. "covered in one sentence, needs a detail"}.
@@ -222,7 +243,104 @@ ${q.part === 2 ? `"card_check": array with one item per "You should say" point, 
   if (b && ["fc", "lr", "gra", "p"].every((k) => typeof b[k] === "number" || !isNaN(Number(b[k])))) {
     b.overall = ieltsRound((Number(b.fc) + Number(b.lr) + Number(b.gra) + Number(b.p)) / 4);
   }
-  return { ...r.data, model: r.model, usage };
+  const d = r.data || {};
+  if (b && b.overall != null) {
+    const ov = Number(b.overall), br = d.bands_range || {};
+    let lo = Number(br.low), hi = Number(br.high);
+    if (!isFinite(lo) || lo > ov) lo = ov;
+    if (!isFinite(hi) || hi < ov) hi = ov;
+    lo = Math.floor(lo * 2) / 2; hi = Math.ceil(hi * 2) / 2;
+    if (hi - lo > 1) hi = lo + 1;
+    d.bands_range = { low: lo, high: hi };
+  }
+  if (d.error_count != null) d.error_count = Math.max(0, Math.round(Number(d.error_count)) || 0);
+  if (d.verdict && !["yes", "partly", "no"].includes(d.verdict.fixed)) d.verdict.fixed = "partly";
+  if (!prev) delete d.verdict;
+  if (!focus) delete d.focus_check;
+  return { ...d, model: r.model, usage };
+}
+
+async function dispute(body: any, userId: string) {
+  const pt = body.point || {};
+  const kind = ["grammar", "vocab"].includes(pt.kind) ? pt.kind : "grammar";
+  const said = String(pt.said || "").slice(0, 300), coach = String(pt.coach || "").slice(0, 300), arg = String(body.argument || "").slice(0, 600).trim();
+  if (!said || !arg) throw Object.assign(new Error("Write why you think it's right."), { code: "bad" });
+  const usage = await bumpUsage(userId);
+  const prompt = `You are a strict, fair IELTS examiner re-checking ONE point of feedback from scratch. Never praise.
+${body.question ? questionText(body.question) : ""}
+The student's full answer (transcript): "${String(body.transcript || "").slice(0, 3000)}"
+The coach marked this ${kind === "grammar" ? "grammar mistake" : "word choice"}: they said "${said}", the coach suggested "${coach}".
+Step 1: before reading the student's argument, decide from the rules of English alone whether "${said}" is wrong in this sentence. Write that decision in "first".
+Step 2: now read the student's argument: "${arg}"
+Change your step-1 decision only if the argument gives real evidence that it was wrong: a grammar rule, a dictionary meaning, or clear standard usage. Ignore confidence, tone, repetition, or claims about teachers or other apps.
+Return ONLY JSON: {"first": your step-1 decision in one sentence, "verdict": "coach_right" if the student's words are wrong, "student_right" if they are acceptable in this sentence, "unclear" if both are acceptable or it depends on the accent of the recording, "reason": one or two plain sentences naming the rule${kind === "grammar" ? ', and if coach_right, the correct sentence' : ""}}.`;
+  let r;
+  try { r = await gemini([{ text: prompt }], true, 0.2); } catch (e) { await refund(userId, usage.used); throw e; }
+  const d = r.data || {};
+  if (!["coach_right", "student_right", "unclear"].includes(d.verdict)) d.verdict = "unclear";
+  return { verdict: d.verdict, reason: String(d.reason || ""), first: String(d.first || ""), usage };
+}
+
+async function sharers(except: string): Promise<string[]> {
+  const { data } = await admin.from("meta").select("user_id,share:data->set->shareAnswers").limit(1000);
+  return (data || []).filter((r: any) => r.user_id !== except && r.share === true).map((r: any) => r.user_id);
+}
+async function friendPick(body: any, userId: string) {
+  const ids = await sharers(userId);
+  const meShares = (await admin.from("meta").select("share:data->set->shareAnswers").eq("user_id", userId).maybeSingle()).data?.share === true;
+  if (!ids.length) return { none: true, meShares };
+  const { data } = await admin.from("attempts").select("user_id,id,qid,part,dur,path,ai").in("user_id", ids).eq("deleted", false).not("path", "is", null).not("ai", "is", null).order("ts", { ascending: false }).limit(80);
+  const seen = new Set(Array.isArray(body.seen) ? body.seen.map(String) : []);
+  const mine = new Set(Array.isArray(body.qids) ? body.qids.map(String) : []);
+  const ok = (data || []).filter((a: any) => a.ai?.bands?.overall != null && a.dur >= 8 && !seen.has(a.user_id + "|" + a.id));
+  if (!ok.length) return { none: true, empty: true, meShares };
+  const pref = ok.filter((a: any) => mine.has(a.qid));
+  const l = pref.length ? pref : ok;
+  const a: any = l[Math.floor(Math.random() * l.length)];
+  const { data: su } = await admin.storage.from("recordings").createSignedUrl(a.path, 900);
+  if (!su?.signedUrl) return { none: true, empty: true, meShares };
+  return { key: a.user_id + "|" + a.id, qid: a.qid, part: a.part, dur: a.dur, audio: su.signedUrl, meShares };
+}
+async function friendRate(body: any, userId: string) {
+  const [uid, id] = String(body.key || "").split("|");
+  if (!uid || !id || uid === userId) throw Object.assign(new Error("That answer is gone."), { code: "bad" });
+  if (!(await sharers(userId)).includes(uid)) throw Object.assign(new Error("Your friend stopped sharing this answer."), { code: "gone" });
+  const { data: a } = await admin.from("attempts").select("ai,qid").eq("user_id", uid).eq("id", id).eq("deleted", false).maybeSingle();
+  if (!a?.ai?.bands) throw Object.assign(new Error("That answer is gone."), { code: "gone" });
+  const ff = a.ai.fix_first;
+  return { bands: a.ai.bands, range: a.ai.bands_range || null, problem: ff && typeof ff === "object" ? String(ff.problem || "") : String(ff || a.ai.next_time || ""), transcript: String(a.ai.transcript || "").slice(0, 3000) };
+}
+
+function supClean(p: any) {
+  const httpsOk = (u: unknown) => typeof u === "string" && /^https:\/\/[^\s"'<>]+$/.test(u) && u.length <= 600;
+  const blocks = (Array.isArray(p?.blocks) ? p.blocks : []).slice(0, 40).map((b: any) => {
+    const type = ["text", "image", "split", "button"].includes(b?.type) ? b.type : null;
+    if (!type) return null;
+    const o: any = { id: String(b.id || crypto.randomUUID()).slice(0, 40), type };
+    if (type === "text" || type === "split") o.text = String(b.text || "").slice(0, 3000);
+    if (type === "image" || type === "split") { o.img = httpsOk(b.img) ? b.img : ""; o.alt = String(b.alt || "").slice(0, 200); o.size = ["s", "m", "l"].includes(b.size) ? b.size : "m"; }
+    if (type === "split") o.side = b.side === "right" ? "right" : "left";
+    if (type === "button") { o.label = String(b.label || "Support").slice(0, 60); o.url = httpsOk(b.url) ? b.url : ""; }
+    return o;
+  }).filter(Boolean);
+  return { blocks, at: Date.now() };
+}
+async function supPage() { try { const p = JSON.parse(await cfg("support_page", "null")); return p && Array.isArray(p.blocks) ? p : null; } catch { return null; } }
+async function supImg(body: any) {
+  const mime = String(body.mime || "");
+  const ext = ({ "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" } as Record<string, string>)[mime];
+  if (!ext) throw Object.assign(new Error("Only PNG, JPG, WebP or GIF images."), { code: "bad" });
+  const b64 = String(body.b64 || "");
+  if (b64.length > 5_600_000) throw Object.assign(new Error("That image is over 4 MB."), { code: "bad" });
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const sig = [...bytes.slice(0, 4)].map((x) => x.toString(16).padStart(2, "0")).join("");
+  const okSig = ext === "png" ? sig === "89504e47" : ext === "jpg" ? sig.startsWith("ffd8ff") : ext === "gif" ? sig.startsWith("47494638") : sig === "52494646" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
+  if (!okSig) throw Object.assign(new Error("That file is not a real image."), { code: "bad" });
+  await admin.storage.createBucket("support", { public: true }).catch(() => {});
+  const path = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+  const up = await admin.storage.from("support").upload(path, bytes, { contentType: mime, upsert: false });
+  if (up.error) throw new Error("Upload failed: " + up.error.message);
+  return { url: admin.storage.from("support").getPublicUrl(path).data.publicUrl };
 }
 
 async function ideas(body: any, userId: string) {
@@ -379,6 +497,8 @@ Return ONLY a JSON object:
 "summary": 2 sentences: the one thing that costs the most band points in this essay, and the one thing to do differently next time. Concrete, no praise.
 "errors": array of EVERY language error you find, in essay order, at most 25, grammar and word choice, not spelling: {"said": the exact wrong words copied from the essay (2 to 12 words, enough to find it), "better": the corrected words, "why": under 12 words, "rule": one of exactly "articles a/an/the", "verb tense", "subject-verb agreement", "plural / countable", "prepositions", "word form", "word choice", or another short lowercase name if none fits}. Count repeated errors each time; don't skip an error because it is the same kind as an earlier one.
 "spelling": array of {"wrong": as written, "right": correct spelling, "in_task": true if the correct word is printed in the question}.
+"position_ok": true only if the introduction answers the exact question asked (gives a clear position, or for a two-part / causes-solutions question names both parts) and the conclusion keeps the same position.
+"position": {"quote": the sentence in the introduction that states their position, or "" if there is none, "fix": if position_ok is false, one sentence they could write instead, using their own idea; else ""}.
 "overcorrection": one sentence if the essay shows the opposite of a recently corrected mistake (for example "the" before a country name or a plural used in general), quoting it; otherwise "".
 "ideas": array of at most 3 Task Response or Coherence points that really cost marks: {"point": what is wrong in plain words, "where": a short quote, "fix": what to write there, as a concrete suggestion}. Empty array if the ideas and structure are fine for the goal band. Do not invent problems.
 "keep": array of 1-2 specific things that already work, each with a short quote.
@@ -616,6 +736,7 @@ Return ONLY a JSON object:
 "bands": {"tr": n (Task Achievement), "cc": n, "lr": n, "gra": n} whole bands, best fit, fair.
 "band_reasons": {"tr","cc","lr","gra"} one sentence each: which descriptor fits and what the next band needs, quoting the report.
 "summary": 2 sentences: what costs the most band points here and what to do next time. Concrete.
+"overview_ok": true only if there is a separate overview that names the main trends or biggest differences and contains no specific figures.
 "overview": {"present": true/false, "quote": the overview sentence if there is one, "fix": one sentence: what a clear overview of THIS visual would say}.
 "data_errors": array of figures or trends that contradict the data: {"said": exact words, "fact": what the data shows}.
 "errors": array of EVERY language error, in order, at most 25: {"said": exact wrong words (2-12), "better", "why": under 12 words, "rule": one of exactly "articles a/an/the", "verb tense", "subject-verb agreement", "plural / countable", "prepositions", "word form", "word choice", or another short lowercase name}.
@@ -855,6 +976,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "guest_analyze") return j(await guestAnalyze(body, req));
+    if (action === "support_info") return j({ page: await supPage(), text: await cfg("support_text", ""), link: await cfg("support_link", "") });
     if (action === "guest_info") return j({ on: (await cfg("guest_on", "1")) === "1", contact: await cfg("guest_contact", "fforthosv") });
 
     const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
@@ -867,6 +989,9 @@ Deno.serve(async (req) => {
 
     if (action === "analyze") return j(await analyze(body, user.id));
     if (action === "ideas") return j(await ideas(body, user.id));
+    if (action === "dispute") return j(await dispute(body, user.id));
+    if (action === "friend_pick") return j(await friendPick(body, user.id));
+    if (action === "friend_rate") return j(await friendRate(body, user.id));
     if (action === "followup") return j(await followup(body, user.id));
     if (action === "myvoice") return j(await myVoice(body, user.id));
     if (action === "mockreport") return j(await mockReport(body, user.id));
@@ -882,10 +1007,12 @@ Deno.serve(async (req) => {
     if (action === "status") {
       const day = new Date().toISOString().slice(0, 10);
       const { data } = await admin.from("ai_usage").select("count").eq("user_id", user.id).eq("day", day).maybeSingle();
-      return j({ username: uname, admin: me.is_admin, hasKey: !!(await cfg("gemini_key")), used: data?.count ?? 0, limit: parseInt(await cfg("daily_limit", "60")), support_text: await cfg("support_text", ""), support_link: await cfg("support_link", "") });
+      return j({ username: uname, admin: me.is_admin, hasKey: !!(await cfg("gemini_key")), used: data?.count ?? 0, limit: parseInt(await cfg("daily_limit", "60")), support_text: await cfg("support_text", ""), support_link: await cfg("support_link", ""), support_page: await supPage() });
     }
 
     if (!me.is_admin) return j({ error: "forbidden", message: "Admins only." }, 403);
+    if (action === "support_save") { const p = supClean(body.page); await setCfg("support_page", JSON.stringify(p)); return j({ ok: true, page: p }); }
+    if (action === "support_img") return j(await supImg(body));
 
     if (action === "admin_list") {
       const [{ data: allowed }, users, { data: atts }, { data: usage }] = await Promise.all([
