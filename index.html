@@ -2910,7 +2910,7 @@ function coachCTA(a) {
 }
 function usedTargets(a) {
   const ai = a.ai || {};
-  if (Array.isArray(ai.used_targets) && ai.used_targets.length) return ai.used_targets.map(x => ({t: x.phrase, used: !!x.used}));
+  if (Array.isArray(ai.used_targets) && ai.used_targets.length && a.targets && a.targets.length) { const u = ai.used_targets.filter(x => a.targets.includes(x.phrase)); if (u.length) return u.map(x => ({t: x.phrase, used: !!x.used})); }
   const tr = (ai.transcript || a.tr || '').toLowerCase();
   if (!tr || !a.targets) return [];
   return a.targets.map(t => { const stem = t.toLowerCase().replace(/\.\.\..*$/, '').split(/[ ,]+/).slice(0, 3).join(' '); return {t, used: stem.length > 3 && tr.includes(stem)}; });
@@ -4308,7 +4308,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261117051009';
+const BUILD_ID = '20261117051322';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;

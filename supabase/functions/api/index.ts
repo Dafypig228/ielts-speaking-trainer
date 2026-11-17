@@ -207,6 +207,7 @@ ${q.part === 2 ? `"card_check": array with one item per "You should say" point, 
   let r;
   try { r = await gemini(parts, true, 0.3); } catch (e) { await refund(userId, usage.used); throw e; }
   // IELTS overall = mean of the four criteria; .25 rounds up to .5 and .75 up to the next whole band
+  if (r.data) r.data.used_targets = targets.length && Array.isArray(r.data.used_targets) ? r.data.used_targets.filter((x: any) => targets.includes(x?.phrase)) : [];
   const b = r.data?.bands;
   if (b && ["fc", "lr", "gra", "p"].every((k) => typeof b[k] === "number" || !isNaN(Number(b[k])))) {
     b.overall = ieltsRound((Number(b.fc) + Number(b.lr) + Number(b.gra) + Number(b.p)) / 4);
