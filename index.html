@@ -4308,7 +4308,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '20261117043239';
+const BUILD_ID = '20261117051009';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -4723,7 +4723,7 @@ coachAttempt = async function (id) {
   const a = getAtt(id);
   if (a && a.ai && a.ai.natural_version && S.set.mvAuto && STANDALONE && SB.user) {
     const st = await mvEnsureStatus();
-    if (st && st.has) { const k = mvKey(id, 'n'); delete MV.clip[k]; mvMake(k, a.ai.natural_version, false); }
+    if (st && st.has) for (const [v, t] of [['n', a.ai.natural_version], ['h', a.ai.higher_version]]) if (t) { const k = mvKey(id, v); delete MV.clip[k]; mvMake(k, t, false); }
   }
 };
 function qfAtt(id) { const a = getAtt(id); return !!(a && /^#quick/.test(location.hash) && QF.deck && QF.deck.includes(a.qid)); }
