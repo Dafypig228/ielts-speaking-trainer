@@ -712,6 +712,7 @@ details>:not(summary).wz-in{animation-duration:180ms}
 .fxctx{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;background:var(--sunken)}
 .p2gate h1{margin:0}
 .t1mapf figcaption{display:flex;align-items:baseline;justify-content:space-between}.t1nn{font-size:12px;font-weight:700;color:var(--muted)}
+.wrscroll>*{flex-shrink:0}.wrscroll .li{min-height:auto}
 
 </style>
 </head>
@@ -4505,7 +4506,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611171608';
+const BUILD_ID = '202611171612';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
