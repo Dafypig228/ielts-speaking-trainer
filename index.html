@@ -2182,7 +2182,7 @@ async function sbPull(uidv) {
       S.starred = rs;
       S.notes = first ? {...((data.data && data.data.notes) || {}), ...S.notes} : ((data.data && data.data.notes) || {});
       if (data.data && data.data.goal) S.set.goal = data.data.goal;
-      if (data.data && data.data.set && typeof data.data.set === 'object') Object.assign(S.set, data.data.set);
+      if (data.data && data.data.set && typeof data.data.set === 'object') { const le = essays(), ld = S.set.essaysDel; Object.assign(S.set, data.data.set); if (typeof essMerge === 'function') { const del = new Set([...(Array.isArray(ld) ? ld : []), ...(Array.isArray(S.set.essaysDel) ? S.set.essaysDel : [])]); S.set.essays = essMerge(le, essays(), del); S.set.essaysDel = [...del].slice(-200); } }
       metaLocal();
       await kvSet('sb-mpull:' + uidv, data.updated_at);
       if (first) await kvSet('sb-metadirty:' + uidv, true);
@@ -4662,7 +4662,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611180838';
+const BUILD_ID = '202611180848';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -5434,7 +5434,7 @@ document.addEventListener('click', e => {
     case 'w2back': e.preventDefault(); if (W2.phase === 'write') return; Object.assign(W2, {phase: 'pick', open: null}); location.hash = 'write'; render(); break;
     case 'w2new': Object.assign(W2, {phase: 'pick', open: null}); render(); window.scrollTo(0, 0); break;
     case 'w2show': W2.show.add(d.k); render(); break;
-    case 'w2del': (async () => { if (!(await confirmBox('Delete this essay?', 'Its mistakes leave your list too.', 'Delete'))) return; S.set.essays = essays().filter(x => x.id !== d.e); saveMeta(); Object.assign(W2, {phase: 'pick', open: null}); render(); })(); break;
+    case 'w2del': (async () => { if (!(await confirmBox('Delete this essay?', 'Its mistakes leave your list too.', 'Delete'))) return; S.set.essays = essays().filter(x => x.id !== d.e); S.set.essaysDel = [...(Array.isArray(S.set.essaysDel) ? S.set.essaysDel : []), d.e].slice(-200); saveMeta(); Object.assign(W2, {phase: 'pick', open: null}); render(); })(); break;
     case 'adtopics': (async () => { const l = (($('#adTopics') || {}).value || '').split('\n').map(x => x.trim()).filter(x => x.length > 20); try { await api('admin_config', {w_topics: JSON.stringify(l)}); W2.remote = l; toast(`Saved ${l.length} topics.`); render(); } catch (er) { toast(er.message || 'Failed.'); } })(); break;
   }
 });
@@ -7746,6 +7746,38 @@ window.addEventListener('beforeunload', e => { if (SUP.edit && SUP.dirty) { e.pr
 viewAdmin = (o => function () {
   return o().replace(/<section class="card stack" style="gap:8px"><h2>Support page<\/h2>[\s\S]*?<\/section>/, `<section class="card stack" style="gap:8px"><h2>Support page</h2><p class="small muted" style="margin:0">Edit it on the page itself: text, images, image beside text, buttons, in any order.</p><div><a class="btn sm" href="#support">Open and edit</a></div></section>`);
 })(viewAdmin);
+
+/* ================= v25: essays are merged between devices, never overwritten ================= */
+/* Before: the settings blob was last-writer-wins, so a device with an old essay list could push it over the cloud.
+   Now every sync first reads the cloud's essays and keeps the union (minus deleted ids). */
+SYNC_KEYS.push('essaysDel');
+const essDel = l => new Set(Array.isArray(l) ? l : []);
+function essMerge(a, b, del) {
+  const m = new Map();
+  for (const e of [...(a || []), ...(b || [])]) {
+    if (!e || !e.id || del.has(e.id)) continue;
+    const o = m.get(e.id);
+    // keep the richer copy: checked beats unchecked, then the one with more fields
+    if (!o || (!o.fb && e.fb) || (!!o.fb === !!e.fb && JSON.stringify(e).length > JSON.stringify(o).length)) m.set(e.id, e);
+  }
+  return [...m.values()].sort((x, y) => (x.ts || 0) - (y.ts || 0)).slice(-60);
+}
+async function essSyncCloud(uidv) {
+  const {data, error} = await SB.client.from('meta').select('data').maybeSingle();
+  if (error || !data || !data.data || !data.data.set) return;
+  const cs = data.data.set, del = new Set([...essDel(cs.essaysDel), ...essDel(S.set.essaysDel)]);
+  const cloud = Array.isArray(cs.essays) ? cs.essays : [], local = essays();
+  const merged = essMerge(local, cloud, del);
+  const ids = l => l.map(e => e.id).sort().join(',');
+  const localChanged = ids(merged) !== ids(local), cloudMissing = ids(merged) !== ids(cloud.filter(e => !del.has(e.id))) || [...del].some(id => !essDel(cs.essaysDel).has(id));
+  if (localChanged || cloudMissing) { S.set.essays = merged; S.set.essaysDel = [...del].slice(-200); metaLocal(); }
+  if (cloudMissing) await kvSet('sb-metadirty:' + uidv, true);
+  if (localChanged) softRefresh();
+}
+sbPull = (o => async function (uidv) {
+  try { await essSyncCloud(uidv); } catch (e) { console.warn('essay merge', e); }
+  return o(uidv);
+})(sbPull);
 
 init();
 </script>
