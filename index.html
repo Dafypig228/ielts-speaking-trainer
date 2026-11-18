@@ -2265,7 +2265,7 @@ async function sbSignOut() {
   if (!await confirmBox('Sign out on this device?', (pending ? pending + ' take(s) have not synced yet and will be lost. ' : '') + 'Recordings are removed from this device but stay in your account.', 'Sign out')) return;
   const uOut = SB.user && SB.user.id;
   try { await SB.client.auth.signOut(); } catch {}
-  try { if (uOut) { await IDB.del('kv', 'sb-pull:' + uOut); for (const t of Object.keys(DOCS)) await IDB.del('kv', 'sb-pull-' + t + ':' + uOut); } } catch {}
+  try { if (uOut) { await IDB.del('kv', 'sb-pull:' + uOut); await IDB.del('kv', 'sb-mpull:' + uOut); for (const t of Object.keys(DOCS)) await IDB.del('kv', 'sb-pull-' + t + ':' + uOut); } } catch {}
   try { for (const a of [...S.att.keys()]) { await IDB.del('att', a); await IDB.del('blob', a).catch(() => {}); } for (const s of S.sessions) await IDB.del('kv', 'sess:' + s.id).catch(() => {}); for (const p of S.phrases.keys()) await IDB.del('kv', 'ph:' + p).catch(() => {}); } catch {}
   S.att = new Map(); S.pending.clear(); S.sessions = []; S.phrases = new Map(); S.starred = new Set(); S.notes = {}; urlCache.clear(); metaLocal(); reindex();
   SB.user = null; SB.me = null; SB.state = 'out'; render(); chip();
@@ -4662,7 +4662,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611180848';
+const BUILD_ID = '202611180934';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -7778,6 +7778,14 @@ sbPull = (o => async function (uidv) {
   try { await essSyncCloud(uidv); } catch (e) { console.warn('essay merge', e); }
   return o(uidv);
 })(sbPull);
+/* the sentence you are fixing is kept while you type, so a tab reload doesn't lose it */
+let rvTypeT = null;
+window.addEventListener('input', e => {
+  if (!e.target || e.target.id !== 'rvtext') return;
+  const s = RV.sents[RV.cur]; if (!s) return;
+  s.now = e.target.value;
+  clearTimeout(rvTypeT); rvTypeT = setTimeout(() => { try { rvSave(); } catch {} }, 600);
+}, true);
 
 init();
 </script>
