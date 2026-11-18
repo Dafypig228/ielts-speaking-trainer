@@ -860,6 +860,7 @@ body.fitview #view .stick{overscroll-behavior:contain}
 .cue-row s{color:var(--muted)}
 .cue-plan{background:var(--act-soft);border-radius:8px;padding:6px 10px;font-size:14.5px}
 .fixrow .wsave,.fixrow .wsaved{font-size:13px;margin-left:6px}
+.row>.grow{flex:1 1 220px}
 
 </style>
 </head>
@@ -4661,7 +4662,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611180826';
+const BUILD_ID = '202611180838';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
