@@ -853,6 +853,13 @@ body.fitview #view .stick{overscroll-behavior:contain}
 .sup-add{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .sup-prev{max-width:none}
 @media (max-width:480px){.sup-imgedit{grid-template-columns:1fr}}
+.cue{border-color:var(--act);gap:8px}
+.cue .kick{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.cue-steps{margin:4px 0 0;padding-left:20px;font-size:14.5px}
+.cue-sec{display:flex;flex-direction:column;gap:2px;font-size:15px}
+.cue-row s{color:var(--muted)}
+.cue-plan{background:var(--act-soft);border-radius:8px;padding:6px 10px;font-size:14.5px}
+.fixrow .wsave,.fixrow .wsaved{font-size:13px;margin-left:6px}
 
 </style>
 </head>
@@ -4654,7 +4661,7 @@ document.addEventListener('click', e => {
 
 
 /* ---------- tell the user when a newer version is online ---------- */
-const BUILD_ID = '202611172324';
+const BUILD_ID = '202611180826';
 let newerShown = false;
 async function checkNewer() {
   if (newerShown || BUILD_ID.startsWith('__') || !navigator.onLine || !/^https?:/.test(location.protocol)) return;
@@ -7199,10 +7206,38 @@ function focusBanner(skill = 's') {
 const viewPractice_v23 = viewPractice;
 viewPractice = function () {
   const h = viewPractice_v23(), q = curQ();
-  if (!q || isGuest() || P.mode === 'warm' || P.stage !== 'ready' || (R.on && R.qid === q.id)) return h;
+  if (!q || P.mode === 'warm') return h;
+  const live = R.on && R.qid === q.id, f = retrySource(q);
+  if (live) {
+    if (!f) return h;
+    let i = h.indexOf('<section class="card timer"'); i = i >= 0 ? h.indexOf('</section>', i) + 10 : -1;
+    return i > 9 ? h.slice(0, i) + cueCard(f) + h.slice(i) : h;
+  }
+  if (P.stage !== 'ready') return h;
   const i = h.indexOf('<p class="aim">');
-  return i < 0 ? h : h.slice(0, i) + focusBanner('s') + h.slice(i);
+  if (i < 0) return h;
+  return h.slice(0, i) + (f ? cueCard(f) : isGuest() ? '' : focusBanner('s')) + h.slice(i);
 };
+/* the try the coach just checked: what a retry should fix */
+function retrySource(q) {
+  if (!P.first) return null;
+  let f = getAtt(P.first);
+  if (!f || f.qid !== q.id) return null;
+  if (!(f.ai && f.ai.transcript)) f = allAttempts().filter(x => x.qid === q.id && x.ts >= getAtt(P.first).ts && x.ai && x.ai.transcript).sort((x, y) => y.ts - x.ts)[0] || null;
+  return f && f.ai ? f : null;
+}
+/* stays on screen while you say it again */
+function cueCard(f) {
+  const ai = f.ai, ff = ai.fix_first && typeof ai.fix_first === 'object' ? ai.fix_first : null, L = loopOf(f);
+  const fi = FOCI[L.focus] ? (L.focus === 'slip' ? slipLabel() : FOCI[L.focus].label) : '';
+  const words = [...(ai.vocab || []).slice(0, 4).map(x => [x.said, (x.better || []).join(' / ')]), ...(ai.repeats || []).slice(0, 2).map(x => [x.word, (x.instead || []).join(' / ')])].filter(x => x[1]);
+  const gram = (ai.grammar || []).slice(0, 3);
+  const plan = P.change ? `<div class="cue-plan"><b>Your plan:</b> ${esc(P.change)}</div>` : '';
+  return `<section class="card stack cue"><div class="kick">Keep in mind${fi ? ` · ${esc(fi)}` : ''}</div>${plan}
+    ${ff ? `<div><b>${esc(ff.problem || '')}</b>${(ff.steps || []).length ? `<ol class="cue-steps">${ff.steps.slice(0, 3).map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}</div>` : ai.next_time ? `<div><b>${esc(ai.next_time)}</b></div>` : ''}
+    ${words.length ? `<div class="cue-sec"><span class="small muted">Use instead</span>${words.map(([a, b]) => `<div class="cue-row"><s>${esc(a)}</s> → <b>${esc(b)}</b></div>`).join('')}</div>` : ''}
+    ${gram.length ? `<div class="cue-sec"><span class="small muted">Say it right</span>${gram.map(g => `<div class="cue-row"><s>${esc(g.said)}</s> → <b>${esc(g.better)}</b></div>`).join('')}</div>` : ''}</section>`;
+}
 /* transcript as tappable words; mid-sentence pauses drawn as a bar */
 function loopTokens(ai) {
   const out = [], mids = (ai.pauses || []).filter(p => p.where === 'mid').map(p => +p.len);
@@ -7329,12 +7364,13 @@ function disRow(a, k, i, it) {
 }
 const fixesBox_v23 = fixesBox;
 fixesBox = function (ai) {
-  const a = attOfAi(ai);
-  if (!a || !isLoopAi(ai) || !STANDALONE || isGuest()) return fixesBox_v23(ai);
-  const g = (ai.grammar || []).map((x, i) => `<div class="fixrow"><span class="err">${esc(x.said)}</span><span class="arr">→</span><span class="cor">${esc(x.better)}</span>${x.why ? `<span class="small muted why">${esc(x.why)}</span>` : ''}${disRow(a, 'g', i, x)}</div>`).join('');
-  const v = (ai.vocab || []).slice(0, 4).map((x, i) => `<div class="fixrow"><span class="weak">${esc(x.said)}</span><span class="arr">→</span><span class="cor">${esc((x.better || []).join(' / '))}</span>${x.note ? `<span class="small muted why">${esc(x.note)}</span>` : ''}${disRow(a, 'v', i, x)}</div>`).join('');
-  const r = (ai.repeats || []).map(x => `<div class="fixrow"><span class="weak">“${esc(x.word)}” ×${esc(x.times)}</span><span class="arr">→</span><span class="cor">${esc((x.instead || []).join(' / '))}</span></div>`).join('');
-  return (g ? `<section class="stack" style="gap:4px"><h2>Mistakes</h2>${g}</section>` : '') + (v || r ? `<section class="stack" style="gap:4px"><h2>Better words</h2>${v}${r}</section>` : '');
+  const a = attOfAi(ai), loop = isLoopAi(ai);
+  if (!a || !STANDALONE || isGuest() || (!(ai.vocab || []).length && !(ai.repeats || []).length && !loop)) return fixesBox_v23(ai);
+  const g = (ai.grammar || []).map((x, i) => `<div class="fixrow"><span class="err">${esc(x.said)}</span><span class="arr">→</span><span class="cor">${esc(x.better)}</span>${x.why ? `<span class="small muted why">${esc(x.why)}</span>` : ''}${loop ? disRow(a, 'g', i, x) : ''}</div>`).join('');
+  const v = (ai.vocab || []).slice(0, 4).map((x, i) => `<div class="fixrow"><span class="weak">${esc(x.said)}</span><span class="arr">→</span><span class="cor">${esc((x.better || []).join(' / '))}</span>${wsaveBtn(a, (x.better || []).join(' / '), x.said, x.note)}${x.note ? `<span class="small muted why">${esc(x.note)}</span>` : ''}${loop ? disRow(a, 'v', i, x) : ''}</div>`).join('');
+  const r = (ai.repeats || []).map(x => `<div class="fixrow"><span class="weak">“${esc(x.word)}” ×${esc(x.times)}</span><span class="arr">→</span><span class="cor">${esc((x.instead || []).join(' / '))}</span>${wsaveBtn(a, (x.instead || []).join(' / '), x.word, '')}</div>`).join('');
+  const all = betterWords(ai).filter(w => !hasPhrase(w.phrase)).length;
+  return (g ? `<section class="stack" style="gap:4px"><h2>Mistakes</h2>${g}</section>` : '') + (v || r ? `<section class="stack" style="gap:4px"><div class="row"><h2 class="grow">Better words</h2>${all > 1 ? `<button class="btn sm" data-act="wsaveall" data-a="${a.id}">Save all ${all} to Words</button>` : ''}</div>${v}${r}</section>` : '');
 };
 async function disSend(id, k, i, arg) {
   const a = getAtt(id); if (!a || !a.ai) return;
@@ -7575,6 +7611,26 @@ function fxCapExamWeek() {
   if (ch) saveMeta();
 }
 viewToday = (o => function () { try { fxCapExamWeek(); } catch {} return o(); })(viewToday);
+/* better words from the coach go to Words (the review list) */
+const hasPhrase = w => [...S.phrases.values()].some(p => p.phrase.toLowerCase() === String(w).toLowerCase());
+function betterWords(ai) {
+  return [...(ai.vocab || []).slice(0, 4).map(x => ({phrase: (x.better || []).join(' / '), said: x.said, note: x.note || ''})), ...(ai.repeats || []).map(x => ({phrase: (x.instead || []).join(' / '), said: x.word, note: ''}))].filter(x => x.phrase);
+}
+function wsaveBtn(a, phrase, said, note) {
+  if (!phrase) return '';
+  return hasPhrase(phrase) ? '<span class="small ok wsaved">in Words</span>' : `<button class="linkbtn wsave" data-act="wsave1" data-a="${a.id}" data-w="${esc(phrase)}" data-s="${esc(said || '')}">+ Words</button>`;
+}
+function phraseFrom(a, w) { return {phrase: w.phrase.slice(0, 200), meaning: `instead of “${w.said}”`, example: '', en: w.note || '', qid: a.qid}; }
+window.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const act = b.dataset.act;
+  if (act !== 'wsave1' && act !== 'wsaveall') return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  const a = getAtt(b.dataset.a); if (!a || !a.ai) return;
+  if (act === 'wsave1') return addPhrase(phraseFrom(a, {phrase: b.dataset.w, said: b.dataset.s, note: ''}));
+  const ws = betterWords(a.ai).filter(w => !hasPhrase(w.phrase));
+  for (const w of ws) { const id = uid('p'), ph = {id, ...phraseFrom(a, w), ts: Date.now(), box: 0, due: Date.now()}; S.phrases.set(id, ph); savePhrase(ph); }
+  toast(`Saved ${ws.length} to Words.`); render();
+}, true);
 
 /* ================= v24: Support page made of blocks (text, image, image with text, button), edited in place by the admin ================= */
 const SUP = {page: undefined, text: '', link: '', loading: false, edit: false, draft: null, busy: null, dirty: false};
